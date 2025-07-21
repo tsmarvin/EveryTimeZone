@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Every Time Zone</title>
+    <meta
+      name="description"
+      content="An intuitive way to visualize timezone overlaps for easy sharing and collaboration"
+    />
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="styles/styles.css" />
+  </head>
+  <!-- Default theme classes managed by SettingsPanel -->
+  <body class="theme-default dark-theme">
+    <!-- Application Header -->
+    <header class="header">
+      <div class="container">
+        <div class="header-content">
+          <div class="header-text">
+            <h1 class="title">Every Time Zone</h1>
+            <p class="subtitle">Visualize every time zone and how they overlaps across the globe.</p>
+          </div>
+          <!-- Settings button -->
+          <div class="appearance-controls">
+            <button class="appearance-settings" type="button" aria-label="Open appearance settings">
+              <span class="appearance-settings-icon">⚙️</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main">
+      <div class="container">
+        <section class="timeline-section">
+          <!-- Timeline container populated by TimelineManager -->
+          <div id="timeline-container" class="timeline-container">
+            <!-- Timeline will be dynamically generated here -->
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <p>
+          <a href="https://github.com/tsmarvin/EveryTimeZone" target="_blank" rel="noopener noreferrer"
+            >View on GitHub</a
+          >
+        </p>
+      </div>
+    </footer>
+
+    <!-- Timezone Selection Modal -->
+    <div id="timezone-modal-overlay" class="modal-overlay">
+      <div id="timezone-modal" class="modal" tabindex="-1">
+        <div class="modal-header">
+          <h2 class="modal-title">Select Timezone</h2>
+          <button class="modal-close" type="button" aria-label="Close modal"></button>
+        </div>
+        <div class="modal-content">
+          <!-- Search input -->
+          <label for="timezone-input" class="timezone-search">Search or select timezone:</label>
+          <input
+            type="text"
+            id="timezone-input"
+            class="timezone-input"
+            placeholder="Type to search timezones..."
+            autocomplete="off"
+          />
+
+          <!-- Wheel navigation -->
+          <div class="timezone-wheel-container">
+            <button id="wheel-up" class="wheel-nav-btn" type="button" aria-label="Previous timezone">▲</button>
+            <!-- Timezone wheel populated by TimezoneModal -->
+            <div id="timezone-wheel" class="timezone-wheel">
+              <!-- Timezone wheel items will be populated here -->
+            </div>
+            <button id="wheel-down" class="wheel-nav-btn" type="button" aria-label="Next timezone">▼</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancel-timezone" class="button secondary" type="button">Cancel</button>
+          <button id="select-timezone" class="button" type="button">Select</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appearance Settings Panel -->
+    <div id="appearance-panel" class="settings-panel">
+      <div class="settings-header">
+        <h2 class="settings-title">Appearance Settings</h2>
+        <button class="settings-close" type="button" aria-label="Close settings panel">×</button>
+      </div>
+      <div class="settings-content">
+        <!-- Theme Selection Section -->
+        <!-- Theme options populated by SettingsPanel.populateThemeOptions() -->
+        <div class="settings-section">
+          <h3 class="settings-section-title">Theme</h3>
+          <!-- Theme grid is dynamically populated from AVAILABLE_THEMES array -->
+          <div class="theme-grid">
+            <!-- Theme options will be populated by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Mode Selection Section -->
+        <div class="settings-section">
+          <h3 class="settings-section-title">Mode</h3>
+          <div class="mode-toggle-container">
+            <!-- Dark mode radio button -->
+            <label class="mode-toggle">
+              <input type="radio" name="mode" value="dark" class="mode-radio" />
+              <span class="mode-option">
+                <span class="mode-icon">🌙</span>
+                <span class="mode-text">Dark Mode</span>
+              </span>
+            </label>
+            <!-- Light mode radio button -->
+            <label class="mode-toggle">
+              <input type="radio" name="mode" value="light" class="mode-radio" />
+              <span class="mode-option">
+                <span class="mode-icon">☀️</span>
+                <span class="mode-text">Light Mode</span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Background overlay -->
+    <div id="settings-overlay" class="settings-overlay"></div>
+
+    <!-- Module Import Map -->
+    <script type="importmap">
+      {
+        "imports": {
+          "suncalc": "./scripts/suncalc/suncalc.js"
+        }
+      }
+    </script>
+
+    <!-- Application Module Loading -->
+    <script type="module" src="scripts/index.js"></script>
+    <script type="module" src="scripts/theme.js"></script>
+    <script type="module" src="scripts/app.js"></script>
+  </body>
+</html>
