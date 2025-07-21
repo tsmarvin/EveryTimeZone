@@ -30,7 +30,7 @@ StandardDeviation : 341.96 Seconds
 
 ## Live Site
 
-[View the live application](https://EveryTimeZone.net)
+[View the live application](https://www.everytimezone.net/?mode=light)
 
 
 ## Quick Start
