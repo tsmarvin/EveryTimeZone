@@ -1,4 +1,7 @@
-# Agents.md
+# Copilot Agent Instructions
+
+**MANDATORY STARTUP PROTOCOL:**
+Before starting any work, Copilot agents MUST read and recite these complete instructions to the log. This ensures full understanding of protocols, especially the critical screenshot workflow requirements.
 
 ## Repository Overview
 
