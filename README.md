@@ -165,5 +165,5 @@ This project uses several tools to maintain code quality:
 
 GitHub Actions automatically handles deployment when code is merged into the `main` branch.
 
-- The `release.yml` GitHub actions settings will publish the built site as a GitHub release on merges to main.
+- The `release.yml` GitHub actions settings will publish the built site as a GitHub release on merges to main with automatically generated release notes from commit messages using conventional commit format.
 - The `deploy.yml` GitHub actions settings will publish the built site to the `gh-pages` branch which will automatically published as a site using GitHub pages.
