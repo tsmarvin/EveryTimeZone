@@ -352,6 +352,9 @@ p {
 
 .timezone-info {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
 .timeline-container {
@@ -441,7 +444,6 @@ p {
   font-weight: 600;
   font-size: var(--text-sm);
   color: var(--color-text);
-  margin-bottom: 2px;
 }
 
 .timezone-offset {
