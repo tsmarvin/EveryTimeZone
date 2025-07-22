@@ -563,8 +563,8 @@ p {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
-  width: 90%;
-  max-width: 380px;
+  width: fit-content;
+  max-width: min(90vw, 700px);
   max-height: 70vh;
   display: flex;
   flex-direction: column;
@@ -572,7 +572,7 @@ p {
   transform: scale(0.9) translateY(20px);
   transition: var(--transition);
   overflow: hidden;
-  min-width: 300px;
+  min-width: 360px;
   min-height: 320px;
 }
 
@@ -581,7 +581,7 @@ p {
 }
 
 .modal-header {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
@@ -622,7 +622,7 @@ p {
 
 .modal-content {
   flex: 1;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -707,7 +707,7 @@ p {
   align-items: center;
   text-align: center;
   width: 100%;
-  max-width: 260px;
+  min-width: 280px;
   border: 1px solid transparent;
 }
 
@@ -746,18 +746,26 @@ p {
 .wheel-timezone-name {
   font-weight: 600;
   font-size: var(--text-sm);
-  margin-bottom: 1px;
-  line-height: 1.2;
+  margin-bottom: 2px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .wheel-timezone-display {
   font-size: var(--text-xs);
   opacity: 0.8;
-  line-height: 1.1;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .modal-footer {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm);
   border-top: 1px solid var(--color-border);
   display: flex;
   gap: var(--space-sm);
@@ -1188,13 +1196,18 @@ p {
     width: 95%;
     height: 90vh;
     max-height: none;
+    min-width: 280px;
     resize: none;
   }
 
   .modal-header,
   .modal-content,
   .modal-footer {
-    padding: var(--space-md);
+    padding: var(--space-sm);
+  }
+
+  .wheel-timezone-item {
+    max-width: 240px;
   }
 
   .modal-footer {
