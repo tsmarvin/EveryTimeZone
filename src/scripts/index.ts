@@ -390,7 +390,7 @@ function getCellWidth(): number {
  */
 function getCurrentHourScrollPosition(): number {
   const cellWidth = getCellWidth();
-  
+
   // The current hour should always be at index 24 in a properly structured 48-hour timeline
   // (24 hours before current + current hour = index 24)
   const currentHourIndex = 24;
