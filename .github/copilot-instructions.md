@@ -68,9 +68,10 @@ refactor: extract timezone utils to separate module
 - **Total screenshots required:** 12 screenshots minimum (6 sizes × 2 themes) for any CSS/HTML change
 
 **REQUIRED SCREENSHOT PROTOCOL STEPS**
-1. Start local HTTP server: `python3 -m http.server 8000 --directory /home/runner/work/EveryTimeZone/EveryTimeZone` (async)
-2. Use Playwright to navigate to `http://localhost:8000`
-3. For EACH screen size and theme combination (in reverse order: TV 7680×4320 → Large Desktop 2560x1440 → Desktop 1920x1080 → Tablet 1366x768 → Mobile 1024x576 → Mini 667x375):
+1. **ALWAYS build the site first**: Run `npm run build` before starting the HTTP server to ensure JavaScript/TypeScript changes are compiled. If build fails with JavaScript errors, fix them before proceeding.
+2. Start local HTTP server: `python3 -m http.server 8000 --directory dist` (async) - note the `dist` directory after build
+3. Use Playwright to navigate to `http://localhost:8000`
+4. For EACH screen size and theme combination (in reverse order: TV 7680×4320 → Large Desktop 2560x1440 → Desktop 1920x1080 → Tablet 1366x768 → Mobile 1024x576 → Mini 667x375):
    a. Resize browser window to exact dimensions
    b. For EACH theme (Dark mode first, then Light mode):
    - Verify theme by checking icon (☀️ = dark mode, 🌙 = light mode)
@@ -96,19 +97,22 @@ refactor: extract timezone utils to separate module
 
 **EXAMPLE SUCCESSFUL WORKFLOW:**
 ```bash
-# 1. Start HTTP server
-python3 -m http.server 8000 --directory /home/runner/work/EveryTimeZone/EveryTimeZone
+# 1. Build the site first to compile TypeScript/JavaScript
+npm run build
 
-# 2. Take screenshots with Playwright
+# 2. Start HTTP server from dist directory
+python3 -m http.server 8000 --directory dist
+
+# 3. Take screenshots with Playwright
 playwright-mcp-server-browser_take_screenshot
 
-# 3. IMMEDIATELY upload screenshot using reply_to_comment (NO DELAYS OR OTHER ACTIONS)
+# 4. IMMEDIATELY upload screenshot using reply_to_comment (NO DELAYS OR OTHER ACTIONS)
 reply_to_comment
 
-# 4. ONLY AFTER posting, analyze screenshot and compare with expectations. Be highly critical.
+# 5. ONLY AFTER posting, analyze screenshot and compare with expectations. Be highly critical.
 think
 
-# 5. REPEAT: Screenshot → reply_to_comment → think for EVERY single screenshot
+# 6. REPEAT: Screenshot → reply_to_comment → think for EVERY single screenshot
 ```
 
 **MANDATORY WORKFLOW SEQUENCE:**
