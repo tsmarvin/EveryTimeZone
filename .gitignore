@@ -118,3 +118,8 @@ _site/
 *.jpg
 *.jpeg
 *.gif
+
+# GitVersion binary (downloaded in CI/local development)
+gitversion
+gitversion.tar.gz
+gitversion.exe
