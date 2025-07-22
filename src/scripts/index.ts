@@ -222,8 +222,8 @@ function extractCityName(iana: string): string {
  */
 function getTimezoneAbbreviation(displayName: string, iana: string): string {
   try {
-    // Use browser's Intl.DateTimeFormat to get timezone abbreviation
-    const formatter = new Intl.DateTimeFormat('en', {
+    // Use browser's Intl.DateTimeFormat to get timezone abbreviation in user's native language
+    const formatter = new Intl.DateTimeFormat(undefined, {
       timeZone: iana,
       timeZoneName: 'short',
     });
@@ -240,7 +240,7 @@ function getTimezoneAbbreviation(displayName: string, iana: string): string {
   }
 
   // Fallback for UTC
-  if (iana.startsWith('UTC') || displayName.includes('Coordinated Universal Time')) {
+  if (iana.startsWith('UTC') || iana === 'Etc/UTC' || iana === 'Etc/GMT') {
     return 'UTC';
   }
 
