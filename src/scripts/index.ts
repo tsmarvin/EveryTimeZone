@@ -5,7 +5,8 @@
  * user interactions, and daylight calculations using SunCalc.
  */
 
-import * as SunCalc from 'suncalc';
+// @ts-ignore - suncalc will be loaded via importmap
+declare const SunCalc: any;
 import { SettingsPanel } from './settings.js';
 
 // Type definitions for timezone and timeline data structures
