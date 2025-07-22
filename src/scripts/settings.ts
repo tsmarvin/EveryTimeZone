@@ -171,11 +171,11 @@ export class SettingsPanel {
 
     themeGrid.innerHTML = AVAILABLE_THEMES.map(
       theme => `
-      <div class="theme-option" data-theme="${theme.name}">
+      <div class="theme-option theme-${theme.name}" data-theme="${theme.name}">
         <div class="theme-preview">
-          <div class="theme-preview-color" style="background: var(--color-primary)"></div>
-          <div class="theme-preview-color" style="background: var(--color-surface)"></div>
-          <div class="theme-preview-color" style="background: var(--color-accent)"></div>
+          <div class="theme-preview-color"></div>
+          <div class="theme-preview-color"></div>
+          <div class="theme-preview-color"></div>
         </div>
         <div class="theme-info">
           <h4 class="theme-name">${theme.displayName}</h4>

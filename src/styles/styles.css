@@ -2146,3 +2146,72 @@ p {
 .theme-sunset-warmth .theme-preview-color:nth-child(3) {
   background: var(--sunset-gold);
 }
+
+/* Theme-specific styling for theme options */
+/* This ensures each theme option shows text in that theme's colors for better readability preview */
+
+/* Default theme styling */
+.theme-default {
+  background: var(--gray-800);
+}
+.theme-default .theme-name {
+  color: var(--gray-50);
+}
+.theme-default .theme-description {
+  color: var(--gray-200);
+}
+
+/* Forest Harmony theme styling */
+.theme-forest-harmony {
+  background: var(--forest-medium-green);
+}
+.theme-forest-harmony .theme-name {
+  color: #f0fdf4; /* Light green text for dark background */
+}
+.theme-forest-harmony .theme-description {
+  color: #bbf7d0; /* Medium light green text */
+}
+
+/* Neon Cyber theme styling */
+.theme-neon-cyber {
+  background: var(--cyber-dark-blue);
+}
+.theme-neon-cyber .theme-name {
+  color: #e0f2fe; /* Light cyan text for dark background */
+}
+.theme-neon-cyber .theme-description {
+  color: #7dd3fc; /* Medium light cyan text */
+}
+
+/* Ocean Breeze theme styling */
+.theme-ocean-breeze {
+  background: var(--ocean-dark-blue);
+}
+.theme-ocean-breeze .theme-name {
+  color: #f0f9ff; /* Light blue text for dark background */
+}
+.theme-ocean-breeze .theme-description {
+  color: #7dd3fc; /* Medium light blue text */
+}
+
+/* Original theme styling */
+.theme-original {
+  background: var(--original-surface);
+}
+.theme-original .theme-name {
+  color: #f0f0f0; /* Light text for dark background */
+}
+.theme-original .theme-description {
+  color: #d0d0d0; /* Medium light text */
+}
+
+/* Sunset Warmth theme styling */
+.theme-sunset-warmth {
+  background: var(--sunset-surface);
+}
+.theme-sunset-warmth .theme-name {
+  color: #fff8e1; /* Light warm text for dark background */
+}
+.theme-sunset-warmth .theme-description {
+  color: #ffe0b2; /* Medium warm text */
+}
