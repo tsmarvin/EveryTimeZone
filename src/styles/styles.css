@@ -2092,99 +2092,99 @@ p {
 /* Each theme option defines its own color variables to ensure correct preview colors regardless of active theme */
 
 .theme-option.theme-default {
-  /* Define color variables for preview colors within this theme option */
-  --preview-gray-400: #666666;
-  --preview-gray-800: #1a1a1a;
-  --preview-gray-200: #cccccc;
+  /* Define actual theme color variables within this theme option */
+  --gray-400: #666666;
+  --gray-800: #1a1a1a;
+  --gray-200: #cccccc;
 }
 .theme-option.theme-default .theme-preview-color:nth-child(1) {
-  background: var(--preview-gray-400);
+  background: var(--gray-400);
 }
 .theme-option.theme-default .theme-preview-color:nth-child(2) {
-  background: var(--preview-gray-800);
+  background: var(--gray-800);
 }
 .theme-option.theme-default .theme-preview-color:nth-child(3) {
-  background: var(--preview-gray-200);
+  background: var(--gray-200);
 }
 
 .theme-option.theme-forest-harmony {
-  /* Define color variables for preview colors within this theme option */
-  --preview-forest-bright-green: #22c55e;
-  --preview-forest-medium-green: #1a2e1a;
-  --preview-forest-yellow: #eab308;
+  /* Define actual theme color variables within this theme option */
+  --forest-bright-green: #22c55e;
+  --forest-medium-green: #1a2e1a;
+  --forest-yellow: #eab308;
 }
 .theme-option.theme-forest-harmony .theme-preview-color:nth-child(1) {
-  background: var(--preview-forest-bright-green);
+  background: var(--forest-bright-green);
 }
 .theme-option.theme-forest-harmony .theme-preview-color:nth-child(2) {
-  background: var(--preview-forest-medium-green);
+  background: var(--forest-medium-green);
 }
 .theme-option.theme-forest-harmony .theme-preview-color:nth-child(3) {
-  background: var(--preview-forest-yellow);
+  background: var(--forest-yellow);
 }
 
 .theme-option.theme-neon-cyber {
-  /* Define color variables for preview colors within this theme option */
-  --preview-cyber-cyan: #00d4ff;
-  --preview-cyber-blue: #141428;
-  --preview-cyber-pink: #ff0080;
+  /* Define actual theme color variables within this theme option */
+  --cyber-cyan: #00d4ff;
+  --cyber-blue: #141428;
+  --cyber-pink: #ff0080;
 }
 .theme-option.theme-neon-cyber .theme-preview-color:nth-child(1) {
-  background: var(--preview-cyber-cyan);
+  background: var(--cyber-cyan);
 }
 .theme-option.theme-neon-cyber .theme-preview-color:nth-child(2) {
-  background: var(--preview-cyber-blue);
+  background: var(--cyber-blue);
 }
 .theme-option.theme-neon-cyber .theme-preview-color:nth-child(3) {
-  background: var(--preview-cyber-pink);
+  background: var(--cyber-pink);
 }
 
 .theme-option.theme-ocean-breeze {
-  /* Define color variables for preview colors within this theme option */
-  --preview-ocean-cyan: #0891b2;
-  --preview-ocean-medium-blue: #0c4a6e;
-  --preview-ocean-blue: #164e63;
+  /* Define actual theme color variables within this theme option */
+  --ocean-cyan-variant: #0891b2;
+  --ocean-medium-blue: #0c4a6e;
+  --ocean-blue: #164e63;
 }
 .theme-option.theme-ocean-breeze .theme-preview-color:nth-child(1) {
-  background: var(--preview-ocean-cyan);
+  background: var(--ocean-cyan-variant);
 }
 .theme-option.theme-ocean-breeze .theme-preview-color:nth-child(2) {
-  background: var(--preview-ocean-medium-blue);
+  background: var(--ocean-medium-blue);
 }
 .theme-option.theme-ocean-breeze .theme-preview-color:nth-child(3) {
-  background: var(--preview-ocean-blue);
+  background: var(--ocean-blue);
 }
 
 .theme-option.theme-original {
-  /* Define color variables for preview colors within this theme option */
-  --preview-original-muted-blue: #4a90e2;
-  --preview-original-surface: #2a2a2a;
-  --preview-original-muted-orange: #e67e22;
+  /* Define actual theme color variables within this theme option */
+  --original-muted-blue: #7c9fb8;
+  --original-surface: #3c3c3c;
+  --original-muted-orange: #b8a37c;
 }
 .theme-option.theme-original .theme-preview-color:nth-child(1) {
-  background: var(--preview-original-muted-blue);
+  background: var(--original-muted-blue);
 }
 .theme-option.theme-original .theme-preview-color:nth-child(2) {
-  background: var(--preview-original-surface);
+  background: var(--original-surface);
 }
 .theme-option.theme-original .theme-preview-color:nth-child(3) {
-  background: var(--preview-original-muted-orange);
+  background: var(--original-muted-orange);
 }
 
 .theme-option.theme-sunset-warmth {
-  /* Define color variables for preview colors within this theme option */
-  --preview-sunset-orange: #ea580c;
-  --preview-sunset-surface: #292524;
-  --preview-sunset-gold: #fbbf24;
+  /* Define actual theme color variables within this theme option */
+  --sunset-orange: #ff6b35;
+  --sunset-surface: #3a2820;
+  --sunset-gold: #ffab00;
 }
 .theme-option.theme-sunset-warmth .theme-preview-color:nth-child(1) {
-  background: var(--preview-sunset-orange);
+  background: var(--sunset-orange);
 }
 .theme-option.theme-sunset-warmth .theme-preview-color:nth-child(2) {
-  background: var(--preview-sunset-surface);
+  background: var(--sunset-surface);
 }
 .theme-option.theme-sunset-warmth .theme-preview-color:nth-child(3) {
-  background: var(--preview-sunset-gold);
+  background: var(--sunset-gold);
 }
 
 /* Theme-specific styling for theme options */
