@@ -151,7 +151,7 @@ p {
 .subtitle {
   font-size: var(--text-lg);
   color: var(--color-header-text-secondary);
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-sm);
   text-shadow: 0 1px 2px var(--color-header-shadow);
 }
 
@@ -371,11 +371,13 @@ p {
 .timeline-container {
   background: var(--color-surface);
   border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
+  border-top: 3px solid var(--color-primary);
   box-shadow: var(--shadow-lg);
   overflow-x: auto;
   overflow-y: visible;
   min-width: 100%;
+  margin-top: var(--space-sm);
 }
 
 .timeline-header {

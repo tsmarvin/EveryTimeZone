@@ -1048,5 +1048,3 @@ function simpleIsDaylight(latitude: number, date: Date): boolean {
 
   return hour >= sunrise && hour <= sunset;
 }
-
-// Export initializeTimeline for use by app.ts
