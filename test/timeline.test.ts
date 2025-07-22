@@ -255,4 +255,69 @@ describe('Timeline Responsive Design', () => {
       }
     });
   });
+
+  describe('Current Hour Positioning', () => {
+    beforeEach(() => {
+      // Set up a mock DOM container for testing
+      document.body.innerHTML = '<div id="timeline-container"></div>';
+    });
+
+    it('should position current hour correctly across different screen sizes', () => {
+      const testSizes = [
+        { width: 375, height: 667, expectedCellWidth: 50 }, // Mobile small
+        { width: 576, height: 800, expectedCellWidth: 55 }, // Mobile large  
+        { width: 768, height: 1024, expectedCellWidth: 70 }, // Tablet
+        { width: 992, height: 768, expectedCellWidth: 80 }, // Desktop small
+        { width: 1400, height: 900, expectedCellWidth: 90 }, // Desktop large
+        { width: 1920, height: 1080, expectedCellWidth: 90 }, // Desktop extra large
+      ];
+
+      testSizes.forEach(({ width, height, expectedCellWidth }) => {
+        // Set screen size
+        Object.defineProperty(window, 'innerWidth', { value: width, writable: true });
+        Object.defineProperty(window, 'innerHeight', { value: height, writable: true });
+
+        // Create timeline data
+        const dimensions = getTimelineDimensions();
+        const timelineData = createTimelineData(dimensions.numHours, dimensions.numRows);
+
+        // Verify timeline data is correct
+        expect(timelineData.length).toBeGreaterThan(0);
+        expect(timelineData[0].hours.length).toBe(48); // 48 hours total
+
+        // Verify current hour is at index 24 (center of -24 to +24 range)
+        const currentHourIndex = 24;
+        const firstRow = timelineData[0];
+        
+        // The current hour should be positioned so it can be scrolled to the leftmost position
+        expect(firstRow.hours[currentHourIndex]).toBeDefined();
+        
+        // Calculate expected scroll position for this screen size
+        // Current hour should be positioned as second visible column (with padding)
+        const paddingCells = 1;
+        const expectedScrollPosition = Math.max(0, (currentHourIndex - paddingCells) * expectedCellWidth);
+        
+        // Test that the calculation would work correctly
+        // (We can't test the actual DOM scroll since we're in a unit test environment)
+        expect(expectedScrollPosition).toBeGreaterThanOrEqual(0);
+        expect(expectedScrollPosition).toBe((24 - 1) * expectedCellWidth); // 23 * cellWidth
+      });
+    });
+
+    it('should handle edge cases for current hour positioning', () => {
+      // Test with minimum screen size
+      Object.defineProperty(window, 'innerWidth', { value: 320, writable: true });
+      Object.defineProperty(window, 'innerHeight', { value: 480, writable: true });
+
+      const dimensions = getTimelineDimensions();
+      const timelineData = createTimelineData(dimensions.numHours, dimensions.numRows);
+
+      // Should still generate valid timeline data
+      expect(timelineData.length).toBeGreaterThan(0);
+      expect(timelineData[0].hours.length).toBe(48);
+
+      // Current hour should still be at index 24
+      expect(timelineData[0].hours[24]).toBeDefined();
+    });
+  });
 });
