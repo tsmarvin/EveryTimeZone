@@ -1539,7 +1539,7 @@ p {
   /* Base Neutrals */
   --pure-black: #000000;
   --pure-white: #ffffff;
-  
+
   /* Gray Scale */
   --gray-darkest: #0f0f0f;
   --gray-darker: #1a1a1a;
@@ -1550,7 +1550,7 @@ p {
   --gray-light: #999999;
   --gray-lighter: #cccccc;
   --gray-lightest: #f5f5f5;
-  
+
   /* Extended Grays */
   --gray-850: #1f2937;
   --gray-750: #374151;
@@ -1566,7 +1566,7 @@ p {
   --gray-25: #fafafa;
   --gray-blue: #94a3b8;
   --gray-warm: #d1d5db;
-  
+
   /* Forest Green Palette */
   --forest-darkest: #0a1a0a;
   --forest-darker: #1a2e1a;
@@ -1587,7 +1587,7 @@ p {
   --forest-shadow: #14532d;
   --forest-sage: #166534;
   --forest-spring: #a3d977;
-  
+
   /* Cyber/Neon Palette */
   --cyber-darkest: #0a0a14;
   --cyber-dark: #141428;
@@ -1609,7 +1609,7 @@ p {
   --cyber-blue-900: #082f49;
   --cyber-blue-800: #0c4a6e;
   --cyber-cyan-light: #7dd3fc;
-  
+
   /* Ocean Blue Palette */
   --ocean-darkest: #0a1628;
   --ocean-dark: #1e2939;
@@ -1625,7 +1625,7 @@ p {
   --ocean-cyan-light: #67e8f9;
   --ocean-slate: #164e63;
   --ocean-midnight: #0c2d48;
-  
+
   /* Original Theme Colors */
   --original-blue-gray: #7c9fb8;
   --original-blue-medium: #6a8aa3;
@@ -1636,7 +1636,7 @@ p {
   --original-sage-blue: #6a9383;
   --original-bronze: #93835a;
   --original-sky: #9ab8d3;
-  
+
   /* Sunset/Warm Palette */
   --sunset-darkest: #2a1810;
   --sunset-dark: #3a2820;
@@ -1657,7 +1657,7 @@ p {
   --sunset-mocha: #5d4037;
   --sunset-bright-yellow: #ffcc02;
   --sunset-charcoal: #292524;
-  
+
   /* Additional Utility Colors */
   --golden-yellow: #fbbf24;
   --golden-amber: #f59e0b;
@@ -2303,7 +2303,6 @@ p {
   --ocean-cyan-variant: var(--ocean-blue);
   --ocean-medium-blue: var(--cyber-blue-800);
   --ocean-blue: var(--ocean-slate);
-}
 }
 .theme-option.theme-ocean-breeze .theme-preview-color:nth-child(1) {
   background: var(--ocean-cyan-variant);

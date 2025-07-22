@@ -1,7 +1,7 @@
-# Copilot Agent Instructions
+# Copilot Agent Instructions for EveryTimeZone
 
-**MANDATORY STARTUP PROTOCOL:**
-Before starting any work, Copilot agents MUST read and recite these complete instructions to the log. This ensures full understanding of protocols, especially the critical screenshot workflow requirements.
+**MANDATORY STARTUP PROTOCOL - CRITICAL REQUIREMENT:**
+Before starting any work, Copilot agents MUST read and recite these complete instructions to the log. This ensures full understanding of protocols, especially the critical screenshot workflow requirements. Failure to recite these instructions at the start of every job will result in immediate termination of the agent.
 
 ## Repository Overview
 
