@@ -385,7 +385,6 @@ p {
   position: relative; /* For sticky positioning of timezone labels */
   /* Remove background, borders, and shadows to blend with page */
 }
-}
 
 .timeline-header {
   display: flex;
