@@ -198,6 +198,8 @@ p {
   text-align: center;
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
+  margin-top: var(--space-md); /* Add spacing above footer */
+  flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
 .footer a {
@@ -311,8 +313,10 @@ p {
 /* Timeline Visualization Styles */
 
 .timeline-section {
-  padding: var(--space-sm) 0;
-  min-height: calc(100vh - 120px); /* Account for reduced header and footer space */
+  padding: var(--space-sm) 0 0 0; /* Remove bottom padding since footer provides spacing */
+  min-height: calc(100vh - 120px); /* Account for header space */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Timeline Controls */
@@ -386,6 +390,8 @@ p {
   min-width: 100%;
   margin-top: var(--space-sm);
   position: relative; /* For sticky positioning of timezone labels */
+  flex: 1; /* Allow container to expand and fill available space */
+}
 }
 
 .timeline-header {
