@@ -366,25 +366,21 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone): Tim
 
 /**
  * Get the current cell width based on screen size
- * Matches the CSS media query breakpoints for .timeline-cell
+ * Matches the CSS media query breakpoints for .timeline-cell exactly
  * @returns Cell width in pixels
  */
 function getCellWidth(): number {
   const screenWidth = window.innerWidth;
 
-  // Match CSS media query breakpoints for .timeline-cell min-width
-  if (screenWidth <= 375) {
-    return 50; // Extra small devices
-  } else if (screenWidth <= 576) {
-    return 55; // Small devices
-  } else if (screenWidth >= 1400) {
-    return 90; // Extra large devices
+  // Match CSS media query breakpoints for .timeline-cell min-width exactly
+  if (screenWidth >= 1400) {
+    return 120; // Extra large devices - @media (min-width: 1400px)
   } else if (screenWidth >= 992) {
-    return 80; // Large devices
+    return 100; // Large devices - @media (min-width: 992px)
   } else if (screenWidth >= 768) {
-    return 70; // Medium devices
+    return 90; // Medium devices - @media (min-width: 768px)
   } else {
-    return 60; // Default
+    return 60; // Default and small devices - matches base CSS and @media (max-width: 576px)
   }
 }
 
@@ -591,8 +587,13 @@ export function renderTimeline(): void {
 
   // Scroll to position current hour at the leftmost visible position
   // Use responsive cell width calculation for proper positioning across screen sizes
-  const currentHourScrollPosition = getCurrentHourScrollPosition();
-  container.scrollLeft = currentHourScrollPosition;
+  // Use setTimeout to ensure layout and width calculations are complete before scrolling
+  setTimeout(() => {
+    const currentHourScrollPosition = getCurrentHourScrollPosition();
+    console.log('[renderTimeline] Setting scroll position to:', currentHourScrollPosition);
+    container.scrollLeft = currentHourScrollPosition;
+    console.log('[renderTimeline] Actual scroll position after setting:', container.scrollLeft);
+  }, 0);
 }
 
 /**
@@ -740,8 +741,13 @@ export class TimelineManager {
 
     // Scroll to position current hour at the leftmost visible position
     // Use responsive cell width calculation for proper positioning across screen sizes
-    const currentHourScrollPosition = getCurrentHourScrollPosition();
-    this.container.scrollLeft = currentHourScrollPosition;
+    // Use setTimeout to ensure layout and width calculations are complete before scrolling
+    setTimeout(() => {
+      const currentHourScrollPosition = getCurrentHourScrollPosition();
+      console.log('[TimelineManager] Setting scroll position to:', currentHourScrollPosition);
+      this.container.scrollLeft = currentHourScrollPosition;
+      console.log('[TimelineManager] Actual scroll position after setting:', this.container.scrollLeft);
+    }, 0);
   }
 }
 
