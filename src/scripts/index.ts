@@ -335,7 +335,7 @@ export function getTimelineDimensions(): { numHours: number; numRows: number } {
   // Define minimum cell width to prevent text wrapping at different screen sizes
   // Based on longest time format "12 PM" (~5 characters) plus padding
   let minCellWidth = 50; // Mini phones - enough for "12 PM" at small font
-  if (screenWidth > 375) minCellWidth = 55; // Small phones  
+  if (screenWidth > 375) minCellWidth = 55; // Small phones
   if (screenWidth >= 576) minCellWidth = 60; // Larger phones
   if (screenWidth >= 768) minCellWidth = 70; // Tablet
   if (screenWidth >= 992) minCellWidth = 80; // Desktop
