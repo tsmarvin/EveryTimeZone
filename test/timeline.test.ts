@@ -41,7 +41,8 @@ describe('Timeline Responsive Design', () => {
       
       const dimensions = getTimelineDimensions();
       
-      expect(dimensions.numHours).toBe(6); // Minimum for mobile
+      expect(dimensions.numHours).toBeGreaterThanOrEqual(4); // Dynamic minimum based on available width
+      expect(dimensions.numHours).toBeLessThanOrEqual(8); // Should not exceed reasonable mobile limit
       expect(dimensions.numRows).toBeGreaterThanOrEqual(3); // Minimum rows
       expect(dimensions.numRows).toBeLessThanOrEqual(12); // Maximum rows
     });
@@ -52,7 +53,8 @@ describe('Timeline Responsive Design', () => {
       
       const dimensions = getTimelineDimensions();
       
-      expect(dimensions.numHours).toBe(12); // Tablet breakpoint
+      expect(dimensions.numHours).toBeGreaterThanOrEqual(6); // More hours available on tablet
+      expect(dimensions.numHours).toBeLessThanOrEqual(16); // Should not exceed reasonable tablet limit
       expect(dimensions.numRows).toBeGreaterThanOrEqual(3);
       expect(dimensions.numRows).toBeLessThanOrEqual(12);
     });
@@ -63,7 +65,8 @@ describe('Timeline Responsive Design', () => {
       
       const dimensions = getTimelineDimensions();
       
-      expect(dimensions.numHours).toBe(24); // Desktop shows full day
+      expect(dimensions.numHours).toBeGreaterThanOrEqual(8); // More hours available on desktop
+      expect(dimensions.numHours).toBeLessThanOrEqual(24); // Full day maximum
       expect(dimensions.numRows).toBeGreaterThanOrEqual(3);
       expect(dimensions.numRows).toBeLessThanOrEqual(12);
     });
@@ -74,7 +77,8 @@ describe('Timeline Responsive Design', () => {
       
       const dimensions = getTimelineDimensions();
       
-      expect(dimensions.numHours).toBe(24); // Full day on large screens
+      expect(dimensions.numHours).toBeGreaterThanOrEqual(12); // Many hours available on large desktop
+      expect(dimensions.numHours).toBeLessThanOrEqual(24); // Full day maximum
       expect(dimensions.numRows).toBeGreaterThanOrEqual(3);
       expect(dimensions.numRows).toBeLessThanOrEqual(12);
     });
@@ -85,7 +89,8 @@ describe('Timeline Responsive Design', () => {
       
       const dimensions = getTimelineDimensions();
       
-      expect(dimensions.numHours).toBe(18); // Intermediate breakpoint
+      expect(dimensions.numHours).toBeGreaterThanOrEqual(6); // Intermediate size
+      expect(dimensions.numHours).toBeLessThanOrEqual(18); // Reasonable upper bound
       expect(dimensions.numRows).toBeGreaterThanOrEqual(3);
       expect(dimensions.numRows).toBeLessThanOrEqual(12);
     });
@@ -96,7 +101,7 @@ describe('Timeline Responsive Design', () => {
       Object.defineProperty(window, 'innerHeight', { value: 300, writable: true });
       
       const smallDimensions = getTimelineDimensions();
-      expect(smallDimensions.numHours).toBeGreaterThanOrEqual(6);
+      expect(smallDimensions.numHours).toBeGreaterThanOrEqual(4); // Adjusted minimum for dynamic calculation
       expect(smallDimensions.numRows).toBeGreaterThanOrEqual(3);
       
       // Test very large screen
@@ -137,6 +142,44 @@ describe('Timeline Responsive Design', () => {
       timelineData.forEach(row => {
         expect(row.hours.length).toBe(dimensions.numHours);
       });
+    });
+
+    it('should calculate optimal columns based on available width', () => {
+      // Test that more columns fit on wider screens
+      Object.defineProperty(window, 'innerWidth', { value: 800, writable: true });
+      Object.defineProperty(window, 'innerHeight', { value: 600, writable: true });
+      
+      const mediumDimensions = getTimelineDimensions();
+      
+      Object.defineProperty(window, 'innerWidth', { value: 1600, writable: true });
+      Object.defineProperty(window, 'innerHeight', { value: 600, writable: true });
+      
+      const wideDimensions = getTimelineDimensions();
+      
+      // Wider screen should accommodate more columns
+      expect(wideDimensions.numHours).toBeGreaterThanOrEqual(mediumDimensions.numHours);
+    });
+
+    it('should prefer common hour increments', () => {
+      // Test various widths and verify they tend towards common increments
+      const commonIncrements = [4, 6, 8, 12, 16, 18, 24];
+      
+      for (let width = 600; width <= 2000; width += 200) {
+        Object.defineProperty(window, 'innerWidth', { value: width, writable: true });
+        Object.defineProperty(window, 'innerHeight', { value: 800, writable: true });
+        
+        const dimensions = getTimelineDimensions();
+        
+        // Result should be a reasonable number of hours
+        expect(dimensions.numHours).toBeGreaterThanOrEqual(4);
+        expect(dimensions.numHours).toBeLessThanOrEqual(24);
+        
+        // Preferably a common increment or close to one
+        const hasCommonIncrement = commonIncrements.some(increment => 
+          Math.abs(increment - dimensions.numHours) <= 2
+        );
+        expect(hasCommonIncrement).toBe(true);
+      }
     });
   });
 

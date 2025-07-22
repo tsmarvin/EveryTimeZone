@@ -44,23 +44,45 @@ jobs:
         cd ..
         zip -r everytimezone-${{ steps.gitversion.outputs.semVer }}.zip dist/*
         
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Get the previous tag
+        PREVIOUS_TAG=$(git tag --sort=-version:refname | head -2 | tail -1)
+        if [ -z "$PREVIOUS_TAG" ]; then
+          # If no previous tag, use first commit
+          PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+        fi
+        
+        echo "Previous tag: $PREVIOUS_TAG"
+        echo "Current version: v${{ steps.gitversion.outputs.semVer }}"
+        
+        # Generate changelog with all commit messages since previous tag
+        CHANGELOG=$(git log --oneline --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
+        
+        # Build release notes
+        cat > release_notes.md << EOF
+        ## Every Time Zone v${{ steps.gitversion.outputs.semVer }}
+
+        Built site for deployment to GitHub Pages or any static hosting provider.
+
+        ### Changes
+
+        $CHANGELOG
+
+        ### Deployment
+        Extract the archive contents to your web server root directory.
+
+        **Version:** ${{ steps.gitversion.outputs.informationalVersion }}
+        **Commit:** ${{ github.sha }}
+        **Previous Release:** $PREVIOUS_TAG
+        EOF
+        
     - name: Create Release
       run: |
         gh release create v${{ steps.gitversion.outputs.semVer }} \
           --title "Every Time Zone v${{ steps.gitversion.outputs.semVer }}" \
-          --notes "## Every Time Zone v${{ steps.gitversion.outputs.semVer }}
-          
-        Built site for deployment to GitHub Pages or any static hosting provider.
-        
-        ### Changes
-        - Auto-generated release from main branch
-        - Built with TypeScript compilation and asset copying
-        
-        ### Deployment
-        Extract the archive contents to your web server root directory.
-        
-        **Version:** ${{ steps.gitversion.outputs.informationalVersion }}
-        **Commit:** ${{ github.sha }}" \
+          --notes-file release_notes.md \
           everytimezone-${{ steps.gitversion.outputs.semVer }}.tar.gz \
           everytimezone-${{ steps.gitversion.outputs.semVer }}.zip
       env:

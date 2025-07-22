@@ -25,6 +25,8 @@ export interface TimeZone {
   offset: number; // UTC offset in hours
   displayName: string; // Full localized name
   iana: string; // IANA timezone identifier
+  cityName: string; // Extracted city name for display and search
+  abbreviation: string; // Timezone abbreviation (e.g., "EDT", "JST")
   daylight?: DaylightData;
 }
 
@@ -91,6 +93,8 @@ export function getUserTimezone(): TimeZone {
     offset,
     displayName,
     iana: userTimezone,
+    cityName: extractCityName(userTimezone),
+    abbreviation: getTimezoneAbbreviation(displayName, userTimezone),
   };
 }
 
@@ -157,6 +161,8 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
       offset,
       displayName,
       iana,
+      cityName: extractCityName(iana),
+      abbreviation: getTimezoneAbbreviation(displayName, iana),
     };
   });
 
@@ -192,8 +198,67 @@ function extractCityName(iana: string): string {
     return iana; // Fallback to full IANA identifier
   }
 
-  // Replace underscores with spaces and handle special cases
-  return cityPart.replace(/_/g, ' ');
+  // Replace underscores with spaces
+  let cityName = cityPart.replace(/_/g, ' ');
+
+  // Convert to proper case for better readability
+  cityName = cityName.replace(/\b\w/g, letter => letter.toUpperCase());
+
+  // Handle specific corrections that require special characters or can't be done algorithmically
+  const corrections: Record<string, string> = {
+    'Sao Paulo': 'São Paulo',
+    'Ho Chi Minh': 'Ho Chi Minh City',
+    'Port Of Spain': 'Port of Spain',
+  };
+
+  return corrections[cityName] || cityName;
+}
+
+/**
+ * Generate timezone abbreviation from full timezone name and IANA identifier
+ * @param displayName Full timezone name (e.g., "Eastern Daylight Time")
+ * @param iana IANA timezone identifier for fallback logic
+ * @returns Timezone abbreviation (e.g., "EDT")
+ */
+function getTimezoneAbbreviation(displayName: string, iana: string): string {
+  try {
+    // Use browser's Intl.DateTimeFormat to get timezone abbreviation in user's native language
+    const formatter = new Intl.DateTimeFormat(undefined, {
+      timeZone: iana,
+      timeZoneName: 'short',
+    });
+
+    // Format a date and extract the timezone abbreviation
+    const parts = formatter.formatToParts(new Date());
+    const timeZonePart = parts.find(part => part.type === 'timeZoneName');
+
+    if (timeZonePart && timeZonePart.value && timeZonePart.value.length <= 5) {
+      return timeZonePart.value;
+    }
+  } catch {
+    // Fall through to fallback logic
+  }
+
+  // Fallback for UTC
+  if (iana.startsWith('UTC') || iana === 'Etc/UTC' || iana === 'Etc/GMT') {
+    return 'UTC';
+  }
+
+  // Fallback: generate abbreviation from display name
+  const words = displayName
+    .split(' ')
+    .filter(word => word.length > 0 && !['of', 'and', 'the', 'in'].includes(word.toLowerCase()));
+
+  if (words.length >= 2) {
+    return words
+      .slice(0, 3)
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  // Ultimate fallback
+  return 'GMT';
 }
 
 /**
@@ -230,14 +295,21 @@ function createTimezoneDisplayName(iana: string, offset: number): string {
 /**
  * Format UTC offset for display
  * @param offset UTC offset in hours
- * @returns Formatted offset string (e.g., "+05:30", "-08:00")
+ * @returns Formatted offset string (e.g., "+5:30", "-7", "+12:45")
  */
 function formatOffset(offset: number): string {
   const sign = offset >= 0 ? '+' : '-';
   const absOffset = Math.abs(offset);
   const hours = Math.floor(absOffset);
   const minutes = Math.round((absOffset - hours) * 60);
-  return `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+  // If minutes are zero, don't include them
+  if (minutes === 0) {
+    return `${sign}${hours}`;
+  }
+
+  // Include minutes when they're non-zero, but don't pad hours with zero
+  return `${sign}${hours}:${minutes.toString().padStart(2, '0')}`;
 }
 
 /**
@@ -313,12 +385,54 @@ export function getTimelineDimensions(): { numHours: number; numRows: number } {
   const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
   const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 768;
 
-  // Calculate number of hours based on screen width
-  // Minimum 6 hours for mobile, up to 24 for desktop
-  let numHours = 6;
-  if (screenWidth >= 768) numHours = 12;
-  if (screenWidth >= 1024) numHours = 18;
-  if (screenWidth >= 1200) numHours = 24;
+  // Calculate available width for timeline cells
+  // Account for container padding, timezone label width, and scrollbar
+  const containerPadding = 32; // Estimated total horizontal padding
+  let timezoneLabelWidth = 160; // Default timezone label width
+
+  // Adjust timezone label width based on screen size
+  if (screenWidth < 576) {
+    timezoneLabelWidth = 120;
+  } else if (screenWidth >= 768) {
+    timezoneLabelWidth = 180;
+  } else if (screenWidth >= 992) {
+    timezoneLabelWidth = 200;
+  } else if (screenWidth >= 1400) {
+    timezoneLabelWidth = 220;
+  }
+
+  const scrollbarWidth = 20; // Estimated scrollbar width
+  const availableWidth = screenWidth - containerPadding - timezoneLabelWidth - scrollbarWidth;
+
+  // Define minimum cell width to prevent text wrapping at different screen sizes
+  // Based on longest time format "12 PM" (~5 characters) plus padding
+  let minCellWidth = 50; // Mini phones - enough for "12 PM" at small font
+  if (screenWidth > 375) minCellWidth = 55; // Small phones
+  if (screenWidth >= 576) minCellWidth = 60; // Larger phones
+  if (screenWidth >= 768) minCellWidth = 70; // Tablet
+  if (screenWidth >= 992) minCellWidth = 80; // Desktop
+  if (screenWidth >= 1400) minCellWidth = 90; // Large desktop
+
+  // Calculate maximum number of hours that can fit legibly
+  const maxHoursFromWidth = Math.floor(availableWidth / minCellWidth);
+
+  // Set reasonable bounds for number of hours
+  const minHours = 4; // Absolute minimum for usability
+  const maxHours = 24; // Maximum meaningful hours to show
+
+  // Calculate optimal number of hours
+  let numHours = Math.max(minHours, Math.min(maxHours, maxHoursFromWidth));
+
+  // Prefer common hour increments for better UX
+  const commonIncrements = [4, 6, 8, 12, 16, 18, 24];
+  const closestIncrement = commonIncrements.reduce((prev, curr) =>
+    Math.abs(curr - numHours) < Math.abs(prev - numHours) ? curr : prev,
+  );
+
+  // Use the closest common increment if it's within reasonable range
+  if (Math.abs(closestIncrement - numHours) <= 2 && closestIncrement <= maxHoursFromWidth) {
+    numHours = closestIncrement;
+  }
 
   // Calculate number of rows based on available height
   // Minimum 3 rows, but try to fill the screen
@@ -331,6 +445,70 @@ export function getTimelineDimensions(): { numHours: number; numRows: number } {
   numRows = Math.min(numRows, 12); // Maximum 12 rows
 
   return { numHours, numRows };
+}
+
+/**
+ * Dynamically adjust timezone label widths based on content
+ */
+function adjustTimezoneLabelWidths(): void {
+  const timezoneLabelCells = document.querySelectorAll('.timeline-timezone-label');
+  if (timezoneLabelCells.length === 0) return;
+
+  const firstCell = timezoneLabelCells[0] as HTMLElement;
+  if (!firstCell) return;
+
+  // Create a temporary element to measure text widths
+  const tempElement = document.createElement('div');
+  tempElement.style.position = 'absolute';
+  tempElement.style.visibility = 'hidden';
+  tempElement.style.whiteSpace = 'nowrap';
+  tempElement.style.fontSize = window.getComputedStyle(firstCell).fontSize;
+  tempElement.style.fontFamily = window.getComputedStyle(firstCell).fontFamily;
+  tempElement.style.fontWeight = window.getComputedStyle(firstCell).fontWeight;
+  document.body.appendChild(tempElement);
+
+  let maxWidth = 0;
+
+  // Measure the content width of each timezone label
+  timezoneLabelCells.forEach(cell => {
+    const timezoneInfo = cell.querySelector('.timezone-info');
+    if (timezoneInfo) {
+      tempElement.innerHTML = timezoneInfo.innerHTML;
+      const contentWidth = tempElement.scrollWidth;
+      maxWidth = Math.max(maxWidth, contentWidth);
+    }
+  });
+
+  // Remove temporary element
+  document.body.removeChild(tempElement);
+
+  // Add padding and set minimum widths based on screen size
+  const screenWidth = window.innerWidth;
+  const padding = 32; // Account for padding and margins
+  let minWidth: number;
+
+  if (screenWidth <= 576) {
+    minWidth = 140; // Mobile minimum
+  } else if (screenWidth <= 768) {
+    minWidth = 180; // Base minimum
+  } else if (screenWidth <= 992) {
+    minWidth = 200; // Tablet minimum
+  } else if (screenWidth <= 1400) {
+    minWidth = 220; // Desktop minimum
+  } else {
+    minWidth = 240; // Large desktop minimum
+  }
+
+  // Calculate optimal width (content + padding, but at least minimum)
+  const optimalWidth = Math.max(maxWidth + padding, minWidth);
+
+  // Apply the calculated width to all timezone label cells
+  timezoneLabelCells.forEach(cell => {
+    (cell as HTMLElement).style.minWidth = `${optimalWidth}px`;
+    (cell as HTMLElement).style.width = `${optimalWidth}px`;
+  });
+
+  console.log(`Adjusted timezone label width to ${optimalWidth}px (content: ${maxWidth}px, min: ${minWidth}px)`);
 }
 
 /**
@@ -353,35 +531,6 @@ export function renderTimeline(): void {
 
   // Clear container
   container.innerHTML = '';
-
-  // Create timeline header with hours
-  const header = document.createElement('div');
-  header.className = 'timeline-header';
-
-  // Empty cell for timezone labels
-  const emptyCell = document.createElement('div');
-  emptyCell.className = 'timeline-cell timeline-timezone-label';
-  header.appendChild(emptyCell);
-
-  // Hour cells
-  const firstRow = timelineData[0];
-  if (firstRow) {
-    firstRow.hours.forEach((hour, index) => {
-      const hourCell = document.createElement('div');
-      hourCell.className = 'timeline-cell timeline-hour-header';
-      // Use consistent format based on setting
-      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
-
-      // Mark current hour
-      if (index === 0) {
-        hourCell.classList.add('current-hour');
-      }
-
-      header.appendChild(hourCell);
-    });
-  }
-
-  container.appendChild(header);
 
   // Create timeline rows
   timelineData.forEach(row => {
@@ -436,6 +585,9 @@ export function renderTimeline(): void {
 
     container.appendChild(rowElement);
   });
+
+  // Apply dynamic width calculation after all rows are rendered
+  adjustTimezoneLabelWidths();
 }
 
 /**
@@ -526,34 +678,6 @@ export class TimelineManager {
     buttonContainer.appendChild(addButton);
     this.container.appendChild(buttonContainer);
 
-    // Create timeline header with hours
-    const header = document.createElement('div');
-    header.className = 'timeline-header';
-
-    // Empty cell for timezone labels
-    const emptyCell = document.createElement('div');
-    emptyCell.className = 'timeline-cell timeline-timezone-label';
-    header.appendChild(emptyCell);
-
-    // Hour cells based on user's timezone
-    const userTz = getUserTimezone();
-    const userHours = generateTimelineHours(numHours, userTz);
-    userHours.forEach((hour, index) => {
-      const hourCell = document.createElement('div');
-      hourCell.className = 'timeline-cell timeline-hour-header';
-      // Use consistent format based on setting
-      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
-
-      // Mark current hour
-      if (index === 0) {
-        hourCell.classList.add('current-hour');
-      }
-
-      header.appendChild(hourCell);
-    });
-
-    this.container.appendChild(header);
-
     // Create timeline rows for selected timezones, sorted by offset
     const sortedTimezones = [...this.selectedTimezones].sort((a, b) => a.offset - b.offset);
     sortedTimezones.forEach(timezone => {
@@ -605,6 +729,9 @@ export class TimelineManager {
 
       this.container.appendChild(rowElement);
     });
+
+    // Apply dynamic width calculation after all rows are rendered
+    adjustTimezoneLabelWidths();
   }
 }
 
@@ -692,6 +819,8 @@ export function getAllTimezonesOrdered(): TimeZone[] {
       offset,
       displayName,
       iana,
+      cityName: extractCityName(iana),
+      abbreviation: getTimezoneAbbreviation(displayName, iana),
     };
   });
 
@@ -796,7 +925,9 @@ export class TimezoneModal {
         tz =>
           tz.displayName.toLowerCase().includes(query) ||
           tz.name.toLowerCase().includes(query) ||
-          tz.iana.toLowerCase().includes(query),
+          tz.iana.toLowerCase().includes(query) ||
+          tz.cityName.toLowerCase().includes(query) ||
+          tz.abbreviation.toLowerCase().includes(query),
       );
     }
 
@@ -836,7 +967,10 @@ export class TimezoneModal {
   private updateInputValue(): void {
     const selectedTimezone = this.filteredTimezones[this.selectedIndex];
     if (selectedTimezone) {
-      this.input.value = selectedTimezone.displayName;
+      // Format offset
+      const offsetStr = formatOffset(selectedTimezone.offset);
+      // Show city name with abbreviated timezone and offset: "Tokyo (JST +09:00)"
+      this.input.value = `${selectedTimezone.cityName} (${selectedTimezone.abbreviation} ${offsetStr})`;
     }
   }
 
@@ -879,21 +1013,12 @@ export class TimezoneModal {
         item.classList.add('current');
       }
 
-      // Format offset for display
-      const offsetHours = Math.floor(Math.abs(timezone.offset));
-      const offsetMinutes = Math.round((Math.abs(timezone.offset) - offsetHours) * 60);
-      const offsetSign = timezone.offset >= 0 ? '+' : '-';
-      const offsetStr =
-        offsetMinutes > 0
-          ? `${offsetSign}${offsetHours}:${offsetMinutes.toString().padStart(2, '0')}`
-          : `${offsetSign}${offsetHours}`;
-
-      // Get common name (city name from IANA)
-      const commonName = timezone.name;
+      // Format offset for display using the existing formatOffset function
+      const offsetStr = formatOffset(timezone.offset);
 
       item.innerHTML = `
-        <div class="wheel-timezone-name">${timezone.displayName} (${offsetStr})</div>
-        <div class="wheel-timezone-display">${commonName}</div>
+        <div class="wheel-timezone-name">${timezone.cityName} (${timezone.abbreviation} ${offsetStr})</div>
+        <div class="wheel-timezone-display">${timezone.displayName}</div>
       `;
 
       // Click handler to select this timezone
