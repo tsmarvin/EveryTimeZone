@@ -6,6 +6,7 @@
  */
 
 import * as SunCalc from 'suncalc';
+import { SettingsPanel } from './settings.js';
 
 // Type definitions for timezone and timeline data structures
 
@@ -293,6 +294,11 @@ export function renderTimeline(): void {
   }
 
   const { numHours, numRows } = getTimelineDimensions();
+
+  // Get current time format setting
+  const settings = SettingsPanel.getCurrentSettings();
+  const timeFormat = settings?.timeFormat || '12h';
+
   const timelineData = createTimelineData(numHours, numRows);
 
   // Clear container
@@ -313,7 +319,8 @@ export function renderTimeline(): void {
     firstRow.hours.forEach((hour, index) => {
       const hourCell = document.createElement('div');
       hourCell.className = 'timeline-cell timeline-hour-header';
-      hourCell.textContent = hour.time12;
+      // Use consistent format based on setting
+      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
       // Mark current hour
       if (index === 0) {
@@ -348,7 +355,8 @@ export function renderTimeline(): void {
     row.hours.forEach((hour, index) => {
       const hourCell = document.createElement('div');
       hourCell.className = 'timeline-cell timeline-hour';
-      hourCell.textContent = hour.time24;
+      // Use consistent format based on setting
+      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
       // Mark current hour
       if (index === 0) {
@@ -397,6 +405,11 @@ export class TimelineManager {
 
     // Initialize with user's timezone and a few others
     this.initializeDefaultTimezones();
+
+    // Listen for settings changes to refresh timeline
+    window.addEventListener('settingsChanged', () => {
+      this.renderTimeline();
+    });
   }
 
   private initializeDefaultTimezones(): void {
@@ -439,6 +452,10 @@ export class TimelineManager {
   private renderTimeline(): void {
     const { numHours } = getTimelineDimensions();
 
+    // Get current time format setting
+    const settings = SettingsPanel.getCurrentSettings();
+    const timeFormat = settings?.timeFormat || '12h';
+
     // Clear container
     this.container.innerHTML = '';
 
@@ -468,7 +485,8 @@ export class TimelineManager {
     userHours.forEach((hour, index) => {
       const hourCell = document.createElement('div');
       hourCell.className = 'timeline-cell timeline-hour-header';
-      hourCell.textContent = hour.time12;
+      // Use consistent format based on setting
+      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
       // Mark current hour
       if (index === 0) {
@@ -512,7 +530,8 @@ export class TimelineManager {
       timezoneHours.forEach((hour, index) => {
         const hourCell = document.createElement('div');
         hourCell.className = 'timeline-cell timeline-hour';
-        hourCell.textContent = hour.time24;
+        // Use consistent format based on setting
+        hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
         // Mark current hour
         if (index === 0) {
