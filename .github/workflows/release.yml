@@ -44,23 +44,99 @@ jobs:
         cd ..
         zip -r everytimezone-${{ steps.gitversion.outputs.semVer }}.zip dist/*
         
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Get the previous tag
+        PREVIOUS_TAG=$(git tag --sort=-version:refname | head -2 | tail -1)
+        if [ -z "$PREVIOUS_TAG" ]; then
+          # If no previous tag, use first commit
+          PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+        fi
+        
+        echo "Previous tag: $PREVIOUS_TAG"
+        echo "Current version: v${{ steps.gitversion.outputs.semVer }}"
+        
+        # Generate changelog
+        CHANGELOG=$(git log --oneline --pretty=format:"- %s" $PREVIOUS_TAG..HEAD | grep -E '^- (feat|fix|docs|style|refactor|perf|test|chore)' | sed 's/^- //')
+        
+        # Categorize commits
+        FEATURES=$(echo "$CHANGELOG" | grep '^feat' | sed 's/^feat: /- /' || true)
+        FIXES=$(echo "$CHANGELOG" | grep '^fix' | sed 's/^fix: /- /' || true)
+        DOCS=$(echo "$CHANGELOG" | grep '^docs' | sed 's/^docs: /- /' || true)
+        REFACTOR=$(echo "$CHANGELOG" | grep '^refactor' | sed 's/^refactor: /- /' || true)
+        PERF=$(echo "$CHANGELOG" | grep '^perf' | sed 's/^perf: /- /' || true)
+        CHORE=$(echo "$CHANGELOG" | grep '^chore' | sed 's/^chore: /- /' || true)
+        
+        # Build release notes
+        NOTES="## Every Time Zone v${{ steps.gitversion.outputs.semVer }}
+
+Built site for deployment to GitHub Pages or any static hosting provider.
+
+### Changes"
+        
+        if [ ! -z "$FEATURES" ]; then
+          NOTES="$NOTES
+
+#### ✨ New Features
+$FEATURES"
+        fi
+        
+        if [ ! -z "$FIXES" ]; then
+          NOTES="$NOTES
+
+#### 🐛 Bug Fixes
+$FIXES"
+        fi
+        
+        if [ ! -z "$PERF" ]; then
+          NOTES="$NOTES
+
+#### ⚡ Performance Improvements
+$PERF"
+        fi
+        
+        if [ ! -z "$REFACTOR" ]; then
+          NOTES="$NOTES
+
+#### ♻️ Code Refactoring
+$REFACTOR"
+        fi
+        
+        if [ ! -z "$DOCS" ]; then
+          NOTES="$NOTES
+
+#### 📚 Documentation
+$DOCS"
+        fi
+        
+        if [ ! -z "$CHORE" ]; then
+          NOTES="$NOTES
+
+#### 🔧 Maintenance
+$CHORE"
+        fi
+        
+        NOTES="$NOTES
+
+### Deployment
+Extract the archive contents to your web server root directory.
+
+**Version:** ${{ steps.gitversion.outputs.informationalVersion }}
+**Commit:** ${{ github.sha }}
+**Previous Release:** $PREVIOUS_TAG"
+        
+        # Save to output file and environment
+        echo "$NOTES" > release_notes.md
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+        echo "$NOTES" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        
     - name: Create Release
       run: |
         gh release create v${{ steps.gitversion.outputs.semVer }} \
           --title "Every Time Zone v${{ steps.gitversion.outputs.semVer }}" \
-          --notes "## Every Time Zone v${{ steps.gitversion.outputs.semVer }}
-          
-        Built site for deployment to GitHub Pages or any static hosting provider.
-        
-        ### Changes
-        - Auto-generated release from main branch
-        - Built with TypeScript compilation and asset copying
-        
-        ### Deployment
-        Extract the archive contents to your web server root directory.
-        
-        **Version:** ${{ steps.gitversion.outputs.informationalVersion }}
-        **Commit:** ${{ github.sha }}" \
+          --notes-file release_notes.md \
           everytimezone-${{ steps.gitversion.outputs.semVer }}.tar.gz \
           everytimezone-${{ steps.gitversion.outputs.semVer }}.zip
       env:
