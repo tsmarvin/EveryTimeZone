@@ -366,40 +366,38 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone): Tim
 
 /**
  * Get the current cell width based on screen size
- * Matches the CSS media query breakpoints for .timeline-cell
+ * Matches the CSS media query breakpoints for .timeline-cell exactly
  * @returns Cell width in pixels
  */
 function getCellWidth(): number {
   const screenWidth = window.innerWidth;
 
-  // Match CSS media query breakpoints for .timeline-cell min-width
-  if (screenWidth <= 375) {
-    return 50; // Extra small devices
-  } else if (screenWidth <= 576) {
-    return 55; // Small devices
-  } else if (screenWidth >= 1400) {
-    return 90; // Extra large devices
+  // Match CSS media query breakpoints for .timeline-cell min-width exactly
+  if (screenWidth >= 1400) {
+    return 120; // Extra large devices - @media (min-width: 1400px)
   } else if (screenWidth >= 992) {
-    return 80; // Large devices
+    return 100; // Large devices - @media (min-width: 992px)
   } else if (screenWidth >= 768) {
-    return 70; // Medium devices
+    return 90; // Medium devices - @media (min-width: 768px)
   } else {
-    return 60; // Default
+    return 60; // Default and small devices - matches base CSS and @media (max-width: 576px)
   }
 }
 
 /**
- * Calculate scroll position to place current hour at the leftmost visible position
+ * Calculate scroll position to place current hour immediately to the right of timezone labels
  * @returns Scroll position in pixels
  */
 function getCurrentHourScrollPosition(): number {
   const cellWidth = getCellWidth();
-  const currentHourIndex = 24; // Current hour is at index 24 in the 48-hour timeline
 
-  // Position current hour as the second visible column (with one cell padding for better UX)
-  // This ensures the current hour is at the leftmost visible position with some breathing room
-  const paddingCells = 1;
-  const scrollPosition = (currentHourIndex - paddingCells) * cellWidth;
+  // The current hour should always be at index 24 in a properly structured 48-hour timeline
+  // (24 hours before current + current hour = index 24)
+  const currentHourIndex = 24;
+
+  // Position current hour as the first visible hour after the sticky timezone label
+  // This places the current hour immediately to the right of the timezone labels
+  const scrollPosition = currentHourIndex * cellWidth;
 
   // Ensure we don't scroll to negative position
   return Math.max(0, scrollPosition);
@@ -590,9 +588,16 @@ export function renderTimeline(): void {
   adjustTimezoneLabelWidths();
 
   // Scroll to position current hour at the leftmost visible position
-  // Use responsive cell width calculation for proper positioning across screen sizes
-  const currentHourScrollPosition = getCurrentHourScrollPosition();
-  container.scrollLeft = currentHourScrollPosition;
+  // Since the calculation is now correct, apply it directly and in next frame
+  const scrollToCurrentHour = (): void => {
+    const currentHourScrollPosition = getCurrentHourScrollPosition();
+    container.scrollLeft = currentHourScrollPosition;
+  };
+
+  // Apply scroll position immediately and ensure it persists
+  scrollToCurrentHour();
+  // Also apply after next frame to handle any layout shifts
+  window.requestAnimationFrame(scrollToCurrentHour);
 }
 
 /**
@@ -739,9 +744,16 @@ export class TimelineManager {
     adjustTimezoneLabelWidths();
 
     // Scroll to position current hour at the leftmost visible position
-    // Use responsive cell width calculation for proper positioning across screen sizes
-    const currentHourScrollPosition = getCurrentHourScrollPosition();
-    this.container.scrollLeft = currentHourScrollPosition;
+    // Since the calculation is now correct, apply it directly and in next frame
+    const scrollToCurrentHour = (): void => {
+      const currentHourScrollPosition = getCurrentHourScrollPosition();
+      this.container.scrollLeft = currentHourScrollPosition;
+    };
+
+    // Apply scroll position immediately and ensure it persists
+    scrollToCurrentHour();
+    // Also apply after next frame to handle any layout shifts
+    window.requestAnimationFrame(scrollToCurrentHour);
   }
 }
 
