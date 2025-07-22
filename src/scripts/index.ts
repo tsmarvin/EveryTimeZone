@@ -382,57 +382,11 @@ export function createTimelineData(numHours: number, numRows: number): TimelineR
  */
 export function getTimelineDimensions(): { numHours: number; numRows: number } {
   // Use window dimensions if available, otherwise fallback to defaults
-  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
   const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 768;
 
-  // Calculate available width for timeline cells
-  // Account for container padding, timezone label width, and scrollbar
-  const containerPadding = 32; // Estimated total horizontal padding
-  let timezoneLabelWidth = 160; // Default timezone label width
-
-  // Adjust timezone label width based on screen size
-  if (screenWidth < 576) {
-    timezoneLabelWidth = 120;
-  } else if (screenWidth >= 768) {
-    timezoneLabelWidth = 180;
-  } else if (screenWidth >= 992) {
-    timezoneLabelWidth = 200;
-  } else if (screenWidth >= 1400) {
-    timezoneLabelWidth = 220;
-  }
-
-  const scrollbarWidth = 20; // Estimated scrollbar width
-  const availableWidth = screenWidth - containerPadding - timezoneLabelWidth - scrollbarWidth;
-
-  // Define minimum cell width to prevent text wrapping at different screen sizes
-  // Based on longest time format "12 PM" (~5 characters) plus padding
-  let minCellWidth = 50; // Mini phones - enough for "12 PM" at small font
-  if (screenWidth > 375) minCellWidth = 55; // Small phones
-  if (screenWidth >= 576) minCellWidth = 60; // Larger phones
-  if (screenWidth >= 768) minCellWidth = 70; // Tablet
-  if (screenWidth >= 992) minCellWidth = 80; // Desktop
-  if (screenWidth >= 1400) minCellWidth = 90; // Large desktop
-
-  // Calculate maximum number of hours that can fit legibly
-  const maxHoursFromWidth = Math.floor(availableWidth / minCellWidth);
-
-  // Set reasonable bounds for number of hours
-  const minHours = 4; // Absolute minimum for usability
-  const maxHours = 24; // Maximum meaningful hours to show
-
-  // Calculate optimal number of hours
-  let numHours = Math.max(minHours, Math.min(maxHours, maxHoursFromWidth));
-
-  // Prefer common hour increments for better UX
-  const commonIncrements = [4, 6, 8, 12, 16, 18, 24];
-  const closestIncrement = commonIncrements.reduce((prev, curr) =>
-    Math.abs(curr - numHours) < Math.abs(prev - numHours) ? curr : prev,
-  );
-
-  // Use the closest common increment if it's within reasonable range
-  if (Math.abs(closestIncrement - numHours) <= 2 && closestIncrement <= maxHoursFromWidth) {
-    numHours = closestIncrement;
-  }
+  // Always show minimum 24 hours for better timeline visualization
+  // This supports the requirement to always show at least 24 hours
+  const numHours = 24;
 
   // Calculate number of rows based on available height
   // Minimum 3 rows, but try to fill the screen
