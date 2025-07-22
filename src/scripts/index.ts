@@ -185,12 +185,12 @@ function extractCityName(iana: string): string {
   // Extract the city part from IANA identifier (everything after the last slash)
   const parts = iana.split('/');
   const cityPart = parts[parts.length - 1];
-  
+
   // Handle case where cityPart might be undefined or empty
   if (!cityPart) {
     return iana; // Fallback to full IANA identifier
   }
-  
+
   // Replace underscores with spaces and handle special cases
   return cityPart.replace(/_/g, ' ');
 }
