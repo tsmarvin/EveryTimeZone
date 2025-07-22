@@ -44,10 +44,12 @@ export const AVAILABLE_THEMES: ThemeOption[] = [
 ];
 
 export type Theme = 'dark' | 'light';
+export type TimeFormat = '12h' | '24h';
 
 export interface AppearanceSettings {
   theme: string; // Theme name (corresponds to AVAILABLE_THEMES)
   mode: Theme; // Light or dark mode
+  timeFormat: TimeFormat; // Time format preference (12-hour vs 24-hour)
 }
 
 /**
@@ -57,6 +59,7 @@ export class SettingsPanel {
   private panel!: HTMLElement;
   private overlay!: HTMLElement;
   private currentSettings: AppearanceSettings;
+  private static instance: SettingsPanel;
 
   constructor() {
     // Parse initial settings from URL parameters, fallback to system preferences
@@ -65,6 +68,23 @@ export class SettingsPanel {
     this.setupEventListeners();
     // Apply settings immediately to ensure correct initial appearance
     this.applySettings(this.currentSettings);
+
+    // Store static instance for global access
+    SettingsPanel.instance = this;
+  }
+
+  /**
+   * Get the current settings instance
+   */
+  public static getInstance(): SettingsPanel | undefined {
+    return SettingsPanel.instance;
+  }
+
+  /**
+   * Get current settings (static method for easy access)
+   */
+  public static getCurrentSettings(): AppearanceSettings | undefined {
+    return SettingsPanel.instance?.getCurrentSettings();
   }
 
   /**
@@ -74,8 +94,9 @@ export class SettingsPanel {
     const urlParams = new URLSearchParams(window.location.search);
     const theme = urlParams.get('theme') || 'default';
     const mode = (urlParams.get('mode') as Theme) || this.getSystemPreferredMode();
+    const timeFormat = (urlParams.get('timeFormat') as TimeFormat) || '12h';
 
-    return { theme, mode };
+    return { theme, mode, timeFormat };
   }
 
   /**
@@ -102,6 +123,12 @@ export class SettingsPanel {
       url.searchParams.set('mode', settings.mode);
     } else {
       url.searchParams.delete('mode');
+    }
+
+    if (settings.timeFormat !== '12h') {
+      url.searchParams.set('timeFormat', settings.timeFormat);
+    } else {
+      url.searchParams.delete('timeFormat');
     }
 
     // Update URL without page reload
@@ -179,6 +206,12 @@ export class SettingsPanel {
     modeRadios.forEach(radio => {
       radio.checked = radio.value === this.currentSettings.mode;
     });
+
+    // Update time format selection
+    const timeFormatCheckbox = this.panel.querySelector('.time-format-checkbox') as HTMLInputElement;
+    if (timeFormatCheckbox) {
+      timeFormatCheckbox.checked = this.currentSettings.timeFormat === '24h';
+    }
   }
 
   /**
@@ -216,6 +249,15 @@ export class SettingsPanel {
       });
     });
 
+    // Time format checkbox
+    const timeFormatCheckbox = this.panel.querySelector('.time-format-checkbox') as HTMLInputElement;
+    if (timeFormatCheckbox) {
+      timeFormatCheckbox.addEventListener('change', () => {
+        const timeFormat = timeFormatCheckbox.checked ? '24h' : '12h';
+        this.updateSettings({ ...this.currentSettings, timeFormat: timeFormat as TimeFormat });
+      });
+    }
+
     // Keyboard navigation
     this.panel.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
@@ -232,6 +274,9 @@ export class SettingsPanel {
     this.applySettings(newSettings);
     this.updateURL(newSettings);
     this.updateSelectedOptions();
+
+    // Dispatch event for other components to listen to settings changes
+    window.dispatchEvent(new CustomEvent('settingsChanged', { detail: newSettings }));
   }
 
   /**

@@ -46,6 +46,29 @@ describe('Settings Panel', () => {
       expect(settings.mode).toBe('light');
     });
 
+    it('should parse timeFormat from URL parameters', () => {
+      window.location.search = '?timeFormat=24h';
+      settingsPanel = new SettingsPanel();
+      const settings = settingsPanel.getCurrentSettings();
+      expect(settings.timeFormat).toBe('24h');
+    });
+
+    it('should default to 12h timeFormat when not specified', () => {
+      window.location.search = '';
+      settingsPanel = new SettingsPanel();
+      const settings = settingsPanel.getCurrentSettings();
+      expect(settings.timeFormat).toBe('12h');
+    });
+
+    it('should parse theme, mode, and timeFormat from URL parameters', () => {
+      window.location.search = '?theme=ocean-breeze&mode=light&timeFormat=24h';
+      settingsPanel = new SettingsPanel();
+      const settings = settingsPanel.getCurrentSettings();
+      expect(settings.theme).toBe('ocean-breeze');
+      expect(settings.mode).toBe('light');
+      expect(settings.timeFormat).toBe('24h');
+    });
+
     it('should use system preference for mode when not specified', () => {
       // Mock system preference for dark mode
       const mockMatchMedia = vi.fn((query: string) => ({
@@ -111,12 +134,44 @@ describe('Settings Panel', () => {
       expect(history.replaceState).toHaveBeenCalled();
     });
 
+    it('should update URL when timeFormat changes to 24h', () => {
+      settingsPanel = new SettingsPanel();
+      
+      // Toggle to 24h time format
+      const timeFormatCheckbox = document.querySelector('.time-format-checkbox') as HTMLInputElement;
+      timeFormatCheckbox.checked = true;
+      timeFormatCheckbox.dispatchEvent(new Event('change'));
+      
+      expect(history.replaceState).toHaveBeenCalled();
+    });
+
+    it('should remove timeFormat from URL when set to 12h (default)', () => {
+      window.location.search = '?timeFormat=24h';
+      settingsPanel = new SettingsPanel();
+      
+      // Toggle to 12h time format (unchecked)
+      const timeFormatCheckbox = document.querySelector('.time-format-checkbox') as HTMLInputElement;
+      timeFormatCheckbox.checked = false;
+      timeFormatCheckbox.dispatchEvent(new Event('change'));
+      
+      expect(history.replaceState).toHaveBeenCalled();
+    });
+
     it('should handle complex URL parameters correctly', () => {
       window.location.search = '?theme=ocean-breeze&mode=light&other=param';
       settingsPanel = new SettingsPanel();
       const settings = settingsPanel.getCurrentSettings();
       expect(settings.theme).toBe('ocean-breeze');
       expect(settings.mode).toBe('light');
+    });
+
+    it('should handle complex URL parameters with timeFormat correctly', () => {
+      window.location.search = '?theme=forest-harmony&mode=light&timeFormat=24h&other=param';
+      settingsPanel = new SettingsPanel();
+      const settings = settingsPanel.getCurrentSettings();
+      expect(settings.theme).toBe('forest-harmony');
+      expect(settings.mode).toBe('light');
+      expect(settings.timeFormat).toBe('24h');
     });
   });
 
@@ -159,6 +214,16 @@ describe('Settings Panel', () => {
       
       expect(lightRadio.checked).toBe(true);
       expect(document.body.classList.contains('light-theme')).toBe(true);
+    });
+
+    it('should update timeFormat selection in UI', () => {
+      const timeFormatCheckbox = document.querySelector('.time-format-checkbox') as HTMLInputElement;
+      timeFormatCheckbox.checked = true;
+      timeFormatCheckbox.dispatchEvent(new Event('change'));
+      
+      expect(timeFormatCheckbox.checked).toBe(true);
+      const settings = settingsPanel.getCurrentSettings();
+      expect(settings.timeFormat).toBe('24h');
     });
   });
 
@@ -263,6 +328,15 @@ describe('Settings Panel', () => {
       // Should fall back to system/default preference
       const settings = settingsPanel.getCurrentSettings();
       expect(settings.mode).toBe('invalid-mode'); // URL parsing preserves value but validation happens elsewhere
+    });
+
+    it('should handle invalid timeFormat values gracefully', () => {
+      window.location.search = '?timeFormat=invalid-format';
+      settingsPanel = new SettingsPanel();
+      
+      // Should preserve the value from URL but validation happens elsewhere
+      const settings = settingsPanel.getCurrentSettings();
+      expect(settings.timeFormat).toBe('invalid-format'); // URL parsing preserves value but validation happens elsewhere
     });
   });
 

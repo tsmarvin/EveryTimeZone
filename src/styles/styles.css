@@ -1052,6 +1052,89 @@ p {
   color: var(--color-text);
 }
 
+/* Time Format Toggle Switch Styles */
+.time-format-toggle-container {
+  display: flex;
+  justify-content: center;
+}
+
+.time-format-switch {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.time-format-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.time-format-slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 200px;
+  height: 48px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 24px;
+  transition: var(--transition);
+  padding: 4px;
+}
+
+.time-format-slider:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-hover);
+}
+
+.time-format-labels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-sm);
+  pointer-events: none;
+}
+
+.time-format-label-12h,
+.time-format-label-24h {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  transition: var(--transition);
+}
+
+.time-format-handle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 88px;
+  height: 36px;
+  background: var(--color-primary);
+  border-radius: 18px;
+  transition: var(--transition);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* When checkbox is checked (24-hour format) */
+.time-format-checkbox:checked + .time-format-slider .time-format-handle {
+  transform: translateX(104px);
+}
+
+.time-format-checkbox:checked + .time-format-slider .time-format-label-24h {
+  color: var(--color-text);
+}
+
+.time-format-checkbox:not(:checked) + .time-format-slider .time-format-label-12h {
+  color: var(--color-text);
+}
+
 .stylesheet-selector:hover {
   background: var(--color-header-button-bg-hover);
   transform: translateY(-2px) scale(1.05);
