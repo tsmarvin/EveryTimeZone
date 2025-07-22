@@ -354,35 +354,6 @@ export function renderTimeline(): void {
   // Clear container
   container.innerHTML = '';
 
-  // Create timeline header with hours
-  const header = document.createElement('div');
-  header.className = 'timeline-header';
-
-  // Empty cell for timezone labels
-  const emptyCell = document.createElement('div');
-  emptyCell.className = 'timeline-cell timeline-timezone-label';
-  header.appendChild(emptyCell);
-
-  // Hour cells
-  const firstRow = timelineData[0];
-  if (firstRow) {
-    firstRow.hours.forEach((hour, index) => {
-      const hourCell = document.createElement('div');
-      hourCell.className = 'timeline-cell timeline-hour-header';
-      // Use consistent format based on setting
-      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
-
-      // Mark current hour
-      if (index === 0) {
-        hourCell.classList.add('current-hour');
-      }
-
-      header.appendChild(hourCell);
-    });
-  }
-
-  container.appendChild(header);
-
   // Create timeline rows
   timelineData.forEach(row => {
     const rowElement = document.createElement('div');
@@ -525,34 +496,6 @@ export class TimelineManager {
     buttonContainer.className = 'timeline-controls';
     buttonContainer.appendChild(addButton);
     this.container.appendChild(buttonContainer);
-
-    // Create timeline header with hours
-    const header = document.createElement('div');
-    header.className = 'timeline-header';
-
-    // Empty cell for timezone labels
-    const emptyCell = document.createElement('div');
-    emptyCell.className = 'timeline-cell timeline-timezone-label';
-    header.appendChild(emptyCell);
-
-    // Hour cells based on user's timezone
-    const userTz = getUserTimezone();
-    const userHours = generateTimelineHours(numHours, userTz);
-    userHours.forEach((hour, index) => {
-      const hourCell = document.createElement('div');
-      hourCell.className = 'timeline-cell timeline-hour-header';
-      // Use consistent format based on setting
-      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
-
-      // Mark current hour
-      if (index === 0) {
-        hourCell.classList.add('current-hour');
-      }
-
-      header.appendChild(hourCell);
-    });
-
-    this.container.appendChild(header);
 
     // Create timeline rows for selected timezones, sorted by offset
     const sortedTimezones = [...this.selectedTimezones].sort((a, b) => a.offset - b.offset);

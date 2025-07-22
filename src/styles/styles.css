@@ -312,7 +312,7 @@ p {
 .timeline-controls {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
   gap: var(--space-sm);
 }
 
@@ -320,7 +320,7 @@ p {
   background: var(--color-primary);
   color: white;
   border: none;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--border-radius);
   cursor: pointer;
   font-size: var(--text-sm);
@@ -380,17 +380,6 @@ p {
   margin-top: var(--space-sm);
 }
 
-.timeline-header {
-  display: flex;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-  color: white;
-  font-weight: 600;
-  border-bottom: 2px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
 .timeline-row {
   display: flex;
   border-bottom: 1px solid var(--color-border);
@@ -399,6 +388,27 @@ p {
 
 .timeline-row:hover {
   background-color: var(--color-surface-variant);
+}
+
+.timeline-row:first-child {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  color: white;
+  font-weight: 600;
+}
+
+.timeline-row:first-child:hover {
+  background: linear-gradient(135deg, var(--color-primary-variant), var(--color-secondary));
+}
+
+.timeline-row:first-child .timeline-timezone-label {
+  background: rgba(255, 255, 255, 0.2);
+  border-right: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.timeline-row:first-child .timeline-hour {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .timeline-row.user-timezone {
@@ -450,11 +460,6 @@ p {
   flex-shrink: 0;
 }
 
-.timeline-header .timeline-timezone-label {
-  background: rgba(255, 255, 255, 0.2);
-  border-right: 2px solid rgba(255, 255, 255, 0.3);
-}
-
 .timezone-name {
   font-weight: 600;
   font-size: var(--text-sm);
@@ -469,13 +474,6 @@ p {
   color: var(--color-text-secondary);
   font-family: 'Courier New', monospace;
   white-space: nowrap;
-}
-
-.timeline-hour-header {
-  background: rgba(255, 255, 255, 0.1);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-header-text);
 }
 
 .timeline-hour {
@@ -521,11 +519,8 @@ p {
 
 /* Current hour styling with higher specificity to override daylight/night indicators */
 .timeline-hour.current-hour,
-.timeline-hour-header.current-hour,
 .timeline-hour.current-hour.daylight-hour,
-.timeline-hour.current-hour.night-hour,
-.timeline-hour-header.current-hour.daylight-hour,
-.timeline-hour-header.current-hour.night-hour {
+.timeline-hour.current-hour.night-hour {
   background: linear-gradient(135deg, var(--color-accent), rgba(220, 38, 38, 0.8)) !important;
   color: white !important;
   font-weight: 700;
@@ -534,11 +529,8 @@ p {
 }
 
 .timeline-hour.current-hour::after,
-.timeline-hour-header.current-hour::after,
 .timeline-hour.current-hour.daylight-hour::after,
-.timeline-hour.current-hour.night-hour::after,
-.timeline-hour-header.current-hour.daylight-hour::after,
-.timeline-hour-header.current-hour.night-hour::after {
+.timeline-hour.current-hour.night-hour::after {
   content: '';
   position: absolute;
   top: -2px;
