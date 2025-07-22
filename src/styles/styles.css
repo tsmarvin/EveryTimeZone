@@ -1002,7 +1002,7 @@ p {
 }
 
 .mode-option::before {
-  content: "⚙️";
+  content: '⚙️';
   margin-right: var(--space-sm);
   font-size: var(--text-lg);
 }
