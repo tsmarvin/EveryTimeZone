@@ -332,12 +332,14 @@ export function getTimelineDimensions(): { numHours: number; numRows: number } {
   const scrollbarWidth = 20; // Estimated scrollbar width
   const availableWidth = screenWidth - containerPadding - timezoneLabelWidth - scrollbarWidth;
 
-  // Define minimum cell width for legibility at different screen sizes
-  let minCellWidth = 45; // Very compact for mobile
-  if (screenWidth >= 576) minCellWidth = 55; // Small mobile
-  if (screenWidth >= 768) minCellWidth = 65; // Tablet
-  if (screenWidth >= 992) minCellWidth = 75; // Desktop
-  if (screenWidth >= 1400) minCellWidth = 85; // Large desktop
+  // Define minimum cell width to prevent text wrapping at different screen sizes
+  // Based on longest time format "12 PM" (~5 characters) plus padding
+  let minCellWidth = 50; // Mini phones - enough for "12 PM" at small font
+  if (screenWidth > 375) minCellWidth = 55; // Small phones  
+  if (screenWidth >= 576) minCellWidth = 60; // Larger phones
+  if (screenWidth >= 768) minCellWidth = 70; // Tablet
+  if (screenWidth >= 992) minCellWidth = 80; // Desktop
+  if (screenWidth >= 1400) minCellWidth = 90; // Large desktop
 
   // Calculate maximum number of hours that can fit legibly
   const maxHoursFromWidth = Math.floor(availableWidth / minCellWidth);

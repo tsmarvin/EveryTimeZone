@@ -421,7 +421,7 @@ p {
 
 .timeline-cell {
   flex: 1;
-  min-width: 45px; /* Fallback minimum for extreme cases */
+  min-width: 50px; /* Minimum to prevent text wrapping on mini phones */
   padding: var(--space-sm);
   text-align: center;
   border-right: 1px solid var(--color-border);
@@ -429,8 +429,9 @@ p {
   align-items: center;
   justify-content: center;
   position: relative;
-  word-break: break-word; /* Allow text wrapping if needed */
+  white-space: nowrap; /* Prevent text wrapping */
   overflow: hidden; /* Prevent text overflow */
+  text-overflow: ellipsis; /* Show ellipsis for extreme overflow */
 }
 
 .timeline-cell:last-child {
@@ -1234,7 +1235,7 @@ p {
 /* Extra small devices (mini phones) */
 @media (max-width: 375px) {
   .timeline-cell {
-    min-width: 35px; /* Very compact for mini phones */
+    min-width: 50px; /* Prevent text wrapping for "12 PM" */
     padding: var(--space-xs);
     font-size: 10px; /* Smaller font for very compact cells */
   }
@@ -1294,7 +1295,7 @@ p {
   }
 
   .timeline-cell {
-    min-width: 40px; /* Smaller minimum for mobile */
+    min-width: 55px; /* Prevent text wrapping for small mobile */
     padding: var(--space-xs);
     font-size: var(--text-xs);
   }
@@ -1381,7 +1382,7 @@ p {
   }
 
   .timeline-cell {
-    min-width: 55px; /* Medium minimum for tablet */
+    min-width: 70px; /* Prevent text wrapping for tablet */
   }
 
   .timeline-timezone-label {
@@ -1405,7 +1406,7 @@ p {
   }
 
   .timeline-cell {
-    min-width: 65px; /* Desktop minimum */
+    min-width: 80px; /* Prevent text wrapping for desktop */
     padding: var(--space-md);
   }
 
@@ -1447,7 +1448,7 @@ p {
   }
 
   .timeline-cell {
-    min-width: 75px; /* Large desktop minimum */
+    min-width: 90px; /* Prevent text wrapping for large desktop */
   }
 
   .timeline-timezone-label {
