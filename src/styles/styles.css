@@ -378,10 +378,21 @@ p {
   overflow-y: visible;
   min-width: 100%;
   margin-top: var(--space-sm);
+  position: relative; /* For sticky positioning of timezone labels */
 }
 
 .timeline-header {
   display: flex;
+  border-bottom: 1px solid var(--color-border);
+  transition: var(--transition);
+  min-width: fit-content; /* Allow row to extend beyond container for scrolling */
+}
+
+.timeline-row:hover {
+  background-color: var(--color-surface-variant);
+}
+
+.timeline-row:first-child {
   background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
   color: white;
   font-weight: 600;
@@ -420,7 +431,8 @@ p {
 }
 
 .timeline-cell {
-  min-width: 80px;
+  min-width: 60px; /* Fixed minimum width for hour cells to ensure 24 hours fit properly */
+  max-width: 60px; /* Fixed width for consistent layout */
   padding: var(--space-sm);
   text-align: center;
   border-right: 1px solid var(--color-border);
@@ -428,6 +440,10 @@ p {
   align-items: center;
   justify-content: center;
   position: relative;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Prevent text overflow */
+  text-overflow: ellipsis; /* Show ellipsis for extreme overflow */
+  flex-shrink: 0; /* Prevent cells from shrinking */
 }
 
 .timeline-cell:last-child {
@@ -444,10 +460,11 @@ p {
   justify-content: flex-start;
   text-align: left;
   padding: var(--space-sm) calc(var(--space-md) + 1.5rem) var(--space-sm) var(--space-md);
-  position: sticky;
+  position: sticky; /* Keep timezone labels fixed during horizontal scroll */
   left: 0;
-  z-index: 1;
+  z-index: 10; /* Ensure it stays above hour cells */
   flex-shrink: 0;
+  background-clip: padding-box; /* Prevent background bleeding under borders during scroll */
 }
 
 .timeline-header .timeline-timezone-label {
@@ -1510,7 +1527,8 @@ p {
   }
 }
 
-/* ============================================================================
+/* 
+==========================================================================
    GLOBAL COLOR PALETTE
    Each hex value defined only once with meaningful semantic names
    ============================================================================ */
