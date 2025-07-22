@@ -1277,6 +1277,10 @@ p {
     text-align: center;
   }
 
+  .header-text {
+    padding-right: calc(3rem + var(--space-md)); /* Accommodate settings gear button */
+  }
+
   .theme-toggle {
     align-self: flex-end;
     position: absolute;
