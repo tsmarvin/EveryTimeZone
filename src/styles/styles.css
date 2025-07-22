@@ -2089,131 +2089,169 @@ p {
 }
 
 /* Theme preview colors for settings panel */
-.theme-default .theme-preview-color:nth-child(1) {
-  background: var(--gray-400);
+/* Each theme option defines its own color variables to ensure correct preview colors regardless of active theme */
+
+.theme-option.theme-default {
+  /* Define color variables for preview colors within this theme option */
+  --preview-gray-400: #666666;
+  --preview-gray-800: #1a1a1a;
+  --preview-gray-200: #cccccc;
 }
-.theme-default .theme-preview-color:nth-child(2) {
-  background: var(--gray-800);
+.theme-option.theme-default .theme-preview-color:nth-child(1) {
+  background: var(--preview-gray-400);
 }
-.theme-default .theme-preview-color:nth-child(3) {
-  background: var(--gray-200);
+.theme-option.theme-default .theme-preview-color:nth-child(2) {
+  background: var(--preview-gray-800);
+}
+.theme-option.theme-default .theme-preview-color:nth-child(3) {
+  background: var(--preview-gray-200);
 }
 
-.theme-forest-harmony .theme-preview-color:nth-child(1) {
-  background: var(--forest-bright-green);
+.theme-option.theme-forest-harmony {
+  /* Define color variables for preview colors within this theme option */
+  --preview-forest-bright-green: #22c55e;
+  --preview-forest-medium-green: #1a2e1a;
+  --preview-forest-yellow: #eab308;
 }
-.theme-forest-harmony .theme-preview-color:nth-child(2) {
-  background: var(--forest-medium-green);
+.theme-option.theme-forest-harmony .theme-preview-color:nth-child(1) {
+  background: var(--preview-forest-bright-green);
 }
-.theme-forest-harmony .theme-preview-color:nth-child(3) {
-  background: var(--forest-yellow);
+.theme-option.theme-forest-harmony .theme-preview-color:nth-child(2) {
+  background: var(--preview-forest-medium-green);
 }
-
-.theme-neon-cyber .theme-preview-color:nth-child(1) {
-  background: var(--cyber-cyan);
-}
-.theme-neon-cyber .theme-preview-color:nth-child(2) {
-  background: var(--cyber-blue);
-}
-.theme-neon-cyber .theme-preview-color:nth-child(3) {
-  background: var(--cyber-pink);
+.theme-option.theme-forest-harmony .theme-preview-color:nth-child(3) {
+  background: var(--preview-forest-yellow);
 }
 
-.theme-ocean-breeze .theme-preview-color:nth-child(1) {
-  background: var(--ocean-cyan);
+.theme-option.theme-neon-cyber {
+  /* Define color variables for preview colors within this theme option */
+  --preview-cyber-cyan: #00d4ff;
+  --preview-cyber-blue: #141428;
+  --preview-cyber-pink: #ff0080;
 }
-.theme-ocean-breeze .theme-preview-color:nth-child(2) {
-  background: var(--ocean-medium-blue);
+.theme-option.theme-neon-cyber .theme-preview-color:nth-child(1) {
+  background: var(--preview-cyber-cyan);
 }
-.theme-ocean-breeze .theme-preview-color:nth-child(3) {
-  background: var(--ocean-blue);
+.theme-option.theme-neon-cyber .theme-preview-color:nth-child(2) {
+  background: var(--preview-cyber-blue);
 }
-
-.theme-original .theme-preview-color:nth-child(1) {
-  background: var(--original-muted-blue);
-}
-.theme-original .theme-preview-color:nth-child(2) {
-  background: var(--original-surface);
-}
-.theme-original .theme-preview-color:nth-child(3) {
-  background: var(--original-muted-orange);
+.theme-option.theme-neon-cyber .theme-preview-color:nth-child(3) {
+  background: var(--preview-cyber-pink);
 }
 
-.theme-sunset-warmth .theme-preview-color:nth-child(1) {
-  background: var(--sunset-orange);
+.theme-option.theme-ocean-breeze {
+  /* Define color variables for preview colors within this theme option */
+  --preview-ocean-cyan: #0891b2;
+  --preview-ocean-medium-blue: #0c4a6e;
+  --preview-ocean-blue: #164e63;
 }
-.theme-sunset-warmth .theme-preview-color:nth-child(2) {
-  background: var(--sunset-surface);
+.theme-option.theme-ocean-breeze .theme-preview-color:nth-child(1) {
+  background: var(--preview-ocean-cyan);
 }
-.theme-sunset-warmth .theme-preview-color:nth-child(3) {
-  background: var(--sunset-gold);
+.theme-option.theme-ocean-breeze .theme-preview-color:nth-child(2) {
+  background: var(--preview-ocean-medium-blue);
+}
+.theme-option.theme-ocean-breeze .theme-preview-color:nth-child(3) {
+  background: var(--preview-ocean-blue);
+}
+
+.theme-option.theme-original {
+  /* Define color variables for preview colors within this theme option */
+  --preview-original-muted-blue: #4a90e2;
+  --preview-original-surface: #2a2a2a;
+  --preview-original-muted-orange: #e67e22;
+}
+.theme-option.theme-original .theme-preview-color:nth-child(1) {
+  background: var(--preview-original-muted-blue);
+}
+.theme-option.theme-original .theme-preview-color:nth-child(2) {
+  background: var(--preview-original-surface);
+}
+.theme-option.theme-original .theme-preview-color:nth-child(3) {
+  background: var(--preview-original-muted-orange);
+}
+
+.theme-option.theme-sunset-warmth {
+  /* Define color variables for preview colors within this theme option */
+  --preview-sunset-orange: #ea580c;
+  --preview-sunset-surface: #292524;
+  --preview-sunset-gold: #fbbf24;
+}
+.theme-option.theme-sunset-warmth .theme-preview-color:nth-child(1) {
+  background: var(--preview-sunset-orange);
+}
+.theme-option.theme-sunset-warmth .theme-preview-color:nth-child(2) {
+  background: var(--preview-sunset-surface);
+}
+.theme-option.theme-sunset-warmth .theme-preview-color:nth-child(3) {
+  background: var(--preview-sunset-gold);
 }
 
 /* Theme-specific styling for theme options */
 /* This ensures each theme option shows text in that theme's colors for better readability preview */
 
 /* Default theme styling */
-.theme-default {
-  background: var(--gray-800);
+.theme-option.theme-default {
+  background: #1a1a1a; /* Use specific color value instead of variable */
 }
-.theme-default .theme-name {
-  color: var(--gray-50);
+.theme-option.theme-default .theme-name {
+  color: #f5f5f5; /* Light gray text for dark background */
 }
-.theme-default .theme-description {
-  color: var(--gray-200);
+.theme-option.theme-default .theme-description {
+  color: #cccccc; /* Medium gray text */
 }
 
 /* Forest Harmony theme styling */
-.theme-forest-harmony {
-  background: var(--forest-medium-green);
+.theme-option.theme-forest-harmony {
+  background: #1a2e1a; /* Forest medium green */
 }
-.theme-forest-harmony .theme-name {
+.theme-option.theme-forest-harmony .theme-name {
   color: #f0fdf4; /* Light green text for dark background */
 }
-.theme-forest-harmony .theme-description {
+.theme-option.theme-forest-harmony .theme-description {
   color: #bbf7d0; /* Medium light green text */
 }
 
 /* Neon Cyber theme styling */
-.theme-neon-cyber {
-  background: var(--cyber-dark-blue);
+.theme-option.theme-neon-cyber {
+  background: #0a0a14; /* Cyber dark blue */
 }
-.theme-neon-cyber .theme-name {
+.theme-option.theme-neon-cyber .theme-name {
   color: #e0f2fe; /* Light cyan text for dark background */
 }
-.theme-neon-cyber .theme-description {
+.theme-option.theme-neon-cyber .theme-description {
   color: #7dd3fc; /* Medium light cyan text */
 }
 
 /* Ocean Breeze theme styling */
-.theme-ocean-breeze {
-  background: var(--ocean-dark-blue);
+.theme-option.theme-ocean-breeze {
+  background: #0c2d48; /* Ocean dark blue */
 }
-.theme-ocean-breeze .theme-name {
+.theme-option.theme-ocean-breeze .theme-name {
   color: #f0f9ff; /* Light blue text for dark background */
 }
-.theme-ocean-breeze .theme-description {
+.theme-option.theme-ocean-breeze .theme-description {
   color: #7dd3fc; /* Medium light blue text */
 }
 
 /* Original theme styling */
-.theme-original {
-  background: var(--original-surface);
+.theme-option.theme-original {
+  background: #2a2a2a; /* Original surface */
 }
-.theme-original .theme-name {
+.theme-option.theme-original .theme-name {
   color: #f0f0f0; /* Light text for dark background */
 }
-.theme-original .theme-description {
+.theme-option.theme-original .theme-description {
   color: #d0d0d0; /* Medium light text */
 }
 
 /* Sunset Warmth theme styling */
-.theme-sunset-warmth {
-  background: var(--sunset-surface);
+.theme-option.theme-sunset-warmth {
+  background: #292524; /* Sunset surface */
 }
-.theme-sunset-warmth .theme-name {
+.theme-option.theme-sunset-warmth .theme-name {
   color: #fff8e1; /* Light warm text for dark background */
 }
-.theme-sunset-warmth .theme-description {
+.theme-option.theme-sunset-warmth .theme-description {
   color: #ffe0b2; /* Medium warm text */
 }
