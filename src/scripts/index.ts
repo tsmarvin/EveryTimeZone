@@ -177,6 +177,25 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
 }
 
 /**
+ * Extract and format city name from IANA timezone identifier
+ * @param iana IANA timezone identifier (e.g., "America/New_York")
+ * @returns Formatted city name (e.g., "New York")
+ */
+function extractCityName(iana: string): string {
+  // Extract the city part from IANA identifier (everything after the last slash)
+  const parts = iana.split('/');
+  const cityPart = parts[parts.length - 1];
+
+  // Handle case where cityPart might be undefined or empty
+  if (!cityPart) {
+    return iana; // Fallback to full IANA identifier
+  }
+
+  // Replace underscores with spaces and handle special cases
+  return cityPart.replace(/_/g, ' ');
+}
+
+/**
  * Create a timezone display name using browser's native localization
  * @param iana IANA timezone identifier
  * @param offset UTC offset in hours (fallback for display)
@@ -370,8 +389,10 @@ export function renderTimeline(): void {
     const labelCell = document.createElement('div');
     labelCell.className = 'timeline-cell timeline-timezone-label';
     labelCell.innerHTML = `
-      <div class="timezone-name">${row.timezone.name}</div>
-      <div class="timezone-offset">${formatOffset(row.timezone.offset)}</div>
+      <div class="timezone-info">
+        <div class="timezone-name">${extractCityName(row.timezone.iana)}</div>
+        <div class="timezone-offset">${row.timezone.displayName} (${formatOffset(row.timezone.offset)})</div>
+      </div>
     `;
     rowElement.appendChild(labelCell);
 
@@ -531,8 +552,8 @@ export class TimelineManager {
       labelCell.className = 'timeline-cell timeline-timezone-label';
       labelCell.innerHTML = `
         <div class="timezone-info">
-          <div class="timezone-name">${timezone.name}</div>
-          <div class="timezone-offset">${formatOffset(timezone.offset)}</div>
+          <div class="timezone-name">${extractCityName(timezone.iana)}</div>
+          <div class="timezone-offset">${timezone.displayName} (${formatOffset(timezone.offset)})</div>
         </div>
         <button class="remove-timezone-btn" title="Remove timezone">×</button>
       `;

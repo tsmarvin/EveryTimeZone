@@ -355,6 +355,10 @@ p {
 
 .timezone-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
 
 .timeline-container {
@@ -446,13 +450,16 @@ p {
   font-weight: 600;
   font-size: var(--text-sm);
   color: var(--color-text);
-  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timezone-offset {
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
   font-family: 'Courier New', monospace;
+  white-space: nowrap;
 }
 
 .timeline-hour-header {
