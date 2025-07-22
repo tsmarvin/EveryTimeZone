@@ -374,9 +374,9 @@ p {
   border: 2px solid var(--color-border);
   border-top: 3px solid var(--color-primary);
   box-shadow: var(--shadow-lg);
-  overflow-x: auto;
+  overflow-x: visible; /* No longer need horizontal scrolling */
   overflow-y: visible;
-  min-width: 100%;
+  width: 100%; /* Always fill container width */
   margin-top: var(--space-sm);
 }
 
@@ -430,7 +430,8 @@ p {
 }
 
 .timeline-cell {
-  min-width: 80px;
+  flex: 1;
+  min-width: 50px; /* Minimum to prevent text wrapping on mini phones */
   padding: var(--space-sm);
   text-align: center;
   border-right: 1px solid var(--color-border);
@@ -438,6 +439,9 @@ p {
   align-items: center;
   justify-content: center;
   position: relative;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Prevent text overflow */
+  text-overflow: ellipsis; /* Show ellipsis for extreme overflow */
 }
 
 .timeline-cell:last-child {
@@ -1233,6 +1237,29 @@ p {
 
 /* Responsive Design */
 
+/* Extra small devices (mini phones) */
+@media (max-width: 375px) {
+  .timeline-cell {
+    min-width: 50px; /* Prevent text wrapping for "12 PM" */
+    padding: var(--space-xs);
+    font-size: 10px; /* Smaller font for very compact cells */
+  }
+
+  .timeline-timezone-label {
+    min-width: 100px;
+    width: 100px;
+    padding: var(--space-xs) var(--space-xs);
+  }
+
+  .timezone-name {
+    font-size: 10px;
+  }
+
+  .timezone-offset {
+    font-size: 9px;
+  }
+}
+
 /* Small devices (landscape phones) */
 @media (max-width: 576px) {
   :root {
@@ -1273,7 +1300,7 @@ p {
   }
 
   .timeline-cell {
-    min-width: 60px;
+    min-width: 55px; /* Prevent text wrapping for small mobile */
     padding: var(--space-xs);
     font-size: var(--text-xs);
   }
@@ -1360,7 +1387,7 @@ p {
   }
 
   .timeline-cell {
-    min-width: 90px;
+    min-width: 70px; /* Prevent text wrapping for tablet */
   }
 
   .timeline-timezone-label {
@@ -1384,7 +1411,7 @@ p {
   }
 
   .timeline-cell {
-    min-width: 100px;
+    min-width: 80px; /* Prevent text wrapping for desktop */
     padding: var(--space-md);
   }
 
@@ -1426,7 +1453,7 @@ p {
   }
 
   .timeline-cell {
-    min-width: 120px;
+    min-width: 90px; /* Prevent text wrapping for large desktop */
   }
 
   .timeline-timezone-label {
