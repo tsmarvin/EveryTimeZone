@@ -321,10 +321,10 @@ function formatOffset(offset: number): string {
 export function generateTimelineHours(numHours: number, timezone: TimeZone): TimelineHour[] {
   const now = new Date();
   const userTz = getUserTimezone();
-  
-  // Get current hour in UTC to avoid timezone parsing issues
-  const nowUTC = new Date(now.toUTCString());
-  nowUTC.setUTCMinutes(0, 0, 0);
+
+  // Get current hour in user's timezone and round down
+  const currentUserHour = new Date(now.toLocaleString('en-US', { timeZone: userTz.iana }));
+  currentUserHour.setMinutes(0, 0, 0);
 
   const hours: TimelineHour[] = [];
 
@@ -333,13 +333,11 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone): Tim
   const startOffset = -24;
 
   for (let i = 0; i < numHours; i++) {
+    // Calculate the time in the target timezone
     const hourOffset = startOffset + i;
-    
-    // Calculate the UTC time for this hour offset
-    const utcTime = new Date(nowUTC.getTime() + hourOffset * 60 * 60 * 1000);
-    
-    // Convert to the target timezone by adding the timezone offset
-    const timeInTz = new Date(utcTime.getTime() + timezone.offset * 60 * 60 * 1000);
+    const baseTime = new Date(currentUserHour.getTime() + hourOffset * 60 * 60 * 1000);
+    const offsetDiff = (timezone.offset - userTz.offset) * 60 * 60 * 1000;
+    const timeInTz = new Date(baseTime.getTime() + offsetDiff);
 
     const hour12 = timeInTz.toLocaleString('en-US', {
       hour: 'numeric',
@@ -355,7 +353,7 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone): Tim
     const isDaylight = isHourInDaylight(timezone, timeInTz);
 
     hours.push({
-      hour: timeInTz.getUTCHours(), // Use UTC hours to avoid timezone confusion
+      hour: timeInTz.getHours(),
       date: timeInTz,
       time12: hour12,
       time24: hour24,
@@ -559,14 +557,8 @@ export function renderTimeline(): void {
       // Use consistent format based on setting
       hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
-      // Mark current hour by checking if this hour represents the current time
-      const now = new Date();
-      const currentHourStart = new Date(now);
-      currentHourStart.setMinutes(0, 0, 0);
-      const currentHourEnd = new Date(currentHourStart.getTime() + 60 * 60 * 1000);
-      
-      // Check if the hour's date falls within the current hour window
-      if (hour.date >= currentHourStart && hour.date < currentHourEnd) {
+      // Mark current hour (index 24 since we start from -24 hours)
+      if (index === 24) {
         hourCell.classList.add('current-hour');
       }
 
@@ -732,14 +724,8 @@ export class TimelineManager {
         // Use consistent format based on setting
         hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
-        // Mark current hour by checking if this hour represents the current time
-        const now = new Date();
-        const currentHourStart = new Date(now);
-        currentHourStart.setMinutes(0, 0, 0);
-        const currentHourEnd = new Date(currentHourStart.getTime() + 60 * 60 * 1000);
-        
-        // Check if the hour's date falls within the current hour window
-        if (hour.date >= currentHourStart && hour.date < currentHourEnd) {
+        // Mark current hour (index 24 since we start from -24 hours)
+        if (index === 24) {
           hourCell.classList.add('current-hour');
         }
 
