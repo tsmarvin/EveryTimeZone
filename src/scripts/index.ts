@@ -86,7 +86,7 @@ export function getUserTimezone(): TimeZone {
     displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || userTimezone;
 
   return {
-    name: userTimezone.split('/').pop() || userTimezone,
+    name: createTimezoneDisplayName(userTimezone, offset),
     offset,
     displayName,
     iana: userTimezone,
@@ -152,7 +152,7 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
     const displayName = displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || iana;
 
     return {
-      name: iana.split('/').pop() || iana,
+      name: createTimezoneDisplayName(iana, offset),
       offset,
       displayName,
       iana,
@@ -174,6 +174,37 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
   const end = Math.min(timezones.length, start + numRows);
 
   return timezones.slice(start, end);
+}
+
+/**
+ * Create a timezone display name using browser's native localization
+ * @param iana IANA timezone identifier
+ * @param offset UTC offset in hours (fallback for display)
+ * @returns Browser-localized timezone name
+ */
+function createTimezoneDisplayName(iana: string, offset: number): string {
+  try {
+    // Use browser's native timezone display names in user's language
+    const formatter = new Intl.DateTimeFormat(undefined, {
+      timeZone: iana,
+      timeZoneName: 'long',
+    });
+
+    // Get the timezone name from a sample date
+    const parts = formatter.formatToParts(new Date());
+    const timeZonePart = parts.find(part => part.type === 'timeZoneName');
+
+    if (timeZonePart && timeZonePart.value) {
+      return timeZonePart.value;
+    }
+  } catch {
+    // If the IANA timezone is not supported, fall back to UTC offset
+    console.warn(`Timezone ${iana} not supported by browser, falling back to UTC offset`);
+  }
+
+  // Fallback to UTC offset format
+  const offsetStr = formatOffset(offset);
+  return `UTC${offsetStr}`;
 }
 
 /**
@@ -612,7 +643,7 @@ export function getAllTimezonesOrdered(): TimeZone[] {
     const displayName = displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || iana;
 
     return {
-      name: iana.split('/').pop() || iana,
+      name: createTimezoneDisplayName(iana, offset),
       offset,
       displayName,
       iana,
