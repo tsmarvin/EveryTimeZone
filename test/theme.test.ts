@@ -73,8 +73,8 @@ describe('Theme Management (Real Implementation)', () => {
       const darkModeIcon = document.querySelector('input[value="dark"]')?.parentElement?.querySelector('.mode-icon');
       const lightModeIcon = document.querySelector('input[value="light"]')?.parentElement?.querySelector('.mode-icon');
       
-      expect(darkModeIcon?.textContent).toBe('🌙');
-      expect(lightModeIcon?.textContent).toBe('☀️');
+      expect(darkModeIcon?.textContent).toBe('⚙️');
+      expect(lightModeIcon?.textContent).toBe('⚙️');
     });
   });
 
