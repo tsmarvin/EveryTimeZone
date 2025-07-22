@@ -25,6 +25,8 @@ export interface TimeZone {
   offset: number; // UTC offset in hours
   displayName: string; // Full localized name
   iana: string; // IANA timezone identifier
+  cityName: string; // Extracted city name for display and search
+  abbreviation: string; // Timezone abbreviation (e.g., "EDT", "JST")
   daylight?: DaylightData;
 }
 
@@ -91,6 +93,8 @@ export function getUserTimezone(): TimeZone {
     offset,
     displayName,
     iana: userTimezone,
+    cityName: extractCityName(userTimezone),
+    abbreviation: getTimezoneAbbreviation(displayName, userTimezone),
   };
 }
 
@@ -157,6 +161,8 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
       offset,
       displayName,
       iana,
+      cityName: extractCityName(iana),
+      abbreviation: getTimezoneAbbreviation(displayName, iana),
     };
   });
 
@@ -193,7 +199,206 @@ function extractCityName(iana: string): string {
   }
 
   // Replace underscores with spaces and handle special cases
-  return cityPart.replace(/_/g, ' ');
+  let cityName = cityPart.replace(/_/g, ' ');
+
+  // Handle special mappings for better city names
+  const cityMappings: Record<string, string> = {
+    'Sao Paulo': 'São Paulo',
+    'Mexico City': 'Mexico City',
+    'New York': 'New York',
+    'Los Angeles': 'Los Angeles',
+    'Ho Chi Minh': 'Ho Chi Minh City',
+    'Port of Spain': 'Port of Spain',
+    'Costa Rica': 'San José',
+    'El Salvador': 'San Salvador',
+    'Buenos Aires': 'Buenos Aires',
+    'Rio Branco': 'Rio Branco',
+  };
+
+  return cityMappings[cityName] || cityName;
+}
+
+/**
+ * Generate timezone abbreviation from full timezone name and IANA identifier
+ * @param displayName Full timezone name (e.g., "Eastern Daylight Time")
+ * @param iana IANA timezone identifier for fallback logic
+ * @returns Timezone abbreviation (e.g., "EDT")
+ */
+function getTimezoneAbbreviation(displayName: string, iana: string): string {
+  // Common timezone abbreviations mapping
+  const abbreviationMappings: Record<string, string> = {
+    // US/Canada Eastern
+    'Eastern Daylight Time': 'EDT',
+    'Eastern Standard Time': 'EST',
+    'Atlantic Daylight Time': 'ADT',
+    'Atlantic Standard Time': 'AST',
+
+    // US/Canada Central
+    'Central Daylight Time': 'CDT',
+    'Central Standard Time': 'CST',
+
+    // US/Canada Mountain
+    'Mountain Daylight Time': 'MDT',
+    'Mountain Standard Time': 'MST',
+
+    // US/Canada Pacific
+    'Pacific Daylight Time': 'PDT',
+    'Pacific Standard Time': 'PST',
+
+    // US Alaska/Hawaii
+    'Alaska Daylight Time': 'AKDT',
+    'Alaska Standard Time': 'AKST',
+    'Hawaii-Aleutian Daylight Time': 'HDT',
+    'Hawaii-Aleutian Standard Time': 'HST',
+
+    // Europe
+    'British Summer Time': 'BST',
+    'Greenwich Mean Time': 'GMT',
+    'Central European Summer Time': 'CEST',
+    'Central European Time': 'CET',
+    'Eastern European Summer Time': 'EEST',
+    'Eastern European Time': 'EET',
+    'Western European Summer Time': 'WEST',
+    'Western European Time': 'WET',
+
+    // Asia
+    'Japan Standard Time': 'JST',
+    'Korea Standard Time': 'KST',
+    'China Standard Time': 'CST',
+    'India Standard Time': 'IST',
+    'Indochina Time': 'ICT',
+    'Singapore Standard Time': 'SGT',
+    'Hong Kong Standard Time': 'HKT',
+    'Philippine Standard Time': 'PST',
+    'Indonesia Central Standard Time': 'WITA',
+    'Indonesia Western Standard Time': 'WIB',
+    'Indonesia Eastern Standard Time': 'WIT',
+
+    // Australia/New Zealand
+    'Australian Eastern Daylight Time': 'AEDT',
+    'Australian Eastern Standard Time': 'AEST',
+    'Australian Central Daylight Time': 'ACDT',
+    'Australian Central Standard Time': 'ACST',
+    'Australian Western Standard Time': 'AWST',
+    'New Zealand Daylight Time': 'NZDT',
+    'New Zealand Standard Time': 'NZST',
+
+    // Others
+    'Coordinated Universal Time': 'UTC',
+    'Moscow Standard Time': 'MSK',
+    'Arabian Standard Time': 'AST',
+    'Gulf Standard Time': 'GST',
+    'Pakistan Standard Time': 'PKT',
+    'Bangladesh Standard Time': 'BST',
+    'Nepal Time': 'NPT',
+    'Sri Lanka Time': 'SLST',
+    'Myanmar Time': 'MMT',
+    'Mauritius Time': 'MUT',
+    'Seychelles Time': 'SCT',
+    'Madagascar Time': 'EAT',
+    'South Africa Standard Time': 'SAST',
+    'West Africa Time': 'WAT',
+    'Central Africa Time': 'CAT',
+    'East Africa Time': 'EAT',
+    'Israel Daylight Time': 'IDT',
+    'Israel Standard Time': 'IST',
+    'Turkey Time': 'TRT',
+    'Georgia Standard Time': 'GET',
+    'Armenia Time': 'AMT',
+    'Azerbaijan Time': 'AZT',
+    'Iran Daylight Time': 'IRDT',
+    'Iran Standard Time': 'IRST',
+    'Afghanistan Time': 'AFT',
+    'Uzbekistan Time': 'UZT',
+    'Kyrgyzstan Time': 'KGT',
+    'Tajikistan Time': 'TJT',
+    'Turkmenistan Time': 'TMT',
+    'Kazakhstan Time': 'ALMT',
+  };
+
+  // Check direct mapping first
+  const directMatch = abbreviationMappings[displayName];
+  if (directMatch) {
+    return directMatch;
+  }
+
+  // Handle GMT offset format (e.g., "GMT-05:00" -> should map to timezone based on IANA)
+  if (displayName.startsWith('GMT')) {
+    // Map common IANA identifiers to their abbreviations when displayName is GMT format
+    const ianaToAbbreviation: Record<string, string> = {
+      'America/New_York': 'EDT', // Assume daylight time for now, could be enhanced to check season
+      'America/Chicago': 'CDT',
+      'America/Denver': 'MDT',
+      'America/Los_Angeles': 'PDT',
+      'America/Anchorage': 'AKDT',
+      'Pacific/Honolulu': 'HST',
+      'Europe/London': 'BST',
+      'Europe/Paris': 'CEST',
+      'Europe/Berlin': 'CEST',
+      'Europe/Rome': 'CEST',
+      'Europe/Moscow': 'MSK',
+      'Asia/Tokyo': 'JST',
+      'Asia/Shanghai': 'CST',
+      'Asia/Kolkata': 'IST',
+      'Asia/Dubai': 'GST',
+      'Australia/Sydney': 'AEDT',
+      'Pacific/Auckland': 'NZDT',
+    };
+
+    const abbrevFromIana = ianaToAbbreviation[iana];
+    if (abbrevFromIana) {
+      return abbrevFromIana;
+    }
+  }
+
+  // Generate abbreviation from IANA for unmapped timezones
+  if (iana.startsWith('UTC')) {
+    return 'UTC';
+  }
+
+  // Extract region-based abbreviations for common patterns
+  const parts = iana.split('/');
+  const region = parts[0];
+  const city = parts[parts.length - 1];
+
+  // Generate fallback abbreviations based on patterns
+  if (region === 'Pacific') {
+    if (city === 'Honolulu') return 'HST';
+    if (city === 'Auckland') return 'NZST';
+    if (city === 'Fiji') return 'FJT';
+    if (city === 'Tahiti') return 'TAHT';
+    return 'PST';
+  }
+
+  if (region === 'Africa') {
+    if (city === 'Cairo') return 'EET';
+    if (city === 'Lagos') return 'WAT';
+    if (city === 'Johannesburg') return 'SAST';
+    if (city === 'Nairobi') return 'EAT';
+    return 'AFT';
+  }
+
+  if (region === 'Indian') {
+    if (city === 'Mauritius') return 'MUT';
+    if (city === 'Maldives') return 'MVT';
+    return 'IOT';
+  }
+
+  // Final fallback: extract first letters from displayName
+  const words = displayName
+    .split(' ')
+    .filter(word => word.length > 0 && !['of', 'and', 'the', 'in'].includes(word.toLowerCase()));
+
+  if (words.length >= 2) {
+    return words
+      .slice(0, 3)
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  // Ultimate fallback
+  return 'GMT';
 }
 
 /**
@@ -692,6 +897,8 @@ export function getAllTimezonesOrdered(): TimeZone[] {
       offset,
       displayName,
       iana,
+      cityName: extractCityName(iana),
+      abbreviation: getTimezoneAbbreviation(displayName, iana),
     };
   });
 
@@ -796,7 +1003,9 @@ export class TimezoneModal {
         tz =>
           tz.displayName.toLowerCase().includes(query) ||
           tz.name.toLowerCase().includes(query) ||
-          tz.iana.toLowerCase().includes(query),
+          tz.iana.toLowerCase().includes(query) ||
+          tz.cityName.toLowerCase().includes(query) ||
+          tz.abbreviation.toLowerCase().includes(query),
       );
     }
 
@@ -836,7 +1045,10 @@ export class TimezoneModal {
   private updateInputValue(): void {
     const selectedTimezone = this.filteredTimezones[this.selectedIndex];
     if (selectedTimezone) {
-      this.input.value = selectedTimezone.displayName;
+      // Format offset
+      const offsetStr = formatOffset(selectedTimezone.offset);
+      // Show city name with abbreviated timezone and offset: "Tokyo (JST +09:00)"
+      this.input.value = `${selectedTimezone.cityName} (${selectedTimezone.abbreviation} ${offsetStr})`;
     }
   }
 
@@ -879,21 +1091,12 @@ export class TimezoneModal {
         item.classList.add('current');
       }
 
-      // Format offset for display
-      const offsetHours = Math.floor(Math.abs(timezone.offset));
-      const offsetMinutes = Math.round((Math.abs(timezone.offset) - offsetHours) * 60);
-      const offsetSign = timezone.offset >= 0 ? '+' : '-';
-      const offsetStr =
-        offsetMinutes > 0
-          ? `${offsetSign}${offsetHours}:${offsetMinutes.toString().padStart(2, '0')}`
-          : `${offsetSign}${offsetHours}`;
-
-      // Get common name (city name from IANA)
-      const commonName = timezone.name;
+      // Format offset for display using the existing formatOffset function
+      const offsetStr = formatOffset(timezone.offset);
 
       item.innerHTML = `
-        <div class="wheel-timezone-name">${timezone.displayName} (${offsetStr})</div>
-        <div class="wheel-timezone-display">${commonName}</div>
+        <div class="wheel-timezone-name">${timezone.cityName} (${timezone.abbreviation} ${offsetStr})</div>
+        <div class="wheel-timezone-display">${timezone.displayName}</div>
       `;
 
       // Click handler to select this timezone
