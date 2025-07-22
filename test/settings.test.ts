@@ -137,10 +137,10 @@ describe('Settings Panel', () => {
     it('should update URL when timeFormat changes to 24h', () => {
       settingsPanel = new SettingsPanel();
       
-      // Click 24h time format radio
-      const format24Radio = document.querySelector('[value="24h"]') as HTMLInputElement;
-      format24Radio.checked = true;
-      format24Radio.dispatchEvent(new Event('change'));
+      // Toggle to 24h time format
+      const timeFormatCheckbox = document.querySelector('.time-format-checkbox') as HTMLInputElement;
+      timeFormatCheckbox.checked = true;
+      timeFormatCheckbox.dispatchEvent(new Event('change'));
       
       expect(history.replaceState).toHaveBeenCalled();
     });
@@ -149,10 +149,10 @@ describe('Settings Panel', () => {
       window.location.search = '?timeFormat=24h';
       settingsPanel = new SettingsPanel();
       
-      // Click 12h time format radio
-      const format12Radio = document.querySelector('[value="12h"]') as HTMLInputElement;
-      format12Radio.checked = true;
-      format12Radio.dispatchEvent(new Event('change'));
+      // Toggle to 12h time format (unchecked)
+      const timeFormatCheckbox = document.querySelector('.time-format-checkbox') as HTMLInputElement;
+      timeFormatCheckbox.checked = false;
+      timeFormatCheckbox.dispatchEvent(new Event('change'));
       
       expect(history.replaceState).toHaveBeenCalled();
     });
@@ -217,11 +217,11 @@ describe('Settings Panel', () => {
     });
 
     it('should update timeFormat selection in UI', () => {
-      const format24Radio = document.querySelector('[value="24h"]') as HTMLInputElement;
-      format24Radio.checked = true;
-      format24Radio.dispatchEvent(new Event('change'));
+      const timeFormatCheckbox = document.querySelector('.time-format-checkbox') as HTMLInputElement;
+      timeFormatCheckbox.checked = true;
+      timeFormatCheckbox.dispatchEvent(new Event('change'));
       
-      expect(format24Radio.checked).toBe(true);
+      expect(timeFormatCheckbox.checked).toBe(true);
       const settings = settingsPanel.getCurrentSettings();
       expect(settings.timeFormat).toBe('24h');
     });

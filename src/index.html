@@ -133,20 +133,14 @@
         <div class="settings-section">
           <h3 class="settings-section-title">Time Format</h3>
           <div class="time-format-toggle-container">
-            <!-- 12-hour format radio button -->
-            <label class="time-format-toggle">
-              <input type="radio" name="timeFormat" value="12h" class="time-format-radio" />
-              <span class="time-format-option">
-                <span class="time-format-icon">🕒</span>
-                <span class="time-format-text">12-hour (AM/PM)</span>
-              </span>
-            </label>
-            <!-- 24-hour format radio button -->
-            <label class="time-format-toggle">
-              <input type="radio" name="timeFormat" value="24h" class="time-format-radio" />
-              <span class="time-format-option">
-                <span class="time-format-icon">🕓</span>
-                <span class="time-format-text">24-hour</span>
+            <label class="time-format-switch">
+              <input type="checkbox" class="time-format-checkbox" />
+              <span class="time-format-slider">
+                <span class="time-format-labels">
+                  <span class="time-format-label-12h">🕒 12h</span>
+                  <span class="time-format-label-24h">🕓 24h</span>
+                </span>
+                <span class="time-format-handle"></span>
               </span>
             </label>
           </div>

@@ -208,10 +208,10 @@ export class SettingsPanel {
     });
 
     // Update time format selection
-    const timeFormatRadios = this.panel.querySelectorAll('.time-format-radio') as NodeListOf<HTMLInputElement>;
-    timeFormatRadios.forEach(radio => {
-      radio.checked = radio.value === this.currentSettings.timeFormat;
-    });
+    const timeFormatCheckbox = this.panel.querySelector('.time-format-checkbox') as HTMLInputElement;
+    if (timeFormatCheckbox) {
+      timeFormatCheckbox.checked = this.currentSettings.timeFormat === '24h';
+    }
   }
 
   /**
@@ -249,15 +249,14 @@ export class SettingsPanel {
       });
     });
 
-    // Time format radios
-    const timeFormatRadios = this.panel.querySelectorAll('.time-format-radio') as NodeListOf<HTMLInputElement>;
-    timeFormatRadios.forEach(radio => {
-      radio.addEventListener('change', () => {
-        if (radio.checked) {
-          this.updateSettings({ ...this.currentSettings, timeFormat: radio.value as TimeFormat });
-        }
+    // Time format checkbox
+    const timeFormatCheckbox = this.panel.querySelector('.time-format-checkbox') as HTMLInputElement;
+    if (timeFormatCheckbox) {
+      timeFormatCheckbox.addEventListener('change', () => {
+        const timeFormat = timeFormatCheckbox.checked ? '24h' : '12h';
+        this.updateSettings({ ...this.currentSettings, timeFormat: timeFormat as TimeFormat });
       });
-    });
+    }
 
     // Keyboard navigation
     this.panel.addEventListener('keydown', e => {
