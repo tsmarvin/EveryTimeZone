@@ -134,12 +134,13 @@ think
 **✅ WHAT WORKS:**
 - Taking screenshots using Playwright after starting local HTTP server
 - Extracting the EXACT image URL from the playwright tool response
-- URLs in format: `https://private-user-images.githubusercontent.com/[userid]/[imageid]-[hash].jpeg?jwt=...`
+- URLs in format: `https://private-user-images.githubusercontent.com/[redacted]`
 - These URLs work in GitHub comments and display images correctly
 
 **❌ WHAT DOESN'T WORK:**
 - Local file paths: `![Description](/tmp/playwright-mcp-output/{timestamp}/filename.png)` → Broken image links
 - Manually constructed GitHub URLs: `![Description](https://github.com/user-attachments/assets/{hash})` → Broken image links
+- Manually constructed GitHub URLs following the correct format: `![Description](https://private-user-images.githubusercontent.com/{redacted})` → Broken image links
 - Repository pull URLs: `![Description](https://github.com/tsmarvin/EveryTimeZone/pull/{filename})` → Broken image links
 - Relative paths: `![Description](filename.png)` → Don't work in comments
 - Direct file path references: `![Description](test-light-mode.png)` → Don't work in comments
