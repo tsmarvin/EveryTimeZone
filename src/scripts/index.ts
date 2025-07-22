@@ -587,7 +587,7 @@ export function renderTimeline(): void {
 
   // Scroll to position current hour at the leftmost visible position
   // Since the calculation is now correct, apply it directly and in next frame
-  const scrollToCurrentHour = () => {
+  const scrollToCurrentHour = (): void => {
     const currentHourScrollPosition = getCurrentHourScrollPosition();
     container.scrollLeft = currentHourScrollPosition;
   };
@@ -595,7 +595,7 @@ export function renderTimeline(): void {
   // Apply scroll position immediately and ensure it persists
   scrollToCurrentHour();
   // Also apply after next frame to handle any layout shifts
-  requestAnimationFrame(scrollToCurrentHour);
+  window.requestAnimationFrame(scrollToCurrentHour);
 }
 
 /**
@@ -743,7 +743,7 @@ export class TimelineManager {
 
     // Scroll to position current hour at the leftmost visible position
     // Since the calculation is now correct, apply it directly and in next frame
-    const scrollToCurrentHour = () => {
+    const scrollToCurrentHour = (): void => {
       const currentHourScrollPosition = getCurrentHourScrollPosition();
       this.container.scrollLeft = currentHourScrollPosition;
     };
@@ -751,7 +751,7 @@ export class TimelineManager {
     // Apply scroll position immediately and ensure it persists
     scrollToCurrentHour();
     // Also apply after next frame to handle any layout shifts
-    requestAnimationFrame(scrollToCurrentHour);
+    window.requestAnimationFrame(scrollToCurrentHour);
   }
 }
 
