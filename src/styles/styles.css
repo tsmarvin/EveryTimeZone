@@ -40,9 +40,16 @@
   --text-3xl: 1.875rem; /* 30px */
   --text-4xl: 2.25rem; /* 36px */
 
+  /* Font Weight Scale - Consistent font weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
   /* Layout Constants */
   --container-max-width: 1200px; /* Maximum width for content containers */
   --border-radius: 0.75rem; /* Standard border radius (12px) */
+  --border-radius-sm: 0.375rem; /* Small border radius (6px) */
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transitions */
 }
 
@@ -1441,10 +1448,13 @@ p {
 
   /* Dark Theme Colors */
   --color-bg: var(--gray-900);
+  --color-background: var(--gray-900);
   --color-surface: var(--gray-800);
   --color-surface-variant: var(--gray-700);
+  --color-surface-hover: var(--gray-600);
   --color-primary: var(--gray-400);
   --color-primary-variant: var(--gray-500);
+  --color-primary-subtle: rgba(102, 102, 102, 0.1);
   --color-secondary: var(--gray-300);
   --color-accent: var(--gray-200);
   --color-text: var(--gray-50);
@@ -1470,10 +1480,13 @@ p {
 
 .theme-default.light-theme {
   --color-bg: var(--white);
+  --color-background: var(--white);
   --color-surface: var(--gray-50);
   --color-surface-variant: var(--gray-100);
+  --color-surface-hover: var(--gray-200);
   --color-primary: var(--gray-500);
   --color-primary-variant: var(--gray-600);
+  --color-primary-subtle: rgba(74, 74, 74, 0.1);
   --color-secondary: var(--gray-400);
   --color-accent: var(--gray-700);
   --color-text: var(--gray-900);
@@ -1524,10 +1537,13 @@ p {
 
   /* Dark Theme Colors */
   --color-bg: var(--forest-dark-green);
+  --color-background: var(--forest-dark-green);
   --color-surface: var(--forest-medium-green);
   --color-surface-variant: var(--forest-variant-green);
+  --color-surface-hover: var(--forest-border-green);
   --color-primary: var(--forest-bright-green);
   --color-primary-variant: var(--forest-medium-bright-green);
+  --color-primary-subtle: rgba(34, 197, 94, 0.1);
   --color-secondary: var(--forest-lime);
   --color-accent: var(--forest-yellow);
   --color-text: var(--forest-light-text);
@@ -1553,10 +1569,13 @@ p {
 
 .theme-forest-harmony.light-theme {
   --color-bg: var(--forest-light-bg);
+  --color-background: var(--forest-light-bg);
   --color-surface: var(--forest-light-surface);
   --color-surface-variant: var(--forest-light-variant);
+  --color-surface-hover: var(--forest-light-border);
   --color-primary: var(--forest-light-primary);
   --color-primary-variant: var(--forest-light-primary-variant);
+  --color-primary-subtle: rgba(22, 163, 74, 0.1);
   --color-secondary: var(--forest-light-secondary);
   --color-accent: var(--forest-light-accent);
   --color-text: var(--forest-light-text);
@@ -1607,10 +1626,13 @@ p {
 
   /* Dark Theme Colors */
   --color-bg: var(--cyber-dark-blue);
+  --color-background: var(--cyber-dark-blue);
   --color-surface: var(--cyber-blue);
   --color-surface-variant: var(--cyber-medium-blue);
+  --color-surface-hover: var(--cyber-border-blue);
   --color-primary: var(--cyber-cyan);
   --color-primary-variant: var(--cyber-cyan-variant);
+  --color-primary-subtle: rgba(0, 212, 255, 0.1);
   --color-secondary: var(--cyber-purple);
   --color-accent: var(--cyber-pink);
   --color-text: var(--cyber-light-blue);
@@ -1636,10 +1658,13 @@ p {
 
 .theme-neon-cyber.light-theme {
   --color-bg: var(--cyber-light-bg);
+  --color-background: var(--cyber-light-bg);
   --color-surface: var(--cyber-light-surface);
   --color-surface-variant: var(--cyber-light-variant);
+  --color-surface-hover: var(--cyber-light-border);
   --color-primary: var(--cyber-light-primary);
   --color-primary-variant: var(--cyber-light-primary-variant);
+  --color-primary-subtle: rgba(2, 132, 199, 0.1);
   --color-secondary: var(--cyber-light-secondary);
   --color-accent: var(--cyber-light-accent);
   --color-text: var(--cyber-light-text);
@@ -1690,10 +1715,13 @@ p {
 
   /* Dark Theme Colors */
   --color-bg: var(--ocean-dark-blue);
+  --color-background: var(--ocean-dark-blue);
   --color-surface: var(--ocean-medium-blue);
   --color-surface-variant: var(--ocean-variant-blue);
+  --color-surface-hover: var(--ocean-border);
   --color-primary: var(--ocean-cyan);
   --color-primary-variant: var(--ocean-cyan-variant);
+  --color-primary-subtle: rgba(6, 182, 212, 0.1);
   --color-secondary: var(--ocean-teal);
   --color-accent: var(--ocean-blue);
   --color-text: var(--ocean-light-text);
@@ -1719,10 +1747,13 @@ p {
 
 .theme-ocean-breeze.light-theme {
   --color-bg: var(--ocean-light-bg);
+  --color-background: var(--ocean-light-bg);
   --color-surface: var(--ocean-light-surface);
   --color-surface-variant: var(--ocean-light-variant);
+  --color-surface-hover: var(--ocean-light-border);
   --color-primary: var(--ocean-light-primary);
   --color-primary-variant: var(--ocean-light-primary-variant);
+  --color-primary-subtle: rgba(8, 145, 178, 0.1);
   --color-secondary: var(--ocean-light-secondary);
   --color-accent: var(--ocean-light-accent);
   --color-text: var(--ocean-light-text);
@@ -1773,10 +1804,13 @@ p {
 
   /* Dark Theme Colors */
   --color-bg: var(--original-dark);
+  --color-background: var(--original-dark);
   --color-surface: var(--original-surface);
   --color-surface-variant: var(--original-surface-variant);
+  --color-surface-hover: var(--original-border);
   --color-primary: var(--original-muted-blue);
   --color-primary-variant: var(--original-muted-blue-variant);
+  --color-primary-subtle: rgba(124, 159, 184, 0.1);
   --color-secondary: var(--original-muted-green);
   --color-accent: var(--original-muted-orange);
   --color-text: var(--original-light-text);
@@ -1802,10 +1836,13 @@ p {
 
 .theme-original.light-theme {
   --color-bg: var(--original-light-bg);
+  --color-background: var(--original-light-bg);
   --color-surface: var(--original-light-surface);
   --color-surface-variant: var(--original-light-surface-variant);
+  --color-surface-hover: var(--original-light-border);
   --color-primary: var(--original-light-primary);
   --color-primary-variant: var(--original-light-primary-variant);
+  --color-primary-subtle: rgba(90, 122, 147, 0.1);
   --color-secondary: var(--original-light-secondary);
   --color-accent: var(--original-light-accent);
   --color-text: var(--original-light-text);
@@ -1856,10 +1893,13 @@ p {
 
   /* Dark Theme Colors */
   --color-bg: var(--sunset-dark);
+  --color-background: var(--sunset-dark);
   --color-surface: var(--sunset-surface);
   --color-surface-variant: var(--sunset-surface-variant);
+  --color-surface-hover: var(--sunset-border);
   --color-primary: var(--sunset-orange);
   --color-primary-variant: var(--sunset-orange-variant);
+  --color-primary-subtle: rgba(255, 107, 53, 0.1);
   --color-secondary: var(--sunset-red);
   --color-accent: var(--sunset-gold);
   --color-text: var(--sunset-light-text);
@@ -1885,10 +1925,13 @@ p {
 
 .theme-sunset-warmth.light-theme {
   --color-bg: var(--sunset-light-bg);
+  --color-background: var(--sunset-light-bg);
   --color-surface: var(--sunset-light-surface);
   --color-surface-variant: var(--sunset-light-surface-variant);
+  --color-surface-hover: var(--sunset-light-border);
   --color-primary: var(--sunset-light-primary);
   --color-primary-variant: var(--sunset-light-primary-variant);
+  --color-primary-subtle: rgba(230, 81, 0, 0.1);
   --color-secondary: var(--sunset-light-secondary);
   --color-accent: var(--sunset-light-accent);
   --color-text: var(--sunset-light-text);
@@ -1930,10 +1973,13 @@ p {
 
   /* Default theme colors (dark) */
   --color-bg: var(--gray-900);
+  --color-background: var(--gray-900);
   --color-surface: var(--gray-800);
   --color-surface-variant: var(--gray-700);
+  --color-surface-hover: var(--gray-600);
   --color-primary: var(--gray-400);
   --color-primary-variant: var(--gray-500);
+  --color-primary-subtle: rgba(102, 102, 102, 0.1);
   --color-secondary: var(--gray-300);
   --color-accent: var(--gray-200);
   --color-text: var(--gray-50);
