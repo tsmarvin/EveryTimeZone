@@ -53,15 +53,6 @@ export interface TimelineRow {
 }
 
 /**
- * Format city name for display by replacing underscores with spaces
- * @param cityName Raw city name from IANA timezone identifier
- * @returns Formatted city name with spaces instead of underscores
- */
-function formatCityName(cityName: string): string {
-  return cityName.replace(/_/g, ' ');
-}
-
-/**
  * Get user's current timezone using Intl API
  * @returns TimeZone object with user's timezone details
  */
