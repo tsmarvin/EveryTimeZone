@@ -580,8 +580,8 @@ p {
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
   width: fit-content;
-  max-width: min(90vw, 700px);
-  max-height: 70vh;
+  max-width: min(95vw, 800px);
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -597,7 +597,7 @@ p {
 }
 
 .modal-header {
-  padding: var(--space-sm);
+  padding: var(--space-xs);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
@@ -638,11 +638,11 @@ p {
 
 .modal-content {
   flex: 1;
-  padding: var(--space-sm);
+  padding: var(--space-xs);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
 }
 
 .timezone-search {
@@ -672,9 +672,9 @@ p {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: var(--space-sm);
-  min-height: 180px;
-  padding: var(--space-sm) 0;
+  gap: var(--space-xs);
+  min-height: 160px;
+  padding: var(--space-xs) 0;
 }
 
 .wheel-nav-btn {
@@ -715,7 +715,6 @@ p {
   justify-content: center;
   width: 100%;
   min-height: 120px;
-  max-height: 160px;
   overflow-y: auto;
   padding: var(--space-xs) 0;
 }
@@ -788,10 +787,10 @@ p {
 }
 
 .modal-footer {
-  padding: var(--space-sm);
+  padding: var(--space-xs);
   border-top: 1px solid var(--color-border);
   display: flex;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   justify-content: flex-end;
   background: linear-gradient(135deg, var(--color-surface), var(--color-surface-variant));
 }
@@ -1341,7 +1340,7 @@ p {
   .modal-header,
   .modal-content,
   .modal-footer {
-    padding: var(--space-sm);
+    padding: var(--space-xs);
   }
 
   .wheel-timezone-item {
