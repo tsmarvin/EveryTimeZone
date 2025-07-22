@@ -230,14 +230,21 @@ function createTimezoneDisplayName(iana: string, offset: number): string {
 /**
  * Format UTC offset for display
  * @param offset UTC offset in hours
- * @returns Formatted offset string (e.g., "+05:30", "-08:00")
+ * @returns Formatted offset string (e.g., "+5:30", "-7", "+12:45")
  */
 function formatOffset(offset: number): string {
   const sign = offset >= 0 ? '+' : '-';
   const absOffset = Math.abs(offset);
   const hours = Math.floor(absOffset);
   const minutes = Math.round((absOffset - hours) * 60);
-  return `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+  // If minutes are zero, don't include them
+  if (minutes === 0) {
+    return `${sign}${hours}`;
+  }
+
+  // Include minutes when they're non-zero, but don't pad hours with zero
+  return `${sign}${hours}:${minutes.toString().padStart(2, '0')}`;
 }
 
 /**
