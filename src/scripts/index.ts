@@ -341,6 +341,70 @@ export function getTimelineDimensions(): { numHours: number; numRows: number } {
 }
 
 /**
+ * Dynamically adjust timezone label widths based on content
+ */
+function adjustTimezoneLabelWidths(): void {
+  const timezoneLabelCells = document.querySelectorAll('.timeline-timezone-label');
+  if (timezoneLabelCells.length === 0) return;
+
+  const firstCell = timezoneLabelCells[0] as HTMLElement;
+  if (!firstCell) return;
+
+  // Create a temporary element to measure text widths
+  const tempElement = document.createElement('div');
+  tempElement.style.position = 'absolute';
+  tempElement.style.visibility = 'hidden';
+  tempElement.style.whiteSpace = 'nowrap';
+  tempElement.style.fontSize = window.getComputedStyle(firstCell).fontSize;
+  tempElement.style.fontFamily = window.getComputedStyle(firstCell).fontFamily;
+  tempElement.style.fontWeight = window.getComputedStyle(firstCell).fontWeight;
+  document.body.appendChild(tempElement);
+
+  let maxWidth = 0;
+
+  // Measure the content width of each timezone label
+  timezoneLabelCells.forEach(cell => {
+    const timezoneInfo = cell.querySelector('.timezone-info');
+    if (timezoneInfo) {
+      tempElement.innerHTML = timezoneInfo.innerHTML;
+      const contentWidth = tempElement.scrollWidth;
+      maxWidth = Math.max(maxWidth, contentWidth);
+    }
+  });
+
+  // Remove temporary element
+  document.body.removeChild(tempElement);
+
+  // Add padding and set minimum widths based on screen size
+  const screenWidth = window.innerWidth;
+  const padding = 32; // Account for padding and margins
+  let minWidth: number;
+
+  if (screenWidth <= 576) {
+    minWidth = 140; // Mobile minimum
+  } else if (screenWidth <= 768) {
+    minWidth = 180; // Base minimum
+  } else if (screenWidth <= 992) {
+    minWidth = 200; // Tablet minimum
+  } else if (screenWidth <= 1400) {
+    minWidth = 220; // Desktop minimum
+  } else {
+    minWidth = 240; // Large desktop minimum
+  }
+
+  // Calculate optimal width (content + padding, but at least minimum)
+  const optimalWidth = Math.max(maxWidth + padding, minWidth);
+
+  // Apply the calculated width to all timezone label cells
+  timezoneLabelCells.forEach(cell => {
+    (cell as HTMLElement).style.minWidth = `${optimalWidth}px`;
+    (cell as HTMLElement).style.width = `${optimalWidth}px`;
+  });
+
+  console.log(`Adjusted timezone label width to ${optimalWidth}px (content: ${maxWidth}px, min: ${minWidth}px)`);
+}
+
+/**
  * Render the timeline visualization
  */
 export function renderTimeline(): void {
@@ -443,6 +507,9 @@ export function renderTimeline(): void {
 
     container.appendChild(rowElement);
   });
+
+  // Apply dynamic width calculation after all rows are rendered
+  adjustTimezoneLabelWidths();
 }
 
 /**
@@ -612,6 +679,9 @@ export class TimelineManager {
 
       this.container.appendChild(rowElement);
     });
+
+    // Apply dynamic width calculation after all rows are rendered
+    adjustTimezoneLabelWidths();
   }
 }
 
