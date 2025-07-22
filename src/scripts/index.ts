@@ -354,7 +354,6 @@ export function renderTimeline(): void {
   // Clear container
   container.innerHTML = '';
 
-
   // Create timeline header with hours
   const header = document.createElement('div');
   header.className = 'timeline-header';
