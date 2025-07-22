@@ -437,7 +437,11 @@ export class TimelineManager {
     // Add a few timezones around the world for demonstration
     const additionalTimezones = getTimezonesForTimeline(5);
     additionalTimezones.forEach(tz => {
-      if (!this.selectedTimezones.find(selected => selected.iana === tz.iana)) {
+      // Check for both duplicate IANA identifiers and duplicate offsets
+      const isDuplicateIana = this.selectedTimezones.find(selected => selected.iana === tz.iana);
+      const isDuplicateOffset = this.selectedTimezones.find(selected => selected.offset === tz.offset);
+
+      if (!isDuplicateIana && !isDuplicateOffset) {
         this.selectedTimezones.push(tz);
       }
     });
@@ -511,8 +515,9 @@ export class TimelineManager {
 
     this.container.appendChild(header);
 
-    // Create timeline rows for selected timezones
-    this.selectedTimezones.forEach(timezone => {
+    // Create timeline rows for selected timezones, sorted by offset
+    const sortedTimezones = [...this.selectedTimezones].sort((a, b) => a.offset - b.offset);
+    sortedTimezones.forEach(timezone => {
       const rowElement = document.createElement('div');
       rowElement.className = 'timeline-row';
 

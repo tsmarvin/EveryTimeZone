@@ -139,4 +139,85 @@ describe('Timeline Responsive Design', () => {
       });
     });
   });
+
+  describe('Timeline Manager Default Timezone Selection', () => {
+    it('should not include duplicate offsets in default timezone selection', async () => {
+      // Import TimelineManager using ES module syntax
+      const { TimelineManager } = await import('../src/scripts/index.js');
+      
+      // Create a container element for the timeline
+      const container = document.createElement('div');
+      container.id = 'timeline-container';
+      document.body.appendChild(container);
+      
+      // Create modal elements that TimelineManager expects
+      const modal = document.createElement('div');
+      modal.id = 'timezone-modal';
+      document.body.appendChild(modal);
+      
+      const overlay = document.createElement('div');
+      overlay.id = 'timezone-modal-overlay';
+      document.body.appendChild(overlay);
+      
+      const input = document.createElement('input');
+      input.id = 'timezone-input';
+      document.body.appendChild(input);
+      
+      const wheel = document.createElement('div');
+      wheel.id = 'timezone-wheel';
+      document.body.appendChild(wheel);
+      
+      const selectButton = document.createElement('button');
+      selectButton.id = 'select-timezone';
+      document.body.appendChild(selectButton);
+      
+      const cancelButton = document.createElement('button');
+      cancelButton.id = 'cancel-timezone';
+      document.body.appendChild(cancelButton);
+      
+      const closeButton = document.createElement('button');
+      closeButton.className = 'modal-close';
+      modal.appendChild(closeButton);
+      
+      const upButton = document.createElement('button');
+      upButton.id = 'wheel-up';
+      document.body.appendChild(upButton);
+      
+      const downButton = document.createElement('button');
+      downButton.id = 'wheel-down';
+      document.body.appendChild(downButton);
+      
+      try {
+        const manager = new TimelineManager();
+        
+        // Access the selected timezones
+        const selectedTimezones = manager.selectedTimezones || [];
+        
+        // Check that no two timezones have the same offset
+        const offsets = selectedTimezones.map((tz: any) => tz.offset);
+        const uniqueOffsets = [...new Set(offsets)];
+        
+        expect(uniqueOffsets.length).toBe(offsets.length);
+        
+        // Clean up
+        document.body.removeChild(container);
+        document.body.removeChild(modal);
+        document.body.removeChild(overlay);
+        document.body.removeChild(input);
+        document.body.removeChild(wheel);
+        document.body.removeChild(selectButton);
+        document.body.removeChild(cancelButton);
+        document.body.removeChild(upButton);
+        document.body.removeChild(downButton);
+      } catch (error) {
+        // Clean up even if test fails
+        [container, modal, overlay, input, wheel, selectButton, cancelButton, upButton, downButton].forEach(el => {
+          if (el && el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        });
+        throw error;
+      }
+    });
+  });
 });
