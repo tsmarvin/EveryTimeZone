@@ -3,10 +3,19 @@ import { join } from 'path';
 import { execSync } from 'child_process';
 
 function getGitVersion(): string {
+  // First, check if GitVersion environment variables are available (from CI)
+  const envSemVer = process.env.GITVERSION_SEMVER;
+
+  if (envSemVer) {
+    console.log(`Using GitVersion from environment: ${envSemVer}`);
+    return envSemVer;
+  }
+
   try {
-    // Try GitVersion first (if available in CI)
+    // Try GitVersion CLI tool (if available locally)
     const gitVersionOutput = execSync('gitversion', { encoding: 'utf-8', cwd: process.cwd() });
     const gitVersionData = JSON.parse(gitVersionOutput);
+    console.log(`Using GitVersion from CLI: ${gitVersionData.SemVer || gitVersionData.FullSemVer}`);
     return gitVersionData.SemVer || gitVersionData.FullSemVer;
   } catch {
     // Fallback to simple git tag approach
@@ -21,6 +30,7 @@ function getGitVersion(): string {
       // Parse the tag version
       const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
       if (!match || !match[1] || !match[2] || !match[3]) {
+        console.log('Using default fallback version: 0.0.1-alpha.0');
         return '0.0.1-alpha.0';
       }
 
@@ -32,15 +42,22 @@ function getGitVersion(): string {
       const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
       if (branch === 'main' && commits > 0) {
         patch += 1;
-        return `${major}.${minor}.${patch}`;
+        const version = `${major}.${minor}.${patch}`;
+        console.log(`Using fallback git logic for main branch: ${version}`);
+        return version;
       } else if (commits > 0) {
         patch += 1;
-        return `${major}.${minor}.${patch}-alpha.${commits}`;
+        const version = `${major}.${minor}.${patch}-alpha.${commits}`;
+        console.log(`Using fallback git logic for feature branch: ${version}`);
+        return version;
       }
 
-      return `${major}.${minor}.${patch}`;
+      const version = `${major}.${minor}.${patch}`;
+      console.log(`Using fallback git logic for tagged commit: ${version}`);
+      return version;
     } catch {
       // No git or tags available, use default
+      console.log('No git available, using default version: 0.0.1-alpha.0');
       return '0.0.1-alpha.0';
     }
   }
@@ -56,6 +73,12 @@ function injectVersionIntoHtml(): void {
 
   const version = getGitVersion();
   let htmlContent = readFileSync(distIndexPath, 'utf-8');
+
+  // Remove any existing app-version meta tags
+  htmlContent = htmlContent.replace(/<meta name="app-version"[^>]*>\s*/g, '');
+
+  // Remove any existing version spans in footer
+  htmlContent = htmlContent.replace(/<span class="version">[^<]*<\/span>\s*/g, '');
 
   // Inject meta tag after the viewport meta tag
   const metaTagRegex = /(<meta name="viewport"[^>]*>)/;

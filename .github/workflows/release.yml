@@ -36,6 +36,10 @@ jobs:
       
     - name: Build site
       run: npm run build
+      env:
+        GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
+        GITVERSION_FULLSEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
+        GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
       
     - name: Create release archive
       run: |
