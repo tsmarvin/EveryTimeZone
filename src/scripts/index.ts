@@ -625,8 +625,8 @@ export class TimelineManager {
     const userTz = getUserTimezone();
     this.selectedTimezones = [userTz];
 
-    // Add a few timezones around the world for demonstration
-    const additionalTimezones = getTimezonesForTimeline(5);
+    // Add more timezones around the world for better screen filling
+    const additionalTimezones = getTimezonesForTimeline(8);
     additionalTimezones.forEach(tz => {
       // Check for both duplicate IANA identifiers and duplicate offsets
       const isDuplicateIana = this.selectedTimezones.find(selected => selected.iana === tz.iana);
