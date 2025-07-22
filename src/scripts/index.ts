@@ -25,6 +25,8 @@ export interface TimeZone {
   offset: number; // UTC offset in hours
   displayName: string; // Full localized name
   iana: string; // IANA timezone identifier
+  cityName: string; // Extracted city name for display and search
+  abbreviation: string; // Timezone abbreviation (e.g., "EDT", "JST")
   daylight?: DaylightData;
 }
 
@@ -91,6 +93,8 @@ export function getUserTimezone(): TimeZone {
     offset,
     displayName,
     iana: userTimezone,
+    cityName: extractCityName(userTimezone),
+    abbreviation: getTimezoneAbbreviation(displayName, userTimezone),
   };
 }
 
@@ -157,6 +161,8 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
       offset,
       displayName,
       iana,
+      cityName: extractCityName(iana),
+      abbreviation: getTimezoneAbbreviation(displayName, iana),
     };
   });
 
@@ -192,8 +198,67 @@ function extractCityName(iana: string): string {
     return iana; // Fallback to full IANA identifier
   }
 
-  // Replace underscores with spaces and handle special cases
-  return cityPart.replace(/_/g, ' ');
+  // Replace underscores with spaces
+  let cityName = cityPart.replace(/_/g, ' ');
+
+  // Convert to proper case for better readability
+  cityName = cityName.replace(/\b\w/g, letter => letter.toUpperCase());
+
+  // Handle specific corrections that require special characters or can't be done algorithmically
+  const corrections: Record<string, string> = {
+    'Sao Paulo': 'São Paulo',
+    'Ho Chi Minh': 'Ho Chi Minh City',
+    'Port Of Spain': 'Port of Spain',
+  };
+
+  return corrections[cityName] || cityName;
+}
+
+/**
+ * Generate timezone abbreviation from full timezone name and IANA identifier
+ * @param displayName Full timezone name (e.g., "Eastern Daylight Time")
+ * @param iana IANA timezone identifier for fallback logic
+ * @returns Timezone abbreviation (e.g., "EDT")
+ */
+function getTimezoneAbbreviation(displayName: string, iana: string): string {
+  try {
+    // Use browser's Intl.DateTimeFormat to get timezone abbreviation in user's native language
+    const formatter = new Intl.DateTimeFormat(undefined, {
+      timeZone: iana,
+      timeZoneName: 'short',
+    });
+
+    // Format a date and extract the timezone abbreviation
+    const parts = formatter.formatToParts(new Date());
+    const timeZonePart = parts.find(part => part.type === 'timeZoneName');
+
+    if (timeZonePart && timeZonePart.value && timeZonePart.value.length <= 5) {
+      return timeZonePart.value;
+    }
+  } catch {
+    // Fall through to fallback logic
+  }
+
+  // Fallback for UTC
+  if (iana.startsWith('UTC') || iana === 'Etc/UTC' || iana === 'Etc/GMT') {
+    return 'UTC';
+  }
+
+  // Fallback: generate abbreviation from display name
+  const words = displayName
+    .split(' ')
+    .filter(word => word.length > 0 && !['of', 'and', 'the', 'in'].includes(word.toLowerCase()));
+
+  if (words.length >= 2) {
+    return words
+      .slice(0, 3)
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  // Ultimate fallback
+  return 'GMT';
 }
 
 /**
@@ -754,6 +819,8 @@ export function getAllTimezonesOrdered(): TimeZone[] {
       offset,
       displayName,
       iana,
+      cityName: extractCityName(iana),
+      abbreviation: getTimezoneAbbreviation(displayName, iana),
     };
   });
 
@@ -858,7 +925,9 @@ export class TimezoneModal {
         tz =>
           tz.displayName.toLowerCase().includes(query) ||
           tz.name.toLowerCase().includes(query) ||
-          tz.iana.toLowerCase().includes(query),
+          tz.iana.toLowerCase().includes(query) ||
+          tz.cityName.toLowerCase().includes(query) ||
+          tz.abbreviation.toLowerCase().includes(query),
       );
     }
 
@@ -898,7 +967,10 @@ export class TimezoneModal {
   private updateInputValue(): void {
     const selectedTimezone = this.filteredTimezones[this.selectedIndex];
     if (selectedTimezone) {
-      this.input.value = selectedTimezone.displayName;
+      // Format offset
+      const offsetStr = formatOffset(selectedTimezone.offset);
+      // Show city name with abbreviated timezone and offset: "Tokyo (JST +09:00)"
+      this.input.value = `${selectedTimezone.cityName} (${selectedTimezone.abbreviation} ${offsetStr})`;
     }
   }
 
@@ -941,21 +1013,12 @@ export class TimezoneModal {
         item.classList.add('current');
       }
 
-      // Format offset for display
-      const offsetHours = Math.floor(Math.abs(timezone.offset));
-      const offsetMinutes = Math.round((Math.abs(timezone.offset) - offsetHours) * 60);
-      const offsetSign = timezone.offset >= 0 ? '+' : '-';
-      const offsetStr =
-        offsetMinutes > 0
-          ? `${offsetSign}${offsetHours}:${offsetMinutes.toString().padStart(2, '0')}`
-          : `${offsetSign}${offsetHours}`;
-
-      // Get common name (city name from IANA)
-      const commonName = timezone.name;
+      // Format offset for display using the existing formatOffset function
+      const offsetStr = formatOffset(timezone.offset);
 
       item.innerHTML = `
-        <div class="wheel-timezone-name">${timezone.displayName} (${offsetStr})</div>
-        <div class="wheel-timezone-display">${commonName}</div>
+        <div class="wheel-timezone-name">${timezone.cityName} (${timezone.abbreviation} ${offsetStr})</div>
+        <div class="wheel-timezone-display">${timezone.displayName}</div>
       `;
 
       // Click handler to select this timezone
