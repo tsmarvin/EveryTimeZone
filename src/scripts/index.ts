@@ -406,7 +406,11 @@ export class TimelineManager {
     // Add a few timezones around the world for demonstration
     const additionalTimezones = getTimezonesForTimeline(5);
     additionalTimezones.forEach(tz => {
-      if (!this.selectedTimezones.find(selected => selected.iana === tz.iana)) {
+      // Check for both duplicate IANA identifiers and duplicate offsets
+      const isDuplicateIana = this.selectedTimezones.find(selected => selected.iana === tz.iana);
+      const isDuplicateOffset = this.selectedTimezones.find(selected => selected.offset === tz.offset);
+
+      if (!isDuplicateIana && !isDuplicateOffset) {
         this.selectedTimezones.push(tz);
       }
     });
