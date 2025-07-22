@@ -672,7 +672,7 @@ p {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   min-height: 180px;
   padding: var(--space-sm) 0;
 }
@@ -692,6 +692,8 @@ p {
   font-weight: bold;
   transition: var(--transition);
   box-shadow: var(--shadow);
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .wheel-nav-btn:hover {
@@ -713,6 +715,9 @@ p {
   justify-content: center;
   width: 100%;
   min-height: 120px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: var(--space-xs) 0;
 }
 
 .wheel-timezone-item {
