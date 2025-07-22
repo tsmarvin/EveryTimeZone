@@ -669,7 +669,7 @@ p {
   align-items: center;
   justify-content: flex-start;
   gap: var(--space-sm);
-  min-height: 250px;
+  min-height: 200px;
   padding: var(--space-sm) 0;
 }
 
