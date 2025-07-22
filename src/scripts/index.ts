@@ -365,6 +365,47 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone): Tim
 }
 
 /**
+ * Get the current cell width based on screen size
+ * Matches the CSS media query breakpoints for .timeline-cell
+ * @returns Cell width in pixels
+ */
+function getCellWidth(): number {
+  const screenWidth = window.innerWidth;
+
+  // Match CSS media query breakpoints for .timeline-cell min-width
+  if (screenWidth <= 375) {
+    return 50; // Extra small devices
+  } else if (screenWidth <= 576) {
+    return 55; // Small devices
+  } else if (screenWidth >= 1400) {
+    return 90; // Extra large devices
+  } else if (screenWidth >= 992) {
+    return 80; // Large devices
+  } else if (screenWidth >= 768) {
+    return 70; // Medium devices
+  } else {
+    return 60; // Default
+  }
+}
+
+/**
+ * Calculate scroll position to place current hour at the leftmost visible position
+ * @returns Scroll position in pixels
+ */
+function getCurrentHourScrollPosition(): number {
+  const cellWidth = getCellWidth();
+  const currentHourIndex = 24; // Current hour is at index 24 in the 48-hour timeline
+
+  // Position current hour as the second visible column (with one cell padding for better UX)
+  // This ensures the current hour is at the leftmost visible position with some breathing room
+  const paddingCells = 1;
+  const scrollPosition = (currentHourIndex - paddingCells) * cellWidth;
+
+  // Ensure we don't scroll to negative position
+  return Math.max(0, scrollPosition);
+}
+
+/**
  * Create timeline data for rendering
  * @param numHours - Number of hours to display
  * @param numRows - Number of timezone rows to display
@@ -548,9 +589,9 @@ export function renderTimeline(): void {
   // Apply dynamic width calculation after all rows are rendered
   adjustTimezoneLabelWidths();
 
-  // Scroll to position current hour on the left side of the viewport
-  // The current hour is at index 24, and each cell is 60px wide
-  const currentHourScrollPosition = 24 * 60; // 60px per cell
+  // Scroll to position current hour at the leftmost visible position
+  // Use responsive cell width calculation for proper positioning across screen sizes
+  const currentHourScrollPosition = getCurrentHourScrollPosition();
   container.scrollLeft = currentHourScrollPosition;
 }
 
@@ -697,9 +738,9 @@ export class TimelineManager {
     // Apply dynamic width calculation after all rows are rendered
     adjustTimezoneLabelWidths();
 
-    // Scroll to position current hour on the left side of the viewport
-    // The current hour is at index 24, and each cell is 60px wide
-    const currentHourScrollPosition = 24 * 60; // 60px per cell
+    // Scroll to position current hour at the leftmost visible position
+    // Use responsive cell width calculation for proper positioning across screen sizes
+    const currentHourScrollPosition = getCurrentHourScrollPosition();
     this.container.scrollLeft = currentHourScrollPosition;
   }
 }
