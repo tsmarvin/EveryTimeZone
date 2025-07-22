@@ -1032,8 +1032,16 @@ p {
   width: 100%;
 }
 
-.mode-option::before {
-  content: '⚙️';
+/* Dark mode option uses moon emoji */
+.mode-radio[value="dark"] + .mode-option::before {
+  content: '🌙';
+  margin-right: var(--space-sm);
+  font-size: var(--text-lg);
+}
+
+/* Light mode option uses sun emoji */
+.mode-radio[value="light"] + .mode-option::before {
+  content: '☀️';
   margin-right: var(--space-sm);
   font-size: var(--text-lg);
 }

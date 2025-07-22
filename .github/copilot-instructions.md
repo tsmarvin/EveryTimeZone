@@ -63,8 +63,8 @@ refactor: extract timezone utils to separate module
   - Large Desktop (2560x1440)
   - TV (7680×4320)
 - **Theme modes to test:**
-  - Dark mode (default) - ☀️ icon visible indicates dark mode
-  - Light mode (toggle theme button) - 🌙 icon visible indicates light mode
+  - Dark mode (default) - 🌙 icon visible indicates dark mode
+  - Light mode (toggle theme button) - ☀️ icon visible indicates light mode
 - **Total screenshots required:** 12 screenshots minimum (6 sizes × 2 themes) for any CSS/HTML change
 
 **REQUIRED SCREENSHOT PROTOCOL STEPS**
