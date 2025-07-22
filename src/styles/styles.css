@@ -419,7 +419,8 @@ p {
 }
 
 .timeline-timezone-label {
-  min-width: 140px;
+  min-width: 160px;
+  width: 160px;
   background: var(--color-surface-variant);
   border-right: 2px solid var(--color-border);
   flex-direction: row;
@@ -430,6 +431,7 @@ p {
   position: sticky;
   left: 0;
   z-index: 1;
+  flex-shrink: 0;
 }
 
 .timeline-header .timeline-timezone-label {
@@ -1159,7 +1161,8 @@ p {
   }
 
   .timeline-timezone-label {
-    min-width: 100px;
+    min-width: 120px;
+    width: 120px;
     padding: var(--space-xs) var(--space-sm);
   }
 
@@ -1238,7 +1241,8 @@ p {
   }
 
   .timeline-timezone-label {
-    min-width: 160px;
+    min-width: 180px;
+    width: 180px;
   }
 }
 
@@ -1262,7 +1266,8 @@ p {
   }
 
   .timeline-timezone-label {
-    min-width: 180px;
+    min-width: 200px;
+    width: 200px;
     padding: var(--space-md) var(--space-lg);
   }
 
@@ -1302,7 +1307,8 @@ p {
   }
 
   .timeline-timezone-label {
-    min-width: 200px;
+    min-width: 220px;
+    width: 220px;
   }
 }
 

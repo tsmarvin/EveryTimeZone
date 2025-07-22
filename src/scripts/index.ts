@@ -86,7 +86,7 @@ export function getUserTimezone(): TimeZone {
     displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || userTimezone;
 
   return {
-    name: userTimezone.split('/').pop() || userTimezone,
+    name: createTimezoneDisplayName(userTimezone, offset),
     offset,
     displayName,
     iana: userTimezone,
@@ -152,7 +152,7 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
     const displayName = displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || iana;
 
     return {
-      name: iana.split('/').pop() || iana,
+      name: createTimezoneDisplayName(iana, offset),
       offset,
       displayName,
       iana,
@@ -174,6 +174,40 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
   const end = Math.min(timezones.length, start + numRows);
 
   return timezones.slice(start, end);
+}
+
+/**
+ * Create a more descriptive timezone name based on offset and location
+ * @param iana IANA timezone identifier
+ * @param offset UTC offset in hours
+ * @returns A more descriptive timezone name
+ */
+function createTimezoneDisplayName(iana: string, offset: number): string {
+  // Format offset for display
+  const offsetStr = formatOffset(offset);
+
+  // For common timezone patterns, use more recognizable names
+  const commonNames: Record<string, string> = {
+    'America/New_York': 'Eastern Time',
+    'America/Chicago': 'Central Time',
+    'America/Denver': 'Mountain Time',
+    'America/Los_Angeles': 'Pacific Time',
+    'America/Toronto': 'Eastern Time',
+    'Europe/London': 'GMT/BST',
+    'Europe/Paris': 'CET/CEST',
+    'Europe/Berlin': 'CET/CEST',
+    'Europe/Rome': 'CET/CEST',
+    'Europe/Moscow': 'MSK',
+    'Asia/Tokyo': 'JST',
+    'Asia/Shanghai': 'CST',
+    'Asia/Kolkata': 'IST',
+    'Asia/Dubai': 'GST',
+    'Australia/Sydney': 'AEST/AEDT',
+    'Pacific/Auckland': 'NZST/NZDT',
+    'Pacific/Honolulu': 'HST',
+  };
+
+  return commonNames[iana] || `UTC${offsetStr}`;
 }
 
 /**
@@ -612,7 +646,7 @@ export function getAllTimezonesOrdered(): TimeZone[] {
     const displayName = displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || iana;
 
     return {
-      name: iana.split('/').pop() || iana,
+      name: createTimezoneDisplayName(iana, offset),
       offset,
       displayName,
       iana,
