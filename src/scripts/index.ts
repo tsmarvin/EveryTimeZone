@@ -370,8 +370,10 @@ export function renderTimeline(): void {
     const labelCell = document.createElement('div');
     labelCell.className = 'timeline-cell timeline-timezone-label';
     labelCell.innerHTML = `
-      <div class="timezone-name">${row.timezone.name}</div>
-      <div class="timezone-offset">${formatOffset(row.timezone.offset)}</div>
+      <div class="timezone-info">
+        <div class="timezone-name">${row.timezone.name}</div>
+        <div class="timezone-offset">${formatOffset(row.timezone.offset)}</div>
+      </div>
     `;
     rowElement.appendChild(labelCell);
 
