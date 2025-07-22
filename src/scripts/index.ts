@@ -177,37 +177,34 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
 }
 
 /**
- * Create a more descriptive timezone name based on offset and location
+ * Create a timezone display name using browser's native localization
  * @param iana IANA timezone identifier
- * @param offset UTC offset in hours
- * @returns A more descriptive timezone name
+ * @param offset UTC offset in hours (fallback for display)
+ * @returns Browser-localized timezone name
  */
 function createTimezoneDisplayName(iana: string, offset: number): string {
-  // Format offset for display
+  try {
+    // Use browser's native timezone display names in user's language
+    const formatter = new Intl.DateTimeFormat(undefined, {
+      timeZone: iana,
+      timeZoneName: 'long',
+    });
+
+    // Get the timezone name from a sample date
+    const parts = formatter.formatToParts(new Date());
+    const timeZonePart = parts.find(part => part.type === 'timeZoneName');
+
+    if (timeZonePart && timeZonePart.value) {
+      return timeZonePart.value;
+    }
+  } catch {
+    // If the IANA timezone is not supported, fall back to UTC offset
+    console.warn(`Timezone ${iana} not supported by browser, falling back to UTC offset`);
+  }
+
+  // Fallback to UTC offset format
   const offsetStr = formatOffset(offset);
-
-  // For common timezone patterns, use more recognizable names
-  const commonNames: Record<string, string> = {
-    'America/New_York': 'Eastern Time',
-    'America/Chicago': 'Central Time',
-    'America/Denver': 'Mountain Time',
-    'America/Los_Angeles': 'Pacific Time',
-    'America/Toronto': 'Eastern Time',
-    'Europe/London': 'GMT/BST',
-    'Europe/Paris': 'CET/CEST',
-    'Europe/Berlin': 'CET/CEST',
-    'Europe/Rome': 'CET/CEST',
-    'Europe/Moscow': 'MSK',
-    'Asia/Tokyo': 'JST',
-    'Asia/Shanghai': 'CST',
-    'Asia/Kolkata': 'IST',
-    'Asia/Dubai': 'GST',
-    'Australia/Sydney': 'AEST/AEDT',
-    'Pacific/Auckland': 'NZST/NZDT',
-    'Pacific/Honolulu': 'HST',
-  };
-
-  return commonNames[iana] || `UTC${offsetStr}`;
+  return `UTC${offsetStr}`;
 }
 
 /**
