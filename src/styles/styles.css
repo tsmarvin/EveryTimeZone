@@ -1001,6 +1001,12 @@ p {
   width: 100%;
 }
 
+.mode-option::before {
+  content: "⚙️";
+  margin-right: var(--space-sm);
+  font-size: var(--text-lg);
+}
+
 .mode-option:hover {
   border-color: var(--color-primary);
   background: var(--color-surface-hover);
@@ -1009,11 +1015,6 @@ p {
 .mode-radio:checked + .mode-option {
   border-color: var(--color-primary);
   background: var(--color-primary-subtle);
-}
-
-.mode-icon {
-  margin-right: var(--space-sm);
-  font-size: var(--text-lg);
 }
 
 .mode-text {

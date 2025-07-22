@@ -69,12 +69,21 @@ describe('Theme Management (Real Implementation)', () => {
       expect(settingsPanel.getCurrentSettings().mode).toBe('light');
     });
 
-    it('should show correct mode icons in the settings panel', () => {
-      const darkModeIcon = document.querySelector('input[value="dark"]')?.parentElement?.querySelector('.mode-icon');
-      const lightModeIcon = document.querySelector('input[value="light"]')?.parentElement?.querySelector('.mode-icon');
+    it('should have consistent mode options in the settings panel', () => {
+      const darkModeOption = document.querySelector('input[value="dark"]')?.parentElement?.querySelector('.mode-option');
+      const lightModeOption = document.querySelector('input[value="light"]')?.parentElement?.querySelector('.mode-option');
       
-      expect(darkModeIcon?.textContent).toBe('⚙️');
-      expect(lightModeIcon?.textContent).toBe('⚙️');
+      // Both options should exist and have the same structure
+      expect(darkModeOption).toBeTruthy();
+      expect(lightModeOption).toBeTruthy();
+      
+      // Both should have mode-text elements
+      expect(darkModeOption?.querySelector('.mode-text')?.textContent).toBe('Dark Mode');
+      expect(lightModeOption?.querySelector('.mode-text')?.textContent).toBe('Light Mode');
+      
+      // Both should have the same CSS classes (icons are now via CSS pseudo-elements)
+      expect(darkModeOption?.className).toBe('mode-option');
+      expect(lightModeOption?.className).toBe('mode-option');
     });
   });
 
