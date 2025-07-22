@@ -586,14 +586,16 @@ export function renderTimeline(): void {
   adjustTimezoneLabelWidths();
 
   // Scroll to position current hour at the leftmost visible position
-  // Use responsive cell width calculation for proper positioning across screen sizes
-  // Use setTimeout to ensure layout and width calculations are complete before scrolling
-  setTimeout(() => {
+  // Since the calculation is now correct, apply it directly and in next frame
+  const scrollToCurrentHour = () => {
     const currentHourScrollPosition = getCurrentHourScrollPosition();
-    console.log('[renderTimeline] Setting scroll position to:', currentHourScrollPosition);
     container.scrollLeft = currentHourScrollPosition;
-    console.log('[renderTimeline] Actual scroll position after setting:', container.scrollLeft);
-  }, 0);
+  };
+
+  // Apply scroll position immediately and ensure it persists
+  scrollToCurrentHour();
+  // Also apply after next frame to handle any layout shifts
+  requestAnimationFrame(scrollToCurrentHour);
 }
 
 /**
@@ -740,14 +742,16 @@ export class TimelineManager {
     adjustTimezoneLabelWidths();
 
     // Scroll to position current hour at the leftmost visible position
-    // Use responsive cell width calculation for proper positioning across screen sizes
-    // Use setTimeout to ensure layout and width calculations are complete before scrolling
-    setTimeout(() => {
+    // Since the calculation is now correct, apply it directly and in next frame
+    const scrollToCurrentHour = () => {
       const currentHourScrollPosition = getCurrentHourScrollPosition();
-      console.log('[TimelineManager] Setting scroll position to:', currentHourScrollPosition);
       this.container.scrollLeft = currentHourScrollPosition;
-      console.log('[TimelineManager] Actual scroll position after setting:', this.container.scrollLeft);
-    }, 0);
+    };
+
+    // Apply scroll position immediately and ensure it persists
+    scrollToCurrentHour();
+    // Also apply after next frame to handle any layout shifts
+    requestAnimationFrame(scrollToCurrentHour);
   }
 }
 
