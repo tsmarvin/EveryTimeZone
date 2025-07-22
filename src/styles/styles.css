@@ -212,6 +212,13 @@ p {
   text-decoration: underline;
 }
 
+.footer .version {
+  margin-left: var(--space-md);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+  opacity: 0.7;
+}
+
 /* Welcome Section */
 .welcome {
   max-width: 800px;
