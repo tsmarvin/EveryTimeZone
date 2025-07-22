@@ -6,6 +6,7 @@
  */
 
 import * as SunCalc from 'suncalc';
+import { SettingsPanel } from './settings.js';
 
 // Type definitions for timezone and timeline data structures
 
@@ -177,6 +178,25 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
 }
 
 /**
+ * Extract and format city name from IANA timezone identifier
+ * @param iana IANA timezone identifier (e.g., "America/New_York")
+ * @returns Formatted city name (e.g., "New York")
+ */
+function extractCityName(iana: string): string {
+  // Extract the city part from IANA identifier (everything after the last slash)
+  const parts = iana.split('/');
+  const cityPart = parts[parts.length - 1];
+
+  // Handle case where cityPart might be undefined or empty
+  if (!cityPart) {
+    return iana; // Fallback to full IANA identifier
+  }
+
+  // Replace underscores with spaces and handle special cases
+  return cityPart.replace(/_/g, ' ');
+}
+
+/**
  * Create a timezone display name using browser's native localization
  * @param iana IANA timezone identifier
  * @param offset UTC offset in hours (fallback for display)
@@ -324,10 +344,45 @@ export function renderTimeline(): void {
   }
 
   const { numHours, numRows } = getTimelineDimensions();
+
+  // Get current time format setting
+  const settings = SettingsPanel.getCurrentSettings();
+  const timeFormat = settings?.timeFormat || '12h';
+
   const timelineData = createTimelineData(numHours, numRows);
 
   // Clear container
   container.innerHTML = '';
+
+
+  // Create timeline header with hours
+  const header = document.createElement('div');
+  header.className = 'timeline-header';
+
+  // Empty cell for timezone labels
+  const emptyCell = document.createElement('div');
+  emptyCell.className = 'timeline-cell timeline-timezone-label';
+  header.appendChild(emptyCell);
+
+  // Hour cells
+  const firstRow = timelineData[0];
+  if (firstRow) {
+    firstRow.hours.forEach((hour, index) => {
+      const hourCell = document.createElement('div');
+      hourCell.className = 'timeline-cell timeline-hour-header';
+      // Use consistent format based on setting
+      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+
+      // Mark current hour
+      if (index === 0) {
+        hourCell.classList.add('current-hour');
+      }
+
+      header.appendChild(hourCell);
+    });
+  }
+
+  container.appendChild(header);
 
   // Create timeline rows
   timelineData.forEach(row => {
@@ -342,8 +397,10 @@ export function renderTimeline(): void {
     const labelCell = document.createElement('div');
     labelCell.className = 'timeline-cell timeline-timezone-label';
     labelCell.innerHTML = `
-      <div class="timezone-name">${row.timezone.name}</div>
-      <div class="timezone-offset">${formatOffset(row.timezone.offset)}</div>
+      <div class="timezone-info">
+        <div class="timezone-name">${extractCityName(row.timezone.iana)}</div>
+        <div class="timezone-offset">${row.timezone.displayName} (${formatOffset(row.timezone.offset)})</div>
+      </div>
     `;
     rowElement.appendChild(labelCell);
 
@@ -351,7 +408,8 @@ export function renderTimeline(): void {
     row.hours.forEach((hour, index) => {
       const hourCell = document.createElement('div');
       hourCell.className = 'timeline-cell timeline-hour';
-      hourCell.textContent = hour.time24;
+      // Use consistent format based on setting
+      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
       // Mark current hour
       if (index === 0) {
@@ -400,6 +458,11 @@ export class TimelineManager {
 
     // Initialize with user's timezone and a few others
     this.initializeDefaultTimezones();
+
+    // Listen for settings changes to refresh timeline
+    window.addEventListener('settingsChanged', () => {
+      this.renderTimeline();
+    });
   }
 
   private initializeDefaultTimezones(): void {
@@ -446,6 +509,10 @@ export class TimelineManager {
   private renderTimeline(): void {
     const { numHours } = getTimelineDimensions();
 
+    // Get current time format setting
+    const settings = SettingsPanel.getCurrentSettings();
+    const timeFormat = settings?.timeFormat || '12h';
+
     // Clear container
     this.container.innerHTML = '';
 
@@ -459,6 +526,34 @@ export class TimelineManager {
     buttonContainer.className = 'timeline-controls';
     buttonContainer.appendChild(addButton);
     this.container.appendChild(buttonContainer);
+
+    // Create timeline header with hours
+    const header = document.createElement('div');
+    header.className = 'timeline-header';
+
+    // Empty cell for timezone labels
+    const emptyCell = document.createElement('div');
+    emptyCell.className = 'timeline-cell timeline-timezone-label';
+    header.appendChild(emptyCell);
+
+    // Hour cells based on user's timezone
+    const userTz = getUserTimezone();
+    const userHours = generateTimelineHours(numHours, userTz);
+    userHours.forEach((hour, index) => {
+      const hourCell = document.createElement('div');
+      hourCell.className = 'timeline-cell timeline-hour-header';
+      // Use consistent format based on setting
+      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+
+      // Mark current hour
+      if (index === 0) {
+        hourCell.classList.add('current-hour');
+      }
+
+      header.appendChild(hourCell);
+    });
+
+    this.container.appendChild(header);
 
     // Create timeline rows for selected timezones, sorted by offset
     const sortedTimezones = [...this.selectedTimezones].sort((a, b) => a.offset - b.offset);
@@ -476,8 +571,8 @@ export class TimelineManager {
       labelCell.className = 'timeline-cell timeline-timezone-label';
       labelCell.innerHTML = `
         <div class="timezone-info">
-          <div class="timezone-name">${timezone.name}</div>
-          <div class="timezone-offset">${formatOffset(timezone.offset)}</div>
+          <div class="timezone-name">${extractCityName(timezone.iana)}</div>
+          <div class="timezone-offset">${timezone.displayName} (${formatOffset(timezone.offset)})</div>
         </div>
         <button class="remove-timezone-btn" title="Remove timezone">×</button>
       `;
@@ -493,7 +588,8 @@ export class TimelineManager {
       timezoneHours.forEach((hour, index) => {
         const hourCell = document.createElement('div');
         hourCell.className = 'timeline-cell timeline-hour';
-        hourCell.textContent = hour.time24;
+        // Use consistent format based on setting
+        hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
         // Mark current hour
         if (index === 0) {
@@ -953,5 +1049,3 @@ function simpleIsDaylight(latitude: number, date: Date): boolean {
 
   return hour >= sunrise && hour <= sunset;
 }
-
-// Export initializeTimeline for use by app.ts
