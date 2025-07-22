@@ -338,9 +338,7 @@ export function renderTimeline(): void {
     // Timezone label
     const labelCell = document.createElement('div');
     labelCell.className = 'timeline-cell timeline-timezone-label';
-    const currentLocationLabel = row.isUserTimezone ? '<div class="current-location-label">Current Location</div>' : '';
     labelCell.innerHTML = `
-      ${currentLocationLabel}
       <div class="timezone-name">${row.timezone.name}</div>
       <div class="timezone-offset">${formatOffset(row.timezone.offset)}</div>
     `;
@@ -495,11 +493,8 @@ export class TimelineManager {
       // Timezone label with remove button
       const labelCell = document.createElement('div');
       labelCell.className = 'timeline-cell timeline-timezone-label';
-      const isUserTimezone = timezone.iana === userTz.iana;
-      const currentLocationLabel = isUserTimezone ? '<div class="current-location-label">Current Location</div>' : '';
       labelCell.innerHTML = `
         <div class="timezone-info">
-          ${currentLocationLabel}
           <div class="timezone-name">${timezone.name}</div>
           <div class="timezone-offset">${formatOffset(timezone.offset)}</div>
         </div>
