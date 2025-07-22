@@ -328,9 +328,14 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone): Tim
 
   const hours: TimelineHour[] = [];
 
+  // Calculate hours from -24 to +24 relative to current hour (48 hours total)
+  // This gives us 24 hours before and 24 hours after the current time
+  const startOffset = -24;
+
   for (let i = 0; i < numHours; i++) {
     // Calculate the time in the target timezone
-    const baseTime = new Date(currentUserHour.getTime() + i * 60 * 60 * 1000);
+    const hourOffset = startOffset + i;
+    const baseTime = new Date(currentUserHour.getTime() + hourOffset * 60 * 60 * 1000);
     const offsetDiff = (timezone.offset - userTz.offset) * 60 * 60 * 1000;
     const timeInTz = new Date(baseTime.getTime() + offsetDiff);
 
@@ -384,9 +389,9 @@ export function getTimelineDimensions(): { numHours: number; numRows: number } {
   // Use window dimensions if available, otherwise fallback to defaults
   const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 768;
 
-  // Always show minimum 24 hours for better timeline visualization
-  // This supports the requirement to always show at least 24 hours
-  const numHours = 24;
+  // Always show 48 hours total: 24 hours before and 24 hours after current time
+  // This allows users to see a full day in both directions from the current moment
+  const numHours = 48;
 
   // Calculate number of rows based on available height
   // Minimum 3 rows, but try to fill the screen
@@ -513,8 +518,8 @@ export function renderTimeline(): void {
       // Use consistent format based on setting
       hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
-      // Mark current hour
-      if (index === 0) {
+      // Mark current hour (index 24 since we start from -24 hours)
+      if (index === 24) {
         hourCell.classList.add('current-hour');
       }
 
@@ -542,6 +547,11 @@ export function renderTimeline(): void {
 
   // Apply dynamic width calculation after all rows are rendered
   adjustTimezoneLabelWidths();
+
+  // Scroll to position current hour on the left side of the viewport
+  // The current hour is at index 24, and each cell is 60px wide
+  const currentHourScrollPosition = 24 * 60; // 60px per cell
+  container.scrollLeft = currentHourScrollPosition;
 }
 
 /**
@@ -668,8 +678,8 @@ export class TimelineManager {
         // Use consistent format based on setting
         hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
-        // Mark current hour
-        if (index === 0) {
+        // Mark current hour (index 24 since we start from -24 hours)
+        if (index === 24) {
           hourCell.classList.add('current-hour');
         }
 
@@ -686,6 +696,11 @@ export class TimelineManager {
 
     // Apply dynamic width calculation after all rows are rendered
     adjustTimezoneLabelWidths();
+
+    // Scroll to position current hour on the left side of the viewport
+    // The current hour is at index 24, and each cell is 60px wide
+    const currentHourScrollPosition = 24 * 60; // 60px per cell
+    this.container.scrollLeft = currentHourScrollPosition;
   }
 }
 

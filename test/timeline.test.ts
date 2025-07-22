@@ -41,7 +41,7 @@ describe('Timeline Responsive Design', () => {
       
       const dimensions = getTimelineDimensions();
       
-      expect(dimensions.numHours).toBe(24); // Always show 24 hours as per requirement
+      expect(dimensions.numHours).toBe(48); // Always show 48 hours as per new requirement (24 before + 24 after current time)
       expect(dimensions.numRows).toBeGreaterThanOrEqual(3); // Minimum rows
       expect(dimensions.numRows).toBeLessThanOrEqual(12); // Maximum rows
     });
@@ -52,7 +52,7 @@ describe('Timeline Responsive Design', () => {
       
       const dimensions = getTimelineDimensions();
       
-      expect(dimensions.numHours).toBe(24); // Always show 24 hours as per requirement
+      expect(dimensions.numHours).toBe(48); // Always show 48 hours as per new requirement (24 before + 24 after current time)
       expect(dimensions.numRows).toBeGreaterThanOrEqual(3);
       expect(dimensions.numRows).toBeLessThanOrEqual(12);
     });
@@ -63,7 +63,7 @@ describe('Timeline Responsive Design', () => {
       
       const dimensions = getTimelineDimensions();
       
-      expect(dimensions.numHours).toBe(24); // Always show 24 hours as per requirement
+      expect(dimensions.numHours).toBe(48); // Always show 48 hours as per new requirement (24 before + 24 after current time)
       expect(dimensions.numRows).toBeGreaterThanOrEqual(3);
       expect(dimensions.numRows).toBeLessThanOrEqual(12);
     });
@@ -74,7 +74,7 @@ describe('Timeline Responsive Design', () => {
       
       const dimensions = getTimelineDimensions();
       
-      expect(dimensions.numHours).toBe(24); // Always show 24 hours as per requirement
+      expect(dimensions.numHours).toBe(48); // Always show 48 hours as per new requirement (24 before + 24 after current time)
       expect(dimensions.numRows).toBeGreaterThanOrEqual(3);
       expect(dimensions.numRows).toBeLessThanOrEqual(12);
     });
@@ -85,7 +85,7 @@ describe('Timeline Responsive Design', () => {
       
       const dimensions = getTimelineDimensions();
       
-      expect(dimensions.numHours).toBe(24); // Always show 24 hours as per requirement
+      expect(dimensions.numHours).toBe(48); // Always show 48 hours as per new requirement (24 before + 24 after current time)
       expect(dimensions.numRows).toBeGreaterThanOrEqual(3);
       expect(dimensions.numRows).toBeLessThanOrEqual(12);
     });
@@ -96,7 +96,7 @@ describe('Timeline Responsive Design', () => {
       Object.defineProperty(window, 'innerHeight', { value: 300, writable: true });
       
       const smallDimensions = getTimelineDimensions();
-      expect(smallDimensions.numHours).toBe(24); // Always show 24 hours as per requirement
+      expect(smallDimensions.numHours).toBe(48); // Always show 48 hours as per new requirement (24 before + 24 after current time)
       expect(smallDimensions.numRows).toBeGreaterThanOrEqual(3);
       
       // Test very large screen
@@ -104,7 +104,7 @@ describe('Timeline Responsive Design', () => {
       Object.defineProperty(window, 'innerHeight', { value: 3000, writable: true });
       
       const largeDimensions = getTimelineDimensions();
-      expect(largeDimensions.numHours).toBe(24); // Always show 24 hours as per requirement
+      expect(largeDimensions.numHours).toBe(48); // Always show 48 hours as per new requirement (24 before + 24 after current time)
       expect(largeDimensions.numRows).toBeLessThanOrEqual(12);
     });
 
@@ -133,14 +133,14 @@ describe('Timeline Responsive Design', () => {
       
       expect(timelineData.length).toBeLessThanOrEqual(dimensions.numRows);
       
-      // Each row should have exactly 24 hours
+      // Each row should have exactly 48 hours
       timelineData.forEach(row => {
-        expect(row.hours.length).toBe(24);
+        expect(row.hours.length).toBe(48);
       });
     });
 
     it('should calculate optimal columns based on available width', () => {
-      // With our new design, we always show 24 hours regardless of width
+      // With our new design, we always show 48 hours regardless of width
       Object.defineProperty(window, 'innerWidth', { value: 800, writable: true });
       Object.defineProperty(window, 'innerHeight', { value: 600, writable: true });
       
@@ -151,14 +151,14 @@ describe('Timeline Responsive Design', () => {
       
       const wideDimensions = getTimelineDimensions();
       
-      // Both should show 24 hours as that's our new requirement
-      expect(mediumDimensions.numHours).toBe(24);
-      expect(wideDimensions.numHours).toBe(24);
+      // Both should show 48 hours as that's our new requirement
+      expect(mediumDimensions.numHours).toBe(48);
+      expect(wideDimensions.numHours).toBe(48);
     });
 
     it('should prefer common hour increments', () => {
-      // With our new design, we always show exactly 24 hours regardless of width
-      const commonIncrements = [4, 6, 8, 12, 16, 18, 24];
+      // With our new design, we always show exactly 48 hours regardless of width
+      const commonIncrements = [4, 6, 8, 12, 16, 18, 24, 48];
       
       for (let width = 600; width <= 2000; width += 200) {
         Object.defineProperty(window, 'innerWidth', { value: width, writable: true });
@@ -166,10 +166,10 @@ describe('Timeline Responsive Design', () => {
         
         const dimensions = getTimelineDimensions();
         
-        // Always expect exactly 24 hours
-        expect(dimensions.numHours).toBe(24);
+        // Always expect exactly 48 hours
+        expect(dimensions.numHours).toBe(48);
         
-        // 24 is indeed a common increment
+        // 48 is indeed a common increment
         expect(commonIncrements).toContain(dimensions.numHours);
       }
     });
