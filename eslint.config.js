@@ -51,6 +51,6 @@ export default [
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', '*.js', 'src/build/'],
+    ignores: ['dist/', 'node_modules/', '*.js'],
   },
 ];
