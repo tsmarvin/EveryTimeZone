@@ -57,80 +57,26 @@ jobs:
         echo "Previous tag: $PREVIOUS_TAG"
         echo "Current version: v${{ steps.gitversion.outputs.semVer }}"
         
-        # Generate changelog
-        CHANGELOG=$(git log --oneline --pretty=format:"- %s" $PREVIOUS_TAG..HEAD | grep -E '^- (feat|fix|docs|style|refactor|perf|test|chore)' | sed 's/^- //')
-        
-        # Categorize commits
-        FEATURES=$(echo "$CHANGELOG" | grep '^feat' | sed 's/^feat: /- /' || true)
-        FIXES=$(echo "$CHANGELOG" | grep '^fix' | sed 's/^fix: /- /' || true)
-        DOCS=$(echo "$CHANGELOG" | grep '^docs' | sed 's/^docs: /- /' || true)
-        REFACTOR=$(echo "$CHANGELOG" | grep '^refactor' | sed 's/^refactor: /- /' || true)
-        PERF=$(echo "$CHANGELOG" | grep '^perf' | sed 's/^perf: /- /' || true)
-        CHORE=$(echo "$CHANGELOG" | grep '^chore' | sed 's/^chore: /- /' || true)
+        # Generate changelog with all commit messages since previous tag
+        CHANGELOG=$(git log --oneline --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
         
         # Build release notes
-        NOTES="## Every Time Zone v${{ steps.gitversion.outputs.semVer }}
+        cat > release_notes.md << EOF
+        ## Every Time Zone v${{ steps.gitversion.outputs.semVer }}
 
-Built site for deployment to GitHub Pages or any static hosting provider.
+        Built site for deployment to GitHub Pages or any static hosting provider.
 
-### Changes"
-        
-        if [ ! -z "$FEATURES" ]; then
-          NOTES="$NOTES
+        ### Changes
 
-#### ✨ New Features
-$FEATURES"
-        fi
-        
-        if [ ! -z "$FIXES" ]; then
-          NOTES="$NOTES
+        $CHANGELOG
 
-#### 🐛 Bug Fixes
-$FIXES"
-        fi
-        
-        if [ ! -z "$PERF" ]; then
-          NOTES="$NOTES
+        ### Deployment
+        Extract the archive contents to your web server root directory.
 
-#### ⚡ Performance Improvements
-$PERF"
-        fi
-        
-        if [ ! -z "$REFACTOR" ]; then
-          NOTES="$NOTES
-
-#### ♻️ Code Refactoring
-$REFACTOR"
-        fi
-        
-        if [ ! -z "$DOCS" ]; then
-          NOTES="$NOTES
-
-#### 📚 Documentation
-$DOCS"
-        fi
-        
-        if [ ! -z "$CHORE" ]; then
-          NOTES="$NOTES
-
-#### 🔧 Maintenance
-$CHORE"
-        fi
-        
-        NOTES="$NOTES
-
-### Deployment
-Extract the archive contents to your web server root directory.
-
-**Version:** ${{ steps.gitversion.outputs.informationalVersion }}
-**Commit:** ${{ github.sha }}
-**Previous Release:** $PREVIOUS_TAG"
-        
-        # Save to output file and environment
-        echo "$NOTES" > release_notes.md
-        echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-        echo "$NOTES" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
+        **Version:** ${{ steps.gitversion.outputs.informationalVersion }}
+        **Commit:** ${{ github.sha }}
+        **Previous Release:** $PREVIOUS_TAG
+        EOF
         
     - name: Create Release
       run: |
