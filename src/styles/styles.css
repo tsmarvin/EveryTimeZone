@@ -342,7 +342,10 @@ p {
   font-size: var(--text-xs);
   font-weight: bold;
   transition: var(--transition);
-  margin-left: var(--space-xs);
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  z-index: 2;
 }
 
 .remove-timezone-btn:hover {
@@ -424,9 +427,9 @@ p {
   border-right: 2px solid var(--color-border);
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   text-align: left;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) calc(var(--space-md) + 1.5rem) var(--space-sm) var(--space-md);
   position: sticky;
   left: 0;
   z-index: 1;
