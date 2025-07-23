@@ -315,10 +315,11 @@ function formatOffset(offset: number): string {
  * Generate timeline hours for display
  * @param numHours Number of hours to display in the timeline
  * @param timezone Target timezone to calculate hours for
+ * @param baseDate Date to center the timeline on (defaults to current date)
  * @returns Array of timeline hours with daylight information
  */
-export function generateTimelineHours(numHours: number, timezone: TimeZone): TimelineHour[] {
-  const now = new Date();
+export function generateTimelineHours(numHours: number, timezone: TimeZone, baseDate?: Date): TimelineHour[] {
+  const now = baseDate || new Date();
   const userTz = getUserTimezone();
 
   // Get current hour in user's timezone and round down
@@ -406,15 +407,16 @@ function getCurrentHourScrollPosition(): number {
  * Create timeline data for rendering
  * @param numHours - Number of hours to display
  * @param numRows - Number of timezone rows to display
+ * @param baseDate - Date to center the timeline on (defaults to current date)
  * @returns Array of timeline rows
  */
-export function createTimelineData(numHours: number, numRows: number): TimelineRow[] {
+export function createTimelineData(numHours: number, numRows: number, baseDate?: Date): TimelineRow[] {
   const userTz = getUserTimezone();
   const timezones = getTimezonesForTimeline(numRows);
 
   return timezones.map(timezone => ({
     timezone,
-    hours: generateTimelineHours(numHours, timezone),
+    hours: generateTimelineHours(numHours, timezone, baseDate),
     isUserTimezone: timezone.iana === userTz.iana,
   }));
 }
@@ -606,6 +608,7 @@ export class TimelineManager {
   private container: HTMLElement;
   private modal: TimezoneModal;
   private selectedTimezones: TimeZone[] = [];
+  private selectedDate: Date = new Date(); // Default to today
 
   constructor() {
     this.container = document.getElementById('timeline-container') as HTMLElement;
@@ -657,6 +660,41 @@ export class TimelineManager {
     this.renderTimeline();
   }
 
+  public setSelectedDate(date: Date): void {
+    this.selectedDate = new Date(date);
+    this.renderTimeline();
+  }
+
+  public getSelectedDate(): Date {
+    return new Date(this.selectedDate);
+  }
+
+  public openDatePicker(): void {
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.value = this.selectedDate.toISOString().split('T')[0] || '';
+    dateInput.style.position = 'absolute';
+    dateInput.style.top = '-1000px';
+    document.body.appendChild(dateInput);
+
+    dateInput.addEventListener('change', () => {
+      if (dateInput.value) {
+        const newDate = new Date(dateInput.value);
+        // Set to current time on the selected date
+        const now = new Date();
+        newDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+        this.setSelectedDate(newDate);
+      }
+      document.body.removeChild(dateInput);
+    });
+
+    dateInput.addEventListener('blur', () => {
+      document.body.removeChild(dateInput);
+    });
+
+    dateInput.click();
+  }
+
   private renderTimeline(): void {
     const { numHours } = getTimelineDimensions();
 
@@ -667,15 +705,24 @@ export class TimelineManager {
     // Clear container
     this.container.innerHTML = '';
 
-    // Create add timezone button outside the scrollable container
+    // Create timeline controls (date picker and add timezone button)
     const timelineSection = this.container.closest('.timeline-section');
     if (timelineSection) {
-      // Remove existing button if present
+      // Remove existing controls if present
       const existingControls = timelineSection.querySelector('.timeline-controls');
       if (existingControls) {
         existingControls.remove();
       }
 
+      // Create date selection button
+      const dateButton = document.createElement('button');
+      dateButton.className = 'button secondary date-picker-btn';
+      const dateStr = this.selectedDate.toLocaleDateString();
+      dateButton.textContent = `📅 ${dateStr}`;
+      dateButton.title = 'Select date to view timeline for';
+      dateButton.addEventListener('click', () => this.openDatePicker());
+
+      // Create add timezone button
       const addButton = document.createElement('button');
       addButton.className = 'button add-timezone-btn';
       addButton.textContent = '+ Add Timezone';
@@ -683,6 +730,7 @@ export class TimelineManager {
 
       const buttonContainer = document.createElement('div');
       buttonContainer.className = 'timeline-controls';
+      buttonContainer.appendChild(dateButton);
       buttonContainer.appendChild(addButton);
 
       // Insert the button container before the timeline container
@@ -731,7 +779,7 @@ export class TimelineManager {
       rowElement.appendChild(labelCell);
 
       // Hour cells
-      const timezoneHours = generateTimelineHours(numHours, timezone);
+      const timezoneHours = generateTimelineHours(numHours, timezone, this.selectedDate);
       timezoneHours.forEach((hour, index) => {
         const hourCell = document.createElement('div');
         hourCell.className = 'timeline-cell timeline-hour';
