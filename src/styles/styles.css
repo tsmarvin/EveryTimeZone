@@ -370,6 +370,11 @@ p {
   box-shadow: var(--shadow-lg);
 }
 
+.date-input-hidden {
+  position: absolute;
+  top: -1000px;
+}
+
 .remove-timezone-btn {
   background: var(--color-accent);
   color: white;

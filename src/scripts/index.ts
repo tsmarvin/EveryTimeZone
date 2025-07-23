@@ -673,8 +673,7 @@ export class TimelineManager {
     const dateInput = document.createElement('input');
     dateInput.type = 'date';
     dateInput.value = this.selectedDate.toISOString().split('T')[0] || '';
-    dateInput.style.position = 'absolute';
-    dateInput.style.top = '-1000px';
+    dateInput.className = 'date-input-hidden';
     document.body.appendChild(dateInput);
 
     dateInput.addEventListener('change', () => {
