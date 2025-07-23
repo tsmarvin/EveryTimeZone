@@ -99,117 +99,87 @@ export function getUserTimezone(): TimeZone {
 }
 
 /**
- * Get a selection of major world timezones centered around user's timezone
- * @param numRows Number of timezone rows to display (default: 5)
- * @returns Array of timezone objects centered around user's timezone
+ * Get timezones centered around user's timezone by offset progression
+ * @param numRows Number of timezone rows to display (default: 5, always uses odd numbers, minimum 3)
+ * @returns Array of timezone objects ordered by offset with user's timezone in the center
  */
 export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
   const userTz = getUserTimezone();
 
-  // Use a selection of major timezones that have coordinates for daylight calculations
-  const majorTimezones = [
-    'Pacific/Honolulu', // UTC-10
-    'America/Anchorage', // UTC-9
-    'America/Los_Angeles', // UTC-8
-    'America/Denver', // UTC-7
-    'America/Chicago', // UTC-6
-    'America/New_York', // UTC-5
-    'America/Toronto', // UTC-5
-    'Europe/London', // UTC+0/+1
-    'Europe/Paris', // UTC+1/+2
-    'Europe/Berlin', // UTC+1/+2
-    'Europe/Rome', // UTC+1/+2
-    'Europe/Moscow', // UTC+3
-    'Asia/Dubai', // UTC+4
-    'Asia/Kolkata', // UTC+5:30
-    'Asia/Shanghai', // UTC+8
-    'Asia/Tokyo', // UTC+9
-    'Australia/Sydney', // UTC+10/+11
-    'Pacific/Auckland', // UTC+12/+13
-  ];
+  // Ensure we always use an odd number of timezones (minimum 3) so user timezone can be centered
+  const oddNumRows = Math.max(3, numRows % 2 === 0 ? numRows + 1 : numRows);
 
-  // Convert IANA timezone identifiers to TimeZone objects
-  const allTimezones: TimeZone[] = majorTimezones.map(iana => {
-    const now = new Date();
+  // Calculate how many timezones to show on each side of user's timezone
+  const timezonesOnEachSide = Math.floor((oddNumRows - 1) / 2);
 
-    const formatter = new Intl.DateTimeFormat('en', {
-      timeZone: iana,
-      timeZoneName: 'longOffset',
-    });
+  // Get all available timezones from the browser
+  const allTimezones = getAllTimezonesOrdered();
 
-    const offsetStr = formatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || '+00:00';
-
-    // Parse offset string like "GMT+05:30" or "GMT-08:00"
-    const offsetMatch = offsetStr.match(/GMT([+-])(\d{2}):(\d{2})/);
-    let offset = 0;
-    if (offsetMatch && offsetMatch[2] && offsetMatch[3]) {
-      const sign = offsetMatch[1] === '+' ? 1 : -1;
-      const hours = parseInt(offsetMatch[2], 10);
-      const minutes = parseInt(offsetMatch[3], 10);
-      offset = sign * (hours + minutes / 60);
-    }
-
-    // Get display name
-    const displayFormatter = new Intl.DateTimeFormat('en', {
-      timeZone: iana,
-      timeZoneName: 'long',
-    });
-    const displayName = displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || iana;
-
-    return {
-      name: createTimezoneDisplayName(iana, offset),
-      offset,
-      displayName,
-      iana,
-      cityName: extractCityName(iana),
-      abbreviation: getTimezoneAbbreviation(displayName, iana),
-    };
-  });
-
-  // Remove duplicate offsets, keeping the first occurrence of each unique offset
-  const timezones: TimeZone[] = [];
-  const seenOffsets = new Set<number>();
-
+  // Create a map of offset -> timezone for quick lookup
+  const timezonesByOffset = new Map<number, TimeZone>();
   for (const timezone of allTimezones) {
-    if (!seenOffsets.has(timezone.offset)) {
-      timezones.push(timezone);
-      seenOffsets.add(timezone.offset);
+    // Use first timezone found for each offset (prefer major cities that will be early in the list)
+    if (!timezonesByOffset.has(timezone.offset)) {
+      timezonesByOffset.set(timezone.offset, timezone);
     }
   }
 
-  // Find user's timezone in the list or add it
-  const userTimezoneMatch = timezones.find(tz => tz.iana === userTz.iana);
-  if (!userTimezoneMatch) {
-    timezones.unshift(userTz);
+  // Generate the range of offsets we want, centered around user's timezone
+  const userOffset = userTz.offset;
+  const targetTimezones: TimeZone[] = [];
+
+  // Add timezones by offset progression: user-N, user-(N-1), ..., user, ..., user+(N-1), user+N
+  for (let i = -timezonesOnEachSide; i <= timezonesOnEachSide; i++) {
+    const targetOffset = userOffset + i;
+
+    // Find a timezone with this offset
+    let timezoneForOffset = timezonesByOffset.get(targetOffset);
+
+    // If no timezone found for exact offset, use user's timezone for center position
+    if (!timezoneForOffset && i === 0) {
+      timezoneForOffset = userTz;
+    }
+
+    // If no timezone found for other offsets, try nearby offsets (within 0.5 hours)
+    if (!timezoneForOffset) {
+      // Try half-hour increments nearby
+      const nearbyOffsets = [targetOffset + 0.5, targetOffset - 0.5];
+      for (const nearbyOffset of nearbyOffsets) {
+        timezoneForOffset = timezonesByOffset.get(nearbyOffset);
+        if (timezoneForOffset) break;
+      }
+    }
+
+    if (timezoneForOffset) {
+      targetTimezones.push(timezoneForOffset);
+    }
   }
 
-  // Sort by offset to show a nice progression
-  timezones.sort((a, b) => a.offset - b.offset);
+  // If we don't have enough timezones (some offsets might not exist),
+  // fill in gaps by taking the closest available timezones
+  if (targetTimezones.length < oddNumRows) {
+    const usedOffsets = new Set(targetTimezones.map(tz => tz.offset));
+    const availableTimezones = allTimezones.filter(tz => !usedOffsets.has(tz.offset));
 
-  // Take a selection centered around user's timezone with balanced distribution
-  const userIndex = timezones.findIndex(tz => tz.iana === userTz.iana);
+    // Sort by distance from user's timezone
+    availableTimezones.sort((a, b) => {
+      const distanceA = Math.abs(a.offset - userOffset);
+      const distanceB = Math.abs(b.offset - userOffset);
+      return distanceA - distanceB;
+    });
 
-  // For balanced distribution: equal timezones above and below user timezone
-  // For odd numRows: (numRows-1)/2 above, user, (numRows-1)/2 below
-  // For even numRows: prefer one more above, so numRows/2 above, user, (numRows/2-1) below
-  const timezonesAbove = Math.floor((numRows - 1) / 2);
-
-  const start = Math.max(0, userIndex - timezonesAbove);
-  const end = Math.min(timezones.length, start + numRows);
-
-  // If we hit the beginning of the array, extend towards the end
-  let adjustedStart = start;
-  if (start === 0 && end - start < numRows && end < timezones.length) {
-    const adjustedEnd = Math.min(timezones.length, numRows);
-    adjustedStart = Math.max(0, adjustedEnd - numRows);
-  }
-  // If we hit the end of the array, extend towards the beginning
-  else if (end === timezones.length && end - start < numRows && start > 0) {
-    adjustedStart = Math.max(0, timezones.length - numRows);
+    // Add the closest ones until we have enough
+    for (const timezone of availableTimezones) {
+      if (targetTimezones.length >= oddNumRows) break;
+      targetTimezones.push(timezone);
+      usedOffsets.add(timezone.offset);
+    }
   }
 
-  const finalEnd = Math.min(timezones.length, adjustedStart + numRows);
-  return timezones.slice(adjustedStart, finalEnd);
+  // Sort by offset to maintain the proper order
+  targetTimezones.sort((a, b) => a.offset - b.offset);
+
+  return targetTimezones.slice(0, oddNumRows);
 }
 
 /**
