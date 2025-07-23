@@ -318,7 +318,7 @@ p {
 /* Timeline Visualization Styles */
 
 .timeline-section {
-  padding: var(--space-xs) 0 0 0; /* Reduce top padding to minimize whitespace */
+  padding: 0; /* Remove all padding to maximize space usage */
   display: flex;
   flex-direction: column;
   flex: 1; /* Allow timeline section to grow and fill available space */
@@ -328,7 +328,7 @@ p {
 .timeline-controls {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: var(--space-xs); /* Reduce bottom margin to minimize whitespace */
+  margin-bottom: 0; /* Remove margin to minimize whitespace */
   gap: var(--space-sm);
 }
 

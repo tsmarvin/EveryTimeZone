@@ -129,7 +129,7 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
   ];
 
   // Convert IANA timezone identifiers to TimeZone objects
-  const timezones: TimeZone[] = majorTimezones.map(iana => {
+  const allTimezones: TimeZone[] = majorTimezones.map(iana => {
     const now = new Date();
 
     const formatter = new Intl.DateTimeFormat('en', {
@@ -165,6 +165,17 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
       abbreviation: getTimezoneAbbreviation(displayName, iana),
     };
   });
+
+  // Remove duplicate offsets, keeping the first occurrence of each unique offset
+  const timezones: TimeZone[] = [];
+  const seenOffsets = new Set<number>();
+
+  for (const timezone of allTimezones) {
+    if (!seenOffsets.has(timezone.offset)) {
+      timezones.push(timezone);
+      seenOffsets.add(timezone.offset);
+    }
+  }
 
   // Find user's timezone in the list or add it
   const userTimezoneMatch = timezones.find(tz => tz.iana === userTz.iana);
@@ -645,20 +656,11 @@ export class TimelineManager {
   }
 
   private initializeDefaultTimezones(): void {
-    const userTz = getUserTimezone();
-    this.selectedTimezones = [userTz];
+    // Get screen-appropriate number of timezone rows
+    const { numRows } = getTimelineDimensions();
 
-    // Add more timezones around the world for better screen filling
-    const additionalTimezones = getTimezonesForTimeline(8);
-    additionalTimezones.forEach(tz => {
-      // Check for both duplicate IANA identifiers and duplicate offsets
-      const isDuplicateIana = this.selectedTimezones.find(selected => selected.iana === tz.iana);
-      const isDuplicateOffset = this.selectedTimezones.find(selected => selected.offset === tz.offset);
-
-      if (!isDuplicateIana && !isDuplicateOffset) {
-        this.selectedTimezones.push(tz);
-      }
-    });
+    // Get properly centered timezones with user timezone in the middle
+    this.selectedTimezones = getTimezonesForTimeline(numRows);
 
     this.renderTimeline();
   }
@@ -706,9 +708,22 @@ export class TimelineManager {
     buttonContainer.appendChild(addButton);
     this.container.appendChild(buttonContainer);
 
-    // Create timeline rows for selected timezones, sorted by offset
-    const sortedTimezones = [...this.selectedTimezones].sort((a, b) => a.offset - b.offset);
-    sortedTimezones.forEach(timezone => {
+    // Create timeline rows for selected timezones
+    // For initial load, preserve the centered order from getTimezonesForTimeline
+    // For manually added timezones, sort by offset for logical progression
+    const userTz = getUserTimezone();
+    const userIndex = this.selectedTimezones.findIndex(tz => tz.iana === userTz.iana);
+
+    let timezonesToRender: TimeZone[];
+    if (userIndex !== -1) {
+      // User timezone exists - preserve order to maintain centering
+      timezonesToRender = this.selectedTimezones;
+    } else {
+      // Fallback to sorting by offset if user timezone not found
+      timezonesToRender = [...this.selectedTimezones].sort((a, b) => a.offset - b.offset);
+    }
+
+    timezonesToRender.forEach(timezone => {
       const rowElement = document.createElement('div');
       rowElement.className = 'timeline-row';
 
