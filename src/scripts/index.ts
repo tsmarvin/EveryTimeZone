@@ -143,11 +143,16 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
 
   // Handle edge cases: when user timezone is at start or end of offset range
   const slotsToFill = oddNumRows - 1; // Subtract 1 for user timezone already added
-  const idealSlotsPerSide = Math.floor(slotsToFill / 2);
 
-  // Check if we're at an edge case (limited timezones on one side)
-  const isAtStartEdge = offsetsBelow.length < idealSlotsPerSide;
-  const isAtEndEdge = offsetsAbove.length < idealSlotsPerSide;
+  // Only treat as edge case when we literally cannot center the user timezone
+  // due to insufficient unique offsets. This should only happen for timezones
+  // at the very edges of the international date line.
+  const totalAvailableOffsets = offsetsBelow.length + offsetsAbove.length;
+  const minRequiredForCentering = slotsToFill;
+
+  // Check if we're at a TRUE edge case (insufficient total offsets to center user timezone)
+  const isAtStartEdge = offsetsBelow.length === 0 && totalAvailableOffsets < minRequiredForCentering;
+  const isAtEndEdge = offsetsAbove.length === 0 && totalAvailableOffsets < minRequiredForCentering;
 
   let selectedOffsets = new Set([userOffset]); // Track selected offsets to avoid duplicates
 
@@ -251,29 +256,57 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
       }
     }
   } else {
-    // Normal case: balanced selection from both sides with randomization
+    // Normal case: balanced selection from both sides to center user timezone
 
-    // Create a shuffled array of available offsets to add randomness
-    const shuffledOffsets = [...offsetsBelow, ...offsetsAbove];
-    for (let i = shuffledOffsets.length - 1; i > 0; i--) {
+    // Calculate how many timezones we need from each side
+    const remainingSlotsToFill = oddNumRows - 1; // Already have user timezone
+    const slotsFromEachSide = Math.floor(remainingSlotsToFill / 2);
+    const extraSlot = remainingSlotsToFill % 2; // If odd number of remaining slots
+
+    // Select timezones from below user's timezone
+    const shuffledBelow = [...offsetsBelow];
+    for (let i = shuffledBelow.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      const temp = shuffledOffsets[i];
-      const jValue = shuffledOffsets[j];
+      const temp = shuffledBelow[i];
+      const jValue = shuffledBelow[j];
       if (temp !== undefined && jValue !== undefined) {
-        shuffledOffsets[i] = jValue;
-        shuffledOffsets[j] = temp;
+        shuffledBelow[i] = jValue;
+        shuffledBelow[j] = temp;
       }
     }
 
-    // Select random offsets until we have enough timezones
-    for (const offset of shuffledOffsets) {
-      if (targetTimezones.length >= oddNumRows) break;
-      if (!selectedOffsets.has(offset)) {
-        const timezone = timezonesByOffset.get(offset);
-        if (timezone) {
-          targetTimezones.push(timezone);
-          selectedOffsets.add(offset);
-        }
+    let belowCount = 0;
+    for (const offset of shuffledBelow) {
+      if (belowCount >= slotsFromEachSide) break;
+      const timezone = timezonesByOffset.get(offset);
+      if (timezone) {
+        targetTimezones.push(timezone);
+        selectedOffsets.add(offset);
+        belowCount++;
+      }
+    }
+
+    // Select timezones from above user's timezone
+    const shuffledAbove = [...offsetsAbove];
+    for (let i = shuffledAbove.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = shuffledAbove[i];
+      const jValue = shuffledAbove[j];
+      if (temp !== undefined && jValue !== undefined) {
+        shuffledAbove[i] = jValue;
+        shuffledAbove[j] = temp;
+      }
+    }
+
+    let aboveCount = 0;
+    const maxAbove = slotsFromEachSide + extraSlot; // Give extra slot to above if needed
+    for (const offset of shuffledAbove) {
+      if (aboveCount >= maxAbove) break;
+      const timezone = timezonesByOffset.get(offset);
+      if (timezone) {
+        targetTimezones.push(timezone);
+        selectedOffsets.add(offset);
+        aboveCount++;
       }
     }
   }
