@@ -1803,8 +1803,8 @@ p {
   --forest-medium-bright-green: var(--forest-emerald);
   --forest-lime: var(--forest-lime);
   --forest-yellow: var(--forest-yellow);
-  --forest-light-text: var(--forest-light-bg);
-  --forest-medium-light-text: var(--forest-light);
+  --forest-dark-text: var(--forest-light-bg);
+  --forest-dark-text-secondary: var(--forest-light);
   --forest-light-bg: var(--forest-pale);
   --forest-light-surface: var(--forest-pale-green);
   --forest-light-variant: var(--forest-mint);
@@ -1828,8 +1828,8 @@ p {
   --color-primary-subtle: rgba(34, 197, 94, 0.1);
   --color-secondary: var(--forest-lime);
   --color-accent: var(--forest-yellow);
-  --color-text: var(--forest-light-text);
-  --color-text-secondary: var(--forest-medium-light-text);
+  --color-text: var(--forest-dark-text);
+  --color-text-secondary: var(--forest-dark-text-secondary);
   --color-border: var(--forest-border-green);
   --color-gradient-start: var(--forest-bright-green);
   --color-gradient-end: var(--forest-lime);
@@ -1981,8 +1981,8 @@ p {
   --ocean-cyan-variant: var(--ocean-blue);
   --ocean-teal: var(--ocean-teal);
   --ocean-blue: var(--ocean-blue-bright);
-  --ocean-light-text: var(--cyber-pale);
-  --ocean-medium-light-text: var(--cyber-cyan-light);
+  --ocean-dark-text: var(--cyber-pale);
+  --ocean-dark-text-secondary: var(--cyber-cyan-light);
   --ocean-light-bg: var(--cyber-pale);
   --ocean-light-surface: var(--cyber-sky-pale);
   --ocean-light-variant: var(--cyber-sky-light);
@@ -2006,8 +2006,8 @@ p {
   --color-primary-subtle: rgba(6, 182, 212, 0.1);
   --color-secondary: var(--ocean-teal);
   --color-accent: var(--ocean-blue);
-  --color-text: var(--ocean-light-text);
-  --color-text-secondary: var(--ocean-medium-light-text);
+  --color-text: var(--ocean-dark-text);
+  --color-text-secondary: var(--ocean-dark-text-secondary);
   --color-border: var(--ocean-border);
   --color-gradient-start: var(--ocean-cyan);
   --color-gradient-end: var(--ocean-teal);
@@ -2070,8 +2070,8 @@ p {
   --original-muted-blue-variant: var(--original-blue-medium);
   --original-muted-green: var(--original-green-blue);
   --original-muted-orange: var(--original-tan);
-  --original-light-text: var(--gray-50);
-  --original-medium-text: var(--gray-150);
+  --original-dark-text: var(--gray-50);
+  --original-dark-text-secondary: var(--gray-150);
   --original-light-bg: var(--gray-25);
   --original-light-surface: var(--gray-50);
   --original-light-surface-variant: var(--gray-75);
@@ -2095,8 +2095,8 @@ p {
   --color-primary-subtle: rgba(124, 159, 184, 0.1);
   --color-secondary: var(--original-muted-green);
   --color-accent: var(--original-muted-orange);
-  --color-text: var(--original-light-text);
-  --color-text-secondary: var(--original-medium-text);
+  --color-text: var(--original-dark-text);
+  --color-text-secondary: var(--original-dark-text-secondary);
   --color-border: var(--original-border);
   --color-gradient-start: var(--original-muted-blue);
   --color-gradient-end: var(--original-muted-green);
@@ -2168,8 +2168,8 @@ p {
   --sunset-light-primary-variant: var(--sunset-deep-red);
   --sunset-light-secondary: var(--sunset-gold);
   --sunset-light-accent: var(--sunset-yellow);
-  --sunset-light-text: var(--sunset-coffee);
-  --sunset-light-text-secondary: var(--sunset-mocha);
+  --sunset-light-text: var(--sunset-cream);
+  --sunset-light-text-secondary: var(--sunset-peach);
   --sunset-light-border: var(--sunset-bright-yellow);
   --white: var(--pure-white);
 
