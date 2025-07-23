@@ -100,6 +100,8 @@ export function getUserTimezone(): TimeZone {
 
 /**
  * Get timezones with user's timezone in the center and random offsets around it
+ * Enhanced to handle edge cases where user's timezone is at start/end of offset range
+ *
  * @param numRows Number of timezone rows to display (default: 5, always uses odd numbers, minimum 3)
  * @returns Array of timezone objects ordered by offset with user's actual timezone guaranteed in the center
  */
@@ -121,7 +123,7 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
     }
   }
 
-  // Generate random offsets around user's timezone
+  // Generate random offsets around user's timezone with edge case handling
   const userOffset = userTz.offset;
   const targetTimezones: TimeZone[] = [];
 
@@ -139,34 +141,144 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
   offsetsBelow.sort((a, b) => userOffset - b - (userOffset - a)); // Closest first
   offsetsAbove.sort((a, b) => a - userOffset - (b - userOffset)); // Closest first
 
-  // Randomly select offsets from above and below
-  const selectedOffsets = new Set([userOffset]); // Track selected offsets to avoid duplicates
+  // Handle edge cases: when user timezone is at start or end of offset range
+  const slotsToFill = oddNumRows - 1; // Subtract 1 for user timezone already added
+  const idealSlotsPerSide = Math.floor(slotsToFill / 2);
 
-  // Create a shuffled array of available offsets to add randomness
-  const shuffledOffsets = [...offsetsBelow, ...offsetsAbove];
-  for (let i = shuffledOffsets.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const temp = shuffledOffsets[i];
-    const jValue = shuffledOffsets[j];
-    if (temp !== undefined && jValue !== undefined) {
-      shuffledOffsets[i] = jValue;
-      shuffledOffsets[j] = temp;
+  // Check if we're at an edge case (limited timezones on one side)
+  const isAtStartEdge = offsetsBelow.length < idealSlotsPerSide;
+  const isAtEndEdge = offsetsAbove.length < idealSlotsPerSide;
+
+  let selectedOffsets = new Set([userOffset]); // Track selected offsets to avoid duplicates
+
+  if (isAtStartEdge || isAtEndEdge) {
+    // Edge case: prioritize filling from the abundant side when at extreme offsets
+
+    if (isAtStartEdge && offsetsAbove.length >= slotsToFill) {
+      // User is at start (few/no timezones below), populate more from above
+      const slotsFromBelow = offsetsBelow.length;
+      const slotsFromAbove = slotsToFill - slotsFromBelow;
+
+      // Add all available below timezones
+      for (const offset of offsetsBelow) {
+        const timezone = timezonesByOffset.get(offset);
+        if (timezone) {
+          targetTimezones.push(timezone);
+          selectedOffsets.add(offset);
+        }
+      }
+
+      // Add random selection from above to fill remaining slots
+      const shuffledAbove = [...offsetsAbove];
+      for (let i = shuffledAbove.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = shuffledAbove[i];
+        const jValue = shuffledAbove[j];
+        if (temp !== undefined && jValue !== undefined) {
+          shuffledAbove[i] = jValue;
+          shuffledAbove[j] = temp;
+        }
+      }
+
+      for (let i = 0; i < slotsFromAbove && i < shuffledAbove.length; i++) {
+        const offset = shuffledAbove[i];
+        if (offset !== undefined) {
+          const timezone = timezonesByOffset.get(offset);
+          if (timezone) {
+            targetTimezones.push(timezone);
+            selectedOffsets.add(offset);
+          }
+        }
+      }
+    } else if (isAtEndEdge && offsetsBelow.length >= slotsToFill) {
+      // User is at end (few/no timezones above), populate more from below
+      const slotsFromAbove = offsetsAbove.length;
+      const slotsFromBelow = slotsToFill - slotsFromAbove;
+
+      // Add all available above timezones
+      for (const offset of offsetsAbove) {
+        const timezone = timezonesByOffset.get(offset);
+        if (timezone) {
+          targetTimezones.push(timezone);
+          selectedOffsets.add(offset);
+        }
+      }
+
+      // Add random selection from below to fill remaining slots
+      const shuffledBelow = [...offsetsBelow];
+      for (let i = shuffledBelow.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = shuffledBelow[i];
+        const jValue = shuffledBelow[j];
+        if (temp !== undefined && jValue !== undefined) {
+          shuffledBelow[i] = jValue;
+          shuffledBelow[j] = temp;
+        }
+      }
+
+      for (let i = 0; i < slotsFromBelow && i < shuffledBelow.length; i++) {
+        const offset = shuffledBelow[i];
+        if (offset !== undefined) {
+          const timezone = timezonesByOffset.get(offset);
+          if (timezone) {
+            targetTimezones.push(timezone);
+            selectedOffsets.add(offset);
+          }
+        }
+      }
+    } else {
+      // Limited timezones on both sides or not enough on abundant side - use all available
+      const allAvailableOffsets = [...offsetsBelow, ...offsetsAbove];
+      for (let i = allAvailableOffsets.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = allAvailableOffsets[i];
+        const jValue = allAvailableOffsets[j];
+        if (temp !== undefined && jValue !== undefined) {
+          allAvailableOffsets[i] = jValue;
+          allAvailableOffsets[j] = temp;
+        }
+      }
+
+      for (const offset of allAvailableOffsets) {
+        if (targetTimezones.length >= oddNumRows) break;
+        if (offset !== undefined) {
+          const timezone = timezonesByOffset.get(offset);
+          if (timezone) {
+            targetTimezones.push(timezone);
+            selectedOffsets.add(offset);
+          }
+        }
+      }
     }
-  }
+  } else {
+    // Normal case: balanced selection from both sides with randomization
 
-  // Select random offsets until we have enough timezones
-  for (const offset of shuffledOffsets) {
-    if (targetTimezones.length >= oddNumRows) break;
-    if (!selectedOffsets.has(offset)) {
-      const timezone = timezonesByOffset.get(offset);
-      if (timezone) {
-        targetTimezones.push(timezone);
-        selectedOffsets.add(offset);
+    // Create a shuffled array of available offsets to add randomness
+    const shuffledOffsets = [...offsetsBelow, ...offsetsAbove];
+    for (let i = shuffledOffsets.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = shuffledOffsets[i];
+      const jValue = shuffledOffsets[j];
+      if (temp !== undefined && jValue !== undefined) {
+        shuffledOffsets[i] = jValue;
+        shuffledOffsets[j] = temp;
+      }
+    }
+
+    // Select random offsets until we have enough timezones
+    for (const offset of shuffledOffsets) {
+      if (targetTimezones.length >= oddNumRows) break;
+      if (!selectedOffsets.has(offset)) {
+        const timezone = timezonesByOffset.get(offset);
+        if (timezone) {
+          targetTimezones.push(timezone);
+          selectedOffsets.add(offset);
+        }
       }
     }
   }
 
-  // If we don't have enough timezones, fill in gaps with closest available timezones
+  // If we still don't have enough timezones, fill in gaps with closest available timezones
   if (targetTimezones.length < oddNumRows) {
     const usedOffsets = new Set(targetTimezones.map(tz => tz.offset));
     const availableTimezones = allTimezones.filter(tz => !usedOffsets.has(tz.offset));

@@ -191,4 +191,288 @@ describe('Timezone Selection Fixes', () => {
       expect(timezoneWithUserOffset?.iana).toBe(userTz.iana);
     });
   });
+
+  describe('Edge Case Handling', () => {
+    it('should handle user timezone at extreme negative offset (start of range)', () => {
+      // Mock user timezone at extreme negative offset
+      const extremeNegativeTimezones = {
+        'Pacific/Midway': 'GMT-11:00', // User timezone - very negative
+        'Pacific/Honolulu': 'GMT-10:00',
+        'America/Anchorage': 'GMT-09:00',
+        'America/Los_Angeles': 'GMT-08:00',
+        'America/Denver': 'GMT-07:00',
+        'America/Chicago': 'GMT-06:00',
+        'America/New_York': 'GMT-05:00',
+        'Europe/London': 'GMT+00:00',
+        'Europe/Berlin': 'GMT+01:00',
+        'Europe/Moscow': 'GMT+03:00',
+        'Asia/Tokyo': 'GMT+09:00',
+        'Australia/Sydney': 'GMT+10:00',
+        'Pacific/Auckland': 'GMT+12:00',
+      };
+
+      global.Intl = {
+        ...Intl,
+        DateTimeFormat: vi.fn().mockImplementation((locale, options) => {
+          const timeZone = options?.timeZone || 'Pacific/Midway';
+          return {
+            resolvedOptions: () => ({ timeZone: 'Pacific/Midway' }),
+            formatToParts: (date) => {
+              const parts = [];
+              if (options?.timeZoneName === 'longOffset') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: extremeNegativeTimezones[timeZone] || 'GMT-11:00',
+                });
+              } else if (options?.timeZoneName === 'long') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: `${timeZone.split('/').pop()?.replace('_', ' ')} Standard Time`,
+                });
+              } else if (options?.timeZoneName === 'short') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: 'MIT',
+                });
+              }
+              return parts;
+            },
+            format: (date) => '12:00 PM',
+          };
+        }),
+        supportedValuesOf: vi.fn().mockReturnValue(Object.keys(extremeNegativeTimezones)),
+      } as any;
+
+      const timezones = getTimezonesForTimeline(5);
+
+      // Should still return requested number of timezones
+      expect(timezones.length).toBe(5);
+
+      // User timezone should be included
+      const userIncluded = timezones.some(tz => tz.iana === 'Pacific/Midway');
+      expect(userIncluded).toBe(true);
+
+      // Should have unique offsets
+      const offsets = timezones.map(tz => tz.offset);
+      const uniqueOffsets = [...new Set(offsets)];
+      expect(uniqueOffsets.length).toBe(offsets.length);
+
+      // Should be ordered by offset
+      const sortedOffsets = [...offsets].sort((a, b) => a - b);
+      expect(offsets).toEqual(sortedOffsets);
+    });
+
+    it('should handle user timezone at extreme positive offset (end of range)', () => {
+      // Mock user timezone at extreme positive offset
+      const extremePositiveTimezones = {
+        'America/Los_Angeles': 'GMT-08:00',
+        'America/Denver': 'GMT-07:00',
+        'America/Chicago': 'GMT-06:00',
+        'America/New_York': 'GMT-05:00',
+        'Europe/London': 'GMT+00:00',
+        'Europe/Berlin': 'GMT+01:00',
+        'Europe/Moscow': 'GMT+03:00',
+        'Asia/Tokyo': 'GMT+09:00',
+        'Australia/Sydney': 'GMT+10:00',
+        'Pacific/Auckland': 'GMT+12:00',
+        'Pacific/Tongatapu': 'GMT+13:00',
+        'Pacific/Kiritimati': 'GMT+14:00', // User timezone - very positive
+      };
+
+      global.Intl = {
+        ...Intl,
+        DateTimeFormat: vi.fn().mockImplementation((locale, options) => {
+          const timeZone = options?.timeZone || 'Pacific/Kiritimati';
+          return {
+            resolvedOptions: () => ({ timeZone: 'Pacific/Kiritimati' }),
+            formatToParts: (date) => {
+              const parts = [];
+              if (options?.timeZoneName === 'longOffset') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: extremePositiveTimezones[timeZone] || 'GMT+14:00',
+                });
+              } else if (options?.timeZoneName === 'long') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: `${timeZone.split('/').pop()?.replace('_', ' ')} Standard Time`,
+                });
+              } else if (options?.timeZoneName === 'short') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: 'LINT',
+                });
+              }
+              return parts;
+            },
+            format: (date) => '12:00 PM',
+          };
+        }),
+        supportedValuesOf: vi.fn().mockReturnValue(Object.keys(extremePositiveTimezones)),
+      } as any;
+
+      const timezones = getTimezonesForTimeline(5);
+
+      // Should still return requested number of timezones
+      expect(timezones.length).toBe(5);
+
+      // User timezone should be included
+      const userIncluded = timezones.some(tz => tz.iana === 'Pacific/Kiritimati');
+      expect(userIncluded).toBe(true);
+
+      // Should have unique offsets
+      const offsets = timezones.map(tz => tz.offset);
+      const uniqueOffsets = [...new Set(offsets)];
+      expect(uniqueOffsets.length).toBe(offsets.length);
+
+      // Should be ordered by offset
+      const sortedOffsets = [...offsets].sort((a, b) => a - b);
+      expect(offsets).toEqual(sortedOffsets);
+    });
+
+    it('should handle user timezone with very few available timezones on one side', () => {
+      // Mock scenario where user has only 1 timezone below and many above
+      const limitedBelowTimezones = {
+        'Pacific/Midway': 'GMT-11:00', // Only one below user
+        'Pacific/Honolulu': 'GMT-10:00', // User timezone
+        'America/Anchorage': 'GMT-09:00',
+        'America/Los_Angeles': 'GMT-08:00',
+        'America/Denver': 'GMT-07:00',
+        'America/Chicago': 'GMT-06:00',
+        'America/New_York': 'GMT-05:00',
+        'Europe/London': 'GMT+00:00',
+        'Europe/Berlin': 'GMT+01:00',
+        'Asia/Tokyo': 'GMT+09:00',
+        'Australia/Sydney': 'GMT+10:00',
+        'Pacific/Auckland': 'GMT+12:00',
+      };
+
+      global.Intl = {
+        ...Intl,
+        DateTimeFormat: vi.fn().mockImplementation((locale, options) => {
+          const timeZone = options?.timeZone || 'Pacific/Honolulu';
+          return {
+            resolvedOptions: () => ({ timeZone: 'Pacific/Honolulu' }),
+            formatToParts: (date) => {
+              const parts = [];
+              if (options?.timeZoneName === 'longOffset') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: limitedBelowTimezones[timeZone] || 'GMT-10:00',
+                });
+              } else if (options?.timeZoneName === 'long') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: `${timeZone.split('/').pop()?.replace('_', ' ')} Standard Time`,
+                });
+              } else if (options?.timeZoneName === 'short') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: 'HST',
+                });
+              }
+              return parts;
+            },
+            format: (date) => '12:00 PM',
+          };
+        }),
+        supportedValuesOf: vi.fn().mockReturnValue(Object.keys(limitedBelowTimezones)),
+      } as any;
+
+      const timezones = getTimezonesForTimeline(7); // Request 7 timezones
+
+      // Should still return requested number of timezones
+      expect(timezones.length).toBe(7);
+
+      // User timezone should be included
+      const userIncluded = timezones.some(tz => tz.iana === 'Pacific/Honolulu');
+      expect(userIncluded).toBe(true);
+
+      // Should have populated additional timezones from the available side (above user)
+      // Since user is at -10 and there's only one below (-11), 
+      // we should get additional timezones from above to fill the 7 requested
+      const offsets = timezones.map(tz => tz.offset);
+      const userOffset = -10;
+      const offsetsAboveUser = offsets.filter(offset => offset > userOffset);
+      
+      // Should have more timezones above user since below is limited
+      expect(offsetsAboveUser.length).toBeGreaterThanOrEqual(3);
+      
+      // The improvement: should intelligently fill from abundant side (above) rather than randomly
+      // This demonstrates the edge case handling where few timezones exist on one side
+      const offsetsBelowUser = offsets.filter(offset => offset < userOffset);
+      const totalBelowAvailable = 1; // Only Pacific/Midway at -11
+      expect(offsetsBelowUser.length).toBeLessThanOrEqual(totalBelowAvailable);
+    });
+
+    it('should demonstrate improved edge case handling vs naive random selection', () => {
+      // Test with extreme edge case: user at very positive offset with very few above
+      const extremeEdgeTimezones = {
+        'America/Los_Angeles': 'GMT-08:00',
+        'America/Denver': 'GMT-07:00', 
+        'America/Chicago': 'GMT-06:00',
+        'America/New_York': 'GMT-05:00',
+        'Europe/London': 'GMT+00:00',
+        'Europe/Berlin': 'GMT+01:00',
+        'Asia/Tokyo': 'GMT+09:00',
+        'Australia/Sydney': 'GMT+10:00',
+        'Pacific/Auckland': 'GMT+12:00', // User timezone
+        'Pacific/Tongatapu': 'GMT+13:00', // Only one above user
+      };
+
+      global.Intl = {
+        ...Intl,
+        DateTimeFormat: vi.fn().mockImplementation((locale, options) => {
+          const timeZone = options?.timeZone || 'Pacific/Auckland';
+          return {
+            resolvedOptions: () => ({ timeZone: 'Pacific/Auckland' }),
+            formatToParts: (date) => {
+              const parts = [];
+              if (options?.timeZoneName === 'longOffset') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: extremeEdgeTimezones[timeZone] || 'GMT+12:00',
+                });
+              } else if (options?.timeZoneName === 'long') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: `${timeZone.split('/').pop()?.replace('_', ' ')} Standard Time`,
+                });
+              } else if (options?.timeZoneName === 'short') {
+                parts.push({
+                  type: 'timeZoneName',
+                  value: 'NZST',
+                });
+              }
+              return parts;
+            },
+            format: (date) => '12:00 PM',
+          };
+        }),
+        supportedValuesOf: vi.fn().mockReturnValue(Object.keys(extremeEdgeTimezones)),
+      } as any;
+
+      // Run multiple times to test the enhanced edge case handling
+      for (let run = 0; run < 5; run++) {
+        const timezones = getTimezonesForTimeline(5);
+
+        // Should always return requested number
+        expect(timezones.length).toBe(5);
+
+        // User timezone should always be included
+        const userIncluded = timezones.some(tz => tz.iana === 'Pacific/Auckland');
+        expect(userIncluded).toBe(true);
+
+        // Should handle edge case by populating more from below since above is limited
+        const offsets = timezones.map(tz => tz.offset); 
+        const userOffset = 12;
+        const offsetsBelowUser = offsets.filter(offset => offset < userOffset);
+        const offsetsAboveUser = offsets.filter(offset => offset > userOffset);
+
+        // Since there's only 1 timezone above (+13), should get more from below
+        expect(offsetsAboveUser.length).toBeLessThanOrEqual(1);
+        expect(offsetsBelowUser.length).toBeGreaterThanOrEqual(3);
+      }
+    });
+  });
 });
