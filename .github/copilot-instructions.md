@@ -45,6 +45,22 @@ This repository hosts a static timezone overlap visualization tool deployed via 
 - `npm run lint` - Run ESLint on TypeScript files
 - `npm run format` - Format code using Prettier
 
+### Pre-commit Requirements
+**MANDATORY:** Always run the full test suite before committing any changes.
+
+**Required Steps Before Every Commit:**
+1. **Run full test suite:** `npm run test` (must pass completely)
+2. **Fix any failing tests:** Address lint errors, formatting issues, type errors, or unit test failures
+3. **Verify all tests pass:** Ensure exit code is 0 before proceeding with commit
+
+**Test Suite Components:**
+- **Linting:** ESLint checks for code quality and style issues
+- **Format checking:** Prettier verifies consistent code formatting
+- **Type checking:** TypeScript compiler validates type safety
+- **Unit tests:** Vitest runs all unit tests to verify functionality
+
+**Critical Rule:** Never commit code that fails any part of the test suite. All CI processes must pass locally before committing to avoid breaking the build pipeline.
+
 ### Technology Stack
 - **Frontend:** HTML, CSS, TypeScript
 - **Hosting:** GitHub Pages
@@ -129,19 +145,22 @@ npm install
 # 2. Build the site to compile TypeScript/JavaScript
 npm run build
 
-# 3. Start HTTP server from dist directory
+# 3. Run full test suite to ensure all CI checks pass
+npm run test
+
+# 4. Start HTTP server from dist directory
 python3 -m http.server 8000 --directory dist
 
-# 4. Take screenshots with Playwright
+# 5. Take screenshots with Playwright
 playwright-mcp-server-browser_take_screenshot
 
-# 5. IMMEDIATELY upload screenshot using reply_to_comment (NO DELAYS OR OTHER ACTIONS)
+# 6. IMMEDIATELY upload screenshot using reply_to_comment (NO DELAYS OR OTHER ACTIONS)
 reply_to_comment
 
-# 6. ONLY AFTER posting, analyze screenshot and compare with expectations. Be highly critical.
+# 7. ONLY AFTER posting, analyze screenshot and compare with expectations. Be highly critical.
 think
 
-# 7. REPEAT: Screenshot → reply_to_comment → think for EVERY single screenshot
+# 8. REPEAT: Screenshot → reply_to_comment → think for EVERY single screenshot
 ```
 
 **MANDATORY WORKFLOW SEQUENCE:**
