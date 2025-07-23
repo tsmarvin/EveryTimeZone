@@ -245,8 +245,10 @@ describe('App Integration', () => {
       const timeline = document.getElementById('timeline-container');
       const initialContent = timeline?.innerHTML;
       
-      // Timeline should have controls for adding timezones
-      const addButton = timeline?.querySelector('.add-timezone-btn');
+      // Timeline section should have controls for adding timezones
+      // The button is now positioned outside the scrollable timeline container
+      const timelineSection = timeline?.closest('.timeline-section');
+      const addButton = timelineSection?.querySelector('.add-timezone-btn');
       expect(addButton).toBeTruthy();
     });
   });
