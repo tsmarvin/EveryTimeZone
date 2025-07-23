@@ -386,6 +386,27 @@ p {
   /* Remove background, borders, and shadows to blend with page */
 }
 
+/* Allow timeline to extend beyond normal container constraints on desktop */
+@media (min-width: 1200px) {
+  .timeline-container {
+    /* Break out of container constraints to use more screen width */
+    margin-left: calc(-1 * var(--space-xl));
+    margin-right: calc(-1 * var(--space-xl));
+    padding-left: var(--space-xl);
+    padding-right: var(--space-xl);
+  }
+}
+
+@media (min-width: 1600px) {
+  .timeline-container {
+    /* Even more expansion on large screens */
+    margin-left: calc(-2 * var(--space-xl));
+    margin-right: calc(-2 * var(--space-xl));
+    padding-left: calc(2 * var(--space-xl));
+    padding-right: calc(2 * var(--space-xl));
+  }
+}
+
 .timeline-header {
   display: flex;
   border-bottom: 1px solid var(--color-border);
