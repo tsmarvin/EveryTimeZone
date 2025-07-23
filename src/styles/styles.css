@@ -450,31 +450,15 @@ p {
   margin-right: calc(-50vw + 50%);
 }
 
-.timeline-header {
-  display: flex;
-  border-bottom: 1px solid var(--color-border);
-  transition: var(--transition);
-  min-width: fit-content; /* Allow row to extend beyond container for scrolling */
-}
-
 .timeline-row:hover {
   background-color: var(--color-surface-variant);
-}
-
-.timeline-row:first-child {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-  color: white;
-  font-weight: 600;
-  border-bottom: 2px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  z-index: 2;
 }
 
 .timeline-row {
   display: flex;
   border-bottom: 1px solid var(--color-border);
   transition: var(--transition);
+  min-width: fit-content; /* Ensure row expands to contain all timeline cells */
 }
 
 .timeline-row:hover {
@@ -536,11 +520,6 @@ p {
   background-clip: padding-box; /* Prevent background bleeding under borders during scroll */
 }
 
-.timeline-header .timeline-timezone-label {
-  background: rgba(255, 255, 255, 0.2);
-  border-right: 2px solid rgba(255, 255, 255, 0.3);
-}
-
 .timezone-name {
   font-weight: 600;
   font-size: var(--text-sm);
@@ -555,13 +534,6 @@ p {
   color: var(--color-text-secondary);
   font-family: 'Courier New', monospace;
   white-space: nowrap;
-}
-
-.timeline-hour-header {
-  background: rgba(255, 255, 255, 0.1);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-header-text);
 }
 
 .timeline-hour {
@@ -607,11 +579,8 @@ p {
 
 /* Current hour styling with higher specificity to override daylight/night indicators */
 .timeline-hour.current-hour,
-.timeline-hour-header.current-hour,
 .timeline-hour.current-hour.daylight-hour,
-.timeline-hour.current-hour.night-hour,
-.timeline-hour-header.current-hour.daylight-hour,
-.timeline-hour-header.current-hour.night-hour {
+.timeline-hour.current-hour.night-hour {
   background: linear-gradient(135deg, var(--color-accent), rgba(220, 38, 38, 0.8)) !important;
   color: white !important;
   font-weight: 700;
@@ -620,11 +589,8 @@ p {
 }
 
 .timeline-hour.current-hour::after,
-.timeline-hour-header.current-hour::after,
 .timeline-hour.current-hour.daylight-hour::after,
-.timeline-hour.current-hour.night-hour::after,
-.timeline-hour-header.current-hour.daylight-hour::after,
-.timeline-hour-header.current-hour.night-hour::after {
+.timeline-hour.current-hour.night-hour::after {
   content: '';
   position: absolute;
   top: -2px;
@@ -1554,8 +1520,7 @@ p {
     background: var(--gray-50) !important;
   }
 
-  .timeline-hour.current-hour,
-  .timeline-hour-header.current-hour {
+  .timeline-hour.current-hour {
     background: #666 !important;
     color: white !important;
   }
