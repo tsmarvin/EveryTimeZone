@@ -327,7 +327,7 @@ p {
 /* Timeline Controls */
 .timeline-controls {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-bottom: 0; /* Remove margin to minimize whitespace */
   gap: var(--space-sm);
 }
@@ -349,6 +349,56 @@ p {
   background: var(--color-primary-variant);
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
+}
+
+.date-picker-btn {
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+
+.date-picker-btn:hover {
+  background: var(--color-border);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* DateTime Modal Styles */
+.datetime-input-container {
+  padding: 1rem 0;
+}
+
+.datetime-label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+
+.datetime-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text);
+  transition: border-color 0.2s ease-in-out;
+}
+
+.datetime-input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-color: var(--color-primary);
+  background-color: var(--color-bg);
 }
 
 .remove-timezone-btn {

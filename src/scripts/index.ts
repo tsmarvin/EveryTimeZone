@@ -436,10 +436,11 @@ function formatOffset(offset: number): string {
  * Generate timeline hours for display
  * @param numHours Number of hours to display in the timeline
  * @param timezone Target timezone to calculate hours for
+ * @param baseDate Date to center the timeline on (defaults to current date)
  * @returns Array of timeline hours with daylight information
  */
-export function generateTimelineHours(numHours: number, timezone: TimeZone): TimelineHour[] {
-  const now = new Date();
+export function generateTimelineHours(numHours: number, timezone: TimeZone, baseDate?: Date): TimelineHour[] {
+  const now = baseDate || new Date();
   const userTz = getUserTimezone();
 
   // Get current hour in user's timezone and round down
@@ -527,15 +528,16 @@ function getCurrentHourScrollPosition(): number {
  * Create timeline data for rendering
  * @param numHours - Number of hours to display
  * @param numRows - Number of timezone rows to display
+ * @param baseDate - Date to center the timeline on (defaults to current date)
  * @returns Array of timeline rows
  */
-export function createTimelineData(numHours: number, numRows: number): TimelineRow[] {
+export function createTimelineData(numHours: number, numRows: number, baseDate?: Date): TimelineRow[] {
   const userTz = getUserTimezone();
   const timezones = getTimezonesForTimeline(numRows);
 
   return timezones.map(timezone => ({
     timezone,
-    hours: generateTimelineHours(numHours, timezone),
+    hours: generateTimelineHours(numHours, timezone, baseDate),
     isUserTimezone: timezone.iana === userTz.iana,
   }));
 }
@@ -726,7 +728,9 @@ export function renderTimeline(): void {
 export class TimelineManager {
   private container: HTMLElement;
   private modal: TimezoneModal;
+  private dateTimeModal: DateTimeModal;
   private selectedTimezones: TimeZone[] = [];
+  private selectedDate: Date = new Date(); // Default to today
 
   constructor() {
     this.container = document.getElementById('timeline-container') as HTMLElement;
@@ -736,6 +740,9 @@ export class TimelineManager {
 
     // Initialize modal with callback
     this.modal = new TimezoneModal((timezone: TimeZone) => this.addTimezone(timezone));
+
+    // Initialize datetime modal with callback
+    this.dateTimeModal = new DateTimeModal((dateTime: Date) => this.setSelectedDate(dateTime));
 
     // Initialize with user's timezone and a few others
     this.initializeDefaultTimezones();
@@ -778,6 +785,20 @@ export class TimelineManager {
     this.renderTimeline();
   }
 
+  public setSelectedDate(date: Date): void {
+    this.selectedDate = new Date(date);
+    this.renderTimeline();
+  }
+
+  public getSelectedDate(): Date {
+    return new Date(this.selectedDate);
+  }
+
+  public openDatePicker(): void {
+    this.dateTimeModal.setDateTime(this.selectedDate);
+    this.dateTimeModal.open();
+  }
+
   private renderTimeline(): void {
     const { numHours } = getTimelineDimensions();
 
@@ -788,15 +809,24 @@ export class TimelineManager {
     // Clear container
     this.container.innerHTML = '';
 
-    // Create add timezone button outside the scrollable container
+    // Create timeline controls (date picker and add timezone button)
     const timelineSection = this.container.closest('.timeline-section');
     if (timelineSection) {
-      // Remove existing button if present
+      // Remove existing controls if present
       const existingControls = timelineSection.querySelector('.timeline-controls');
       if (existingControls) {
         existingControls.remove();
       }
 
+      // Create date selection button
+      const dateButton = document.createElement('button');
+      dateButton.className = 'button secondary date-picker-btn';
+      const dateStr = this.selectedDate.toLocaleDateString();
+      dateButton.textContent = `📅 ${dateStr}`;
+      dateButton.title = 'Select date to view timeline for';
+      dateButton.addEventListener('click', () => this.openDatePicker());
+
+      // Create add timezone button
       const addButton = document.createElement('button');
       addButton.className = 'button add-timezone-btn';
       addButton.textContent = '+ Add Timezone';
@@ -804,6 +834,7 @@ export class TimelineManager {
 
       const buttonContainer = document.createElement('div');
       buttonContainer.className = 'timeline-controls';
+      buttonContainer.appendChild(dateButton);
       buttonContainer.appendChild(addButton);
 
       // Insert the button container before the timeline container
@@ -852,7 +883,7 @@ export class TimelineManager {
       rowElement.appendChild(labelCell);
 
       // Hour cells
-      const timezoneHours = generateTimelineHours(numHours, timezone);
+      const timezoneHours = generateTimelineHours(numHours, timezone, this.selectedDate);
       timezoneHours.forEach((hour, index) => {
         const hourCell = document.createElement('div');
         hourCell.className = 'timeline-cell timeline-hour';
@@ -1229,6 +1260,143 @@ export class TimezoneModal {
 
   public getSelectedTimezone(): TimeZone | null {
     return this.filteredTimezones[this.selectedIndex] || null;
+  }
+}
+
+/**
+ * DateTime Modal - Handles date and time selection
+ */
+export class DateTimeModal {
+  private modal: HTMLElement;
+  private overlay: HTMLElement;
+  private input: HTMLInputElement;
+  private selectButton: HTMLElement;
+  private cancelButton: HTMLElement;
+  private closeButton: HTMLElement | null = null;
+  private onDateTimeSelectedCallback: ((dateTime: Date) => void) | undefined;
+
+  constructor(onDateTimeSelected?: (dateTime: Date) => void) {
+    this.modal = document.getElementById('datetime-modal') as HTMLElement;
+    this.overlay = document.getElementById('datetime-modal-overlay') as HTMLElement;
+    this.input = document.getElementById('datetime-input') as HTMLInputElement;
+    this.selectButton = document.getElementById('select-datetime') as HTMLElement;
+    this.cancelButton = document.getElementById('cancel-datetime') as HTMLElement;
+
+    // Check if modal exists before trying to query it (for tests)
+    if (this.modal) {
+      this.closeButton = this.modal.querySelector('.modal-close') as HTMLElement;
+    }
+
+    this.onDateTimeSelectedCallback = onDateTimeSelected;
+
+    // Only setup event listeners if elements exist
+    if (this.modal && this.overlay && this.input && this.selectButton && this.cancelButton) {
+      this.setupEventListeners();
+    }
+  }
+
+  private setupEventListeners(): void {
+    // Close modal when clicking overlay
+    this.overlay.addEventListener('click', event => this.handleOverlayClick(event));
+
+    // Close modal when clicking close button
+    if (this.closeButton) {
+      this.closeButton.addEventListener('click', () => this.close());
+    }
+
+    // Cancel button
+    this.cancelButton.addEventListener('click', () => this.close());
+
+    // Select button
+    this.selectButton.addEventListener('click', () => this.selectDateTime());
+
+    // Handle keyboard events
+    this.modal.addEventListener('keydown', e => this.handleKeyDown(e));
+
+    // Handle form submission
+    this.input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.selectDateTime();
+      }
+    });
+  }
+
+  private handleKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.close();
+    }
+  }
+
+  private handleOverlayClick(event: Event): void {
+    if (event.target === this.overlay) {
+      this.close();
+    }
+  }
+
+  private selectDateTime(): void {
+    if (this.input && this.input.value) {
+      // Create date from the datetime-local input value
+      const selectedDateTime = new Date(this.input.value);
+
+      if (this.onDateTimeSelectedCallback) {
+        this.onDateTimeSelectedCallback(selectedDateTime);
+      }
+    }
+    this.close();
+  }
+
+  public open(): void {
+    // Return early if modal doesn't exist (for tests)
+    if (!this.modal || !this.overlay || !this.input) {
+      return;
+    }
+
+    // Set current datetime as default if no value is set
+    if (!this.input.value) {
+      const now = new Date();
+      // Format to datetime-local format (YYYY-MM-DDTHH:MM)
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      this.input.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    this.overlay.classList.add('active');
+    this.modal.focus();
+    document.body.style.overflow = 'hidden';
+
+    // Focus the input after a short delay to ensure it's visible
+    setTimeout(() => {
+      this.input.focus();
+    }, 100);
+  }
+
+  public close(): void {
+    // Return early if modal doesn't exist (for tests)
+    if (!this.overlay) {
+      return;
+    }
+
+    this.overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  public setDateTime(dateTime: Date): void {
+    // Return early if input doesn't exist (for tests)
+    if (!this.input) {
+      return;
+    }
+
+    const year = dateTime.getFullYear();
+    const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+    const day = String(dateTime.getDate()).padStart(2, '0');
+    const hours = String(dateTime.getHours()).padStart(2, '0');
+    const minutes = String(dateTime.getMinutes()).padStart(2, '0');
+    this.input.value = `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 }
 
