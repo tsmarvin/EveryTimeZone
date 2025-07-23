@@ -695,16 +695,27 @@ export class TimelineManager {
     // Clear container
     this.container.innerHTML = '';
 
-    // Create add timezone button
-    const addButton = document.createElement('button');
-    addButton.className = 'button add-timezone-btn';
-    addButton.textContent = '+ Add Timezone';
-    addButton.addEventListener('click', () => this.openTimezoneModal());
+    // Create add timezone button outside the scrollable container
+    const timelineSection = this.container.closest('.timeline-section');
+    if (timelineSection) {
+      // Remove existing button if present
+      const existingControls = timelineSection.querySelector('.timeline-controls');
+      if (existingControls) {
+        existingControls.remove();
+      }
 
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'timeline-controls';
-    buttonContainer.appendChild(addButton);
-    this.container.appendChild(buttonContainer);
+      const addButton = document.createElement('button');
+      addButton.className = 'button add-timezone-btn';
+      addButton.textContent = '+ Add Timezone';
+      addButton.addEventListener('click', () => this.openTimezoneModal());
+
+      const buttonContainer = document.createElement('div');
+      buttonContainer.className = 'timeline-controls';
+      buttonContainer.appendChild(addButton);
+
+      // Insert the button container before the timeline container
+      timelineSection.insertBefore(buttonContainer, this.container);
+    }
 
     // Create timeline rows for selected timezones, sorted by offset
     const sortedTimezones = [...this.selectedTimezones].sort((a, b) => a.offset - b.offset);
