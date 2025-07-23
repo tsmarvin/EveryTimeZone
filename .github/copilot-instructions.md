@@ -13,7 +13,7 @@ This repository hosts a static timezone overlap visualization tool deployed via 
 - Primary development occurs on `main` branch
 - GitHub Actions automatically builds and deploys to `gh-pages` branch on merge
 - HTML/CSS for UI with TypeScript for logic
-- No compilation required (TypeScript transpilation only)
+- Build process required: TypeScript compilation, asset copying, and version injection
 
 **Key Features:**
 - URL-based configuration storage for shareability
@@ -22,6 +22,44 @@ This repository hosts a static timezone overlap visualization tool deployed via 
 - Automated deployment on merge to main
 
 ## Development Guidelines
+
+### Build Process
+**MANDATORY:** Always install dependencies and build the site properly before starting any work.
+
+**Required Steps:**
+1. **Install dependencies:** `npm install` (must be run first)
+2. **Build the site:** `npm run build` (compiles TypeScript, copies assets, injects version)
+3. **Output location:** Built files are placed in the `dist/` directory
+4. **Never manually copy static assets** - use the proper build process
+
+**Build Process Details:**
+- `npm run build` executes: `npm run clean && tsc && npm run copy-assets && npm run version:inject`
+- TypeScript files are compiled from `src/` to `dist/`
+- Static assets (HTML, CSS, scripts) are copied to `dist/`
+- Third-party dependencies (like suncalc) are copied to appropriate locations
+- Version information is injected into the build
+
+**Development Commands:**
+- `npm run dev` or `npm run build:watch` - Watch mode for development
+- `npm run test` - Run all tests (lint, format check, type check, unit tests)
+- `npm run lint` - Run ESLint on TypeScript files
+- `npm run format` - Format code using Prettier
+
+### Pre-commit Requirements
+**MANDATORY:** Always run the full test suite before committing any changes.
+
+**Required Steps Before Every Commit:**
+1. **Run full test suite:** `npm run test` (must pass completely)
+2. **Fix any failing tests:** Address lint errors, formatting issues, type errors, or unit test failures
+3. **Verify all tests pass:** Ensure exit code is 0 before proceeding with commit
+
+**Test Suite Components:**
+- **Linting:** ESLint checks for code quality and style issues
+- **Format checking:** Prettier verifies consistent code formatting
+- **Type checking:** TypeScript compiler validates type safety
+- **Unit tests:** Vitest runs all unit tests to verify functionality
+
+**Critical Rule:** Never commit code that fails any part of the test suite. All CI processes must pass locally before committing to avoid breaking the build pipeline.
 
 ### Technology Stack
 - **Frontend:** HTML, CSS, TypeScript
@@ -71,10 +109,11 @@ refactor: extract timezone utils to separate module
 - **Total screenshots required:** 12 screenshots minimum (6 sizes × 2 themes) for any CSS/HTML change
 
 **REQUIRED SCREENSHOT PROTOCOL STEPS**
-1. **ALWAYS build the site first**: Run `npm run build` before starting the HTTP server to ensure JavaScript/TypeScript changes are compiled. If build fails with JavaScript errors, fix them before proceeding.
-2. Start local HTTP server: `python3 -m http.server 8000 --directory dist` (async) - note the `dist` directory after build
-3. Use Playwright to navigate to `http://localhost:8000`
-4. For EACH screen size and theme combination (in reverse order: TV 7680×4320 → Large Desktop 2560x1440 → Desktop 1920x1080 → Tablet 1366x768 → Mobile 1024x576 → Mini 667x375):
+1. **ALWAYS install dependencies first**: Run `npm install` if `node_modules` doesn't exist or if packages have been updated
+2. **ALWAYS build the site**: Run `npm run build` before starting the HTTP server to ensure JavaScript/TypeScript changes are compiled. If build fails with JavaScript errors, fix them before proceeding.
+3. Start local HTTP server: `python3 -m http.server 8000 --directory dist` (async) - note the `dist` directory after build
+4. Use Playwright to navigate to `http://localhost:8000`
+5. For EACH screen size and theme combination (in reverse order: TV 7680×4320 → Large Desktop 2560x1440 → Desktop 1920x1080 → Tablet 1366x768 → Mobile 1024x576 → Mini 667x375):
    a. Resize browser window to exact dimensions
    b. For EACH theme (Dark mode first, then Light mode):
    - Verify theme by checking icon (☀️ = dark mode, 🌙 = light mode)
@@ -100,22 +139,28 @@ refactor: extract timezone utils to separate module
 
 **EXAMPLE SUCCESSFUL WORKFLOW:**
 ```bash
-# 1. Build the site first to compile TypeScript/JavaScript
+# 1. Install dependencies first (if needed)
+npm install
+
+# 2. Build the site to compile TypeScript/JavaScript
 npm run build
 
-# 2. Start HTTP server from dist directory
+# 3. Run full test suite to ensure all CI checks pass
+npm run test
+
+# 4. Start HTTP server from dist directory
 python3 -m http.server 8000 --directory dist
 
-# 3. Take screenshots with Playwright
+# 5. Take screenshots with Playwright
 playwright-mcp-server-browser_take_screenshot
 
-# 4. IMMEDIATELY upload screenshot using reply_to_comment (NO DELAYS OR OTHER ACTIONS)
+# 6. IMMEDIATELY upload screenshot using reply_to_comment (NO DELAYS OR OTHER ACTIONS)
 reply_to_comment
 
-# 5. ONLY AFTER posting, analyze screenshot and compare with expectations. Be highly critical.
+# 7. ONLY AFTER posting, analyze screenshot and compare with expectations. Be highly critical.
 think
 
-# 6. REPEAT: Screenshot → reply_to_comment → think for EVERY single screenshot
+# 8. REPEAT: Screenshot → reply_to_comment → think for EVERY single screenshot
 ```
 
 **MANDATORY WORKFLOW SEQUENCE:**
