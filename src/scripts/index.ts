@@ -177,16 +177,15 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
 
   // Take a selection centered around user's timezone with balanced distribution
   const userIndex = timezones.findIndex(tz => tz.iana === userTz.iana);
-  
+
   // For balanced distribution: equal timezones above and below user timezone
   // For odd numRows: (numRows-1)/2 above, user, (numRows-1)/2 below
   // For even numRows: prefer one more above, so numRows/2 above, user, (numRows/2-1) below
   const timezonesAbove = Math.floor((numRows - 1) / 2);
-  const timezonesBelow = numRows - 1 - timezonesAbove;
-  
+
   const start = Math.max(0, userIndex - timezonesAbove);
   const end = Math.min(timezones.length, start + numRows);
-  
+
   // If we hit the beginning of the array, extend towards the end
   let adjustedStart = start;
   if (start === 0 && end - start < numRows && end < timezones.length) {
@@ -197,7 +196,7 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
   else if (end === timezones.length && end - start < numRows && start > 0) {
     adjustedStart = Math.max(0, timezones.length - numRows);
   }
-  
+
   const finalEnd = Math.min(timezones.length, adjustedStart + numRows);
   return timezones.slice(adjustedStart, finalEnd);
 }
