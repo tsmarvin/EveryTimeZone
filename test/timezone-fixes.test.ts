@@ -101,6 +101,26 @@ describe('Timezone Selection Fixes', () => {
       expect(timezoneOffsets).toContain(userTz.offset);
     });
 
+    it('should place user timezone at center position when sufficient unique offsets are available', () => {
+      const userTz = getUserTimezone();
+      
+      // Test with various row counts to ensure centering works
+      for (const numRows of [3, 5, 7]) {
+        const timezones = getTimezonesForTimeline(numRows);
+        
+        // Find user timezone position (should be after sorting by offset)
+        const userIndex = timezones.findIndex(tz => tz.iana === userTz.iana);
+        const centerIndex = Math.floor(numRows / 2);
+        
+        // For the test setup with adequate timezone distribution, user should be centered
+        expect(userIndex).toBe(centerIndex);
+        
+        // Log for debugging
+        console.log(`Rows: ${numRows}, User at index: ${userIndex}, Center: ${centerIndex}`);
+        console.log(`Timezones: ${timezones.map(tz => `${tz.cityName}(${tz.offset})`).join(', ')}`);
+      }
+    });
+
     it('should include user timezone even when other timezones have same offset', () => {
       // This test ensures that even if Detroit (alphabetically first) has the same offset,
       // the user's actual timezone (New York) is still included
