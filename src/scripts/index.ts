@@ -607,6 +607,7 @@ export function renderTimeline(): void {
 export class TimelineManager {
   private container: HTMLElement;
   private modal: TimezoneModal;
+  private dateTimeModal: DateTimeModal;
   private selectedTimezones: TimeZone[] = [];
   private selectedDate: Date = new Date(); // Default to today
 
@@ -618,6 +619,9 @@ export class TimelineManager {
 
     // Initialize modal with callback
     this.modal = new TimezoneModal((timezone: TimeZone) => this.addTimezone(timezone));
+
+    // Initialize datetime modal with callback
+    this.dateTimeModal = new DateTimeModal((dateTime: Date) => this.setSelectedDate(dateTime));
 
     // Initialize with user's timezone and a few others
     this.initializeDefaultTimezones();
@@ -670,28 +674,8 @@ export class TimelineManager {
   }
 
   public openDatePicker(): void {
-    const dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.value = this.selectedDate.toISOString().split('T')[0] || '';
-    dateInput.className = 'date-input-hidden';
-    document.body.appendChild(dateInput);
-
-    dateInput.addEventListener('change', () => {
-      if (dateInput.value) {
-        const newDate = new Date(dateInput.value);
-        // Set to current time on the selected date
-        const now = new Date();
-        newDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
-        this.setSelectedDate(newDate);
-      }
-      document.body.removeChild(dateInput);
-    });
-
-    dateInput.addEventListener('blur', () => {
-      document.body.removeChild(dateInput);
-    });
-
-    dateInput.click();
+    this.dateTimeModal.setDateTime(this.selectedDate);
+    this.dateTimeModal.open();
   }
 
   private renderTimeline(): void {
@@ -1155,6 +1139,143 @@ export class TimezoneModal {
 
   public getSelectedTimezone(): TimeZone | null {
     return this.filteredTimezones[this.selectedIndex] || null;
+  }
+}
+
+/**
+ * DateTime Modal - Handles date and time selection
+ */
+export class DateTimeModal {
+  private modal: HTMLElement;
+  private overlay: HTMLElement;
+  private input: HTMLInputElement;
+  private selectButton: HTMLElement;
+  private cancelButton: HTMLElement;
+  private closeButton: HTMLElement | null = null;
+  private onDateTimeSelectedCallback: ((dateTime: Date) => void) | undefined;
+
+  constructor(onDateTimeSelected?: (dateTime: Date) => void) {
+    this.modal = document.getElementById('datetime-modal') as HTMLElement;
+    this.overlay = document.getElementById('datetime-modal-overlay') as HTMLElement;
+    this.input = document.getElementById('datetime-input') as HTMLInputElement;
+    this.selectButton = document.getElementById('select-datetime') as HTMLElement;
+    this.cancelButton = document.getElementById('cancel-datetime') as HTMLElement;
+
+    // Check if modal exists before trying to query it (for tests)
+    if (this.modal) {
+      this.closeButton = this.modal.querySelector('.modal-close') as HTMLElement;
+    }
+
+    this.onDateTimeSelectedCallback = onDateTimeSelected;
+
+    // Only setup event listeners if elements exist
+    if (this.modal && this.overlay && this.input && this.selectButton && this.cancelButton) {
+      this.setupEventListeners();
+    }
+  }
+
+  private setupEventListeners(): void {
+    // Close modal when clicking overlay
+    this.overlay.addEventListener('click', event => this.handleOverlayClick(event));
+
+    // Close modal when clicking close button
+    if (this.closeButton) {
+      this.closeButton.addEventListener('click', () => this.close());
+    }
+
+    // Cancel button
+    this.cancelButton.addEventListener('click', () => this.close());
+
+    // Select button
+    this.selectButton.addEventListener('click', () => this.selectDateTime());
+
+    // Handle keyboard events
+    this.modal.addEventListener('keydown', e => this.handleKeyDown(e));
+
+    // Handle form submission
+    this.input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.selectDateTime();
+      }
+    });
+  }
+
+  private handleKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.close();
+    }
+  }
+
+  private handleOverlayClick(event: Event): void {
+    if (event.target === this.overlay) {
+      this.close();
+    }
+  }
+
+  private selectDateTime(): void {
+    if (this.input && this.input.value) {
+      // Create date from the datetime-local input value
+      const selectedDateTime = new Date(this.input.value);
+
+      if (this.onDateTimeSelectedCallback) {
+        this.onDateTimeSelectedCallback(selectedDateTime);
+      }
+    }
+    this.close();
+  }
+
+  public open(): void {
+    // Return early if modal doesn't exist (for tests)
+    if (!this.modal || !this.overlay || !this.input) {
+      return;
+    }
+
+    // Set current datetime as default if no value is set
+    if (!this.input.value) {
+      const now = new Date();
+      // Format to datetime-local format (YYYY-MM-DDTHH:MM)
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      this.input.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    this.overlay.classList.add('active');
+    this.modal.focus();
+    document.body.style.overflow = 'hidden';
+
+    // Focus the input after a short delay to ensure it's visible
+    setTimeout(() => {
+      this.input.focus();
+    }, 100);
+  }
+
+  public close(): void {
+    // Return early if modal doesn't exist (for tests)
+    if (!this.overlay) {
+      return;
+    }
+
+    this.overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  public setDateTime(dateTime: Date): void {
+    // Return early if input doesn't exist (for tests)
+    if (!this.input) {
+      return;
+    }
+
+    const year = dateTime.getFullYear();
+    const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+    const day = String(dateTime.getDate()).padStart(2, '0');
+    const hours = String(dateTime.getHours()).padStart(2, '0');
+    const minutes = String(dateTime.getMinutes()).padStart(2, '0');
+    this.input.value = `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 }
 
