@@ -3073,3 +3073,742 @@ p {
     padding: 1px 4px;
   }
 }
+
+/* ==========================================================================
+   Comparison Timeline Styles (Option 3)
+   ========================================================================== */
+
+.comparison-timeline {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.comparison-header {
+  background: linear-gradient(135deg, var(--color-surface-variant), var(--color-surface));
+  padding: var(--space-md);
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: var(--space-md);
+}
+
+.comparison-info h3 {
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--color-primary);
+}
+
+.comparison-info p {
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-text-secondary);
+}
+
+.legend {
+  display: flex;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.overlap-indicator {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, var(--color-secondary), rgba(74, 139, 107, 0.7));
+  border-radius: 2px;
+}
+
+.work-hours-indicator {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, rgba(74, 139, 107, 0.3), rgba(74, 139, 107, 0.1));
+  border-radius: 2px;
+}
+
+.non-even-indicator {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(239, 68, 68, 0.1));
+  border-radius: 2px;
+}
+
+.comparison-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.comparison-row {
+  display: flex;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.comparison-row:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.comparison-row.user-timezone {
+  border: 2px solid var(--color-primary);
+  background: linear-gradient(135deg, rgba(79, 107, 179, 0.05), rgba(74, 139, 107, 0.05));
+}
+
+.comparison-info-panel {
+  min-width: 280px;
+  max-width: 280px;
+  padding: var(--space-md);
+  background: var(--color-surface-variant);
+  border-right: 2px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.timezone-header {
+  margin-bottom: var(--space-sm);
+}
+
+.timezone-name {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-xs);
+}
+
+.timezone-details {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.non-even-badge {
+  display: inline-block;
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--color-accent);
+  padding: 2px 6px;
+  border-radius: var(--border-radius);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  margin-left: var(--space-xs);
+}
+
+.comparison-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.time-difference {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.overlap-info {
+  font-size: var(--text-xs);
+}
+
+.overlap-positive {
+  color: var(--color-secondary);
+}
+
+.overlap-negative {
+  color: var(--color-text-secondary);
+}
+
+.comparison-timeline-panel {
+  flex: 1;
+  display: flex;
+  overflow-x: auto;
+  padding: var(--space-sm);
+  gap: 2px;
+}
+
+.comparison-hour {
+  min-width: 50px;
+  max-width: 50px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.comparison-hour.current-hour {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border: 2px solid white !important;
+  box-shadow: 0 4px 12px rgba(79, 107, 179, 0.4) !important;
+  transform: scale(1.05) !important;
+}
+
+.comparison-hour.working-hour {
+  background: linear-gradient(135deg, rgba(74, 139, 107, 0.2), rgba(74, 139, 107, 0.1));
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+
+.comparison-hour.business-overlap {
+  background: linear-gradient(135deg, var(--color-secondary), rgba(74, 139, 107, 0.8)) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border: 2px solid var(--color-secondary) !important;
+}
+
+.comparison-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--golden-yellow), var(--golden-amber));
+  color: var(--brown-dark);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.comparison-hour.night-hour {
+  background: linear-gradient(135deg, var(--slate-dark), var(--slate-darkest));
+  color: var(--gray-blue);
+  border-color: rgba(30, 41, 59, 0.7);
+}
+
+/* Light theme adjustments for comparison timeline */
+.light-theme .comparison-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--cream-pale), var(--cream-light));
+  color: var(--brown-medium);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.light-theme .comparison-hour.night-hour {
+  background: linear-gradient(135deg, var(--gray-750), var(--gray-850));
+  color: var(--gray-warm);
+  border-color: rgba(55, 65, 81, 0.4);
+}
+
+/* ==========================================================================
+   Circular Clock Styles (Option 4)
+   ========================================================================== */
+
+.circular-clock {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-lg);
+}
+
+.clock-header {
+  width: 100%;
+  background: linear-gradient(135deg, var(--color-surface-variant), var(--color-surface));
+  padding: var(--space-md);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.clock-info h3 {
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--color-primary);
+}
+
+.clock-info p {
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-text-secondary);
+}
+
+.clock-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.user-tz-indicator {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  border-radius: 50%;
+}
+
+.other-tz-indicator {
+  width: 12px;
+  height: 12px;
+  background: var(--color-background);
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+}
+
+.fractional-indicator {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(239, 68, 68, 0.1));
+  border-radius: 50%;
+}
+
+.clock-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.clock-svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.clock-background {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+  stroke-width: 2;
+}
+
+.clock-hour-marker {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--color-text-secondary);
+}
+
+.clock-tick {
+  stroke: var(--color-border);
+  stroke-width: 2;
+}
+
+.clock-center {
+  fill: var(--color-primary);
+}
+
+.timezone-position.user-timezone .connection-line {
+  stroke: var(--color-primary);
+  stroke-width: 3;
+}
+
+.timezone-position .connection-line {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.timezone-position.user-timezone .timezone-circle {
+  fill: var(--color-primary);
+  stroke: white;
+  stroke-width: 2;
+}
+
+.timezone-position .timezone-circle {
+  fill: var(--color-background);
+  stroke: var(--color-border);
+  stroke-width: 2;
+}
+
+.timezone-position.non-even-offset .timezone-circle.fractional-offset {
+  fill: rgba(220, 38, 38, 0.2);
+  stroke: var(--color-accent);
+  stroke-width: 2;
+}
+
+.timezone-time {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--color-text);
+  text-anchor: middle;
+}
+
+.timezone-city {
+  font-size: 10px;
+  font-weight: 500;
+  fill: var(--color-text-secondary);
+  text-anchor: middle;
+}
+
+.fractional-offset-text {
+  font-size: 8px;
+  font-weight: 600;
+  fill: var(--color-accent);
+  text-anchor: middle;
+}
+
+.clock-interaction-info {
+  max-width: 500px;
+  background: var(--color-surface-variant);
+  padding: var(--space-md);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+}
+
+.interaction-tips p {
+  margin: 0 0 var(--space-sm) 0;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.interaction-tips ul {
+  margin: 0;
+  padding-left: var(--space-lg);
+  color: var(--color-text-secondary);
+}
+
+.interaction-tips li {
+  margin-bottom: var(--space-xs);
+}
+
+/* ==========================================================================
+   Sliding Scale Styles (Option 5)
+   ========================================================================== */
+
+.sliding-scale {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.scale-header {
+  background: linear-gradient(135deg, var(--color-surface-variant), var(--color-surface));
+  padding: var(--space-md);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.scale-info h3 {
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--color-primary);
+}
+
+.scale-info p {
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-text-secondary);
+}
+
+.scale-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.user-scale-indicator {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  border-radius: 2px;
+}
+
+.fractional-scale-indicator {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(239, 68, 68, 0.1));
+  border-radius: 2px;
+}
+
+.scale-scroll-wrapper {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface);
+  min-height: 400px;
+}
+
+.scale-container {
+  position: relative;
+  min-height: 380px;
+}
+
+.scale-ruler {
+  position: absolute;
+  top: 0;
+  height: 40px;
+  background: linear-gradient(135deg, var(--color-surface-variant), var(--color-surface));
+  border-bottom: 2px solid var(--color-border);
+}
+
+.hour-marker {
+  position: absolute;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-line {
+  width: 2px;
+  height: 20px;
+  background: var(--color-border);
+}
+
+.marker-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.half-hour-marker {
+  position: absolute;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.half-marker-line {
+  width: 1px;
+  height: 10px;
+  background: var(--color-border);
+  opacity: 0.5;
+}
+
+.scale-tracks {
+  position: absolute;
+  top: 42px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.scale-track {
+  position: relative;
+  height: 60px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.scale-track.user-timezone {
+  background: linear-gradient(135deg, rgba(79, 107, 179, 0.05), rgba(74, 139, 107, 0.05));
+  border-left: 4px solid var(--color-primary);
+}
+
+.scale-track.non-even-offset {
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.02), transparent);
+}
+
+.track-info {
+  position: absolute;
+  top: 0;
+  z-index: 10;
+  background: var(--color-surface-variant);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--space-sm);
+  min-width: 200px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.track-timezone-name {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-xs);
+}
+
+.track-timezone-details {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.fractional-badge {
+  display: inline-block;
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--color-accent);
+  padding: 1px 4px;
+  border-radius: var(--border-radius);
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.timeline-strip {
+  position: absolute;
+  top: 30px;
+  height: 30px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+}
+
+.scale-hour {
+  position: absolute;
+  width: 14px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-text);
+  transition: var(--transition);
+}
+
+.scale-hour.current-hour {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border: 2px solid white !important;
+  box-shadow: 0 2px 8px rgba(79, 107, 179, 0.4) !important;
+  transform: scale(1.1) !important;
+  z-index: 5 !important;
+}
+
+.scale-hour.working-hours {
+  background: linear-gradient(135deg, rgba(74, 139, 107, 0.3), rgba(74, 139, 107, 0.1));
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+
+.scale-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--golden-yellow), var(--golden-amber));
+  color: var(--brown-dark);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.scale-hour.night-hour {
+  background: linear-gradient(135deg, var(--slate-dark), var(--slate-darkest));
+  color: var(--gray-blue);
+  border-color: rgba(30, 41, 59, 0.7);
+}
+
+.scale-controls {
+  margin-top: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--color-surface-variant);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+}
+
+.scale-control-buttons {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.scale-control-btn {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.scale-control-btn:hover {
+  background: var(--color-secondary);
+  transform: translateY(-1px);
+}
+
+.scale-tips p {
+  margin: 0 0 var(--space-sm) 0;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.scale-tips ul {
+  margin: 0;
+  padding-left: var(--space-lg);
+  color: var(--color-text-secondary);
+}
+
+.scale-tips li {
+  margin-bottom: var(--space-xs);
+}
+
+/* Light theme adjustments for sliding scale */
+.light-theme .scale-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--cream-pale), var(--cream-light));
+  color: var(--brown-medium);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.light-theme .scale-hour.night-hour {
+  background: linear-gradient(135deg, var(--gray-750), var(--gray-850));
+  color: var(--gray-warm);
+  border-color: rgba(55, 65, 81, 0.4);
+}
+
+/* Responsive adjustments for new visualization modes */
+@media (max-width: 768px) {
+  .comparison-info-panel {
+    min-width: 240px;
+    max-width: 240px;
+  }
+
+  .comparison-hour {
+    min-width: 40px;
+    max-width: 40px;
+    height: 32px;
+    font-size: var(--text-xs);
+  }
+
+  .clock-svg {
+    width: 350px;
+    height: 350px;
+  }
+
+  .scale-control-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .track-info {
+    min-width: 160px;
+  }
+}
+
+@media (max-width: 576px) {
+  .comparison-info-panel {
+    min-width: 180px;
+    max-width: 180px;
+    padding: var(--space-sm);
+  }
+
+  .comparison-hour {
+    min-width: 32px;
+    max-width: 32px;
+    height: 28px;
+    font-size: 10px;
+  }
+
+  .clock-svg {
+    width: 300px;
+    height: 300px;
+  }
+
+  .timezone-time {
+    font-size: 9px;
+  }
+
+  .timezone-city {
+    font-size: 8px;
+  }
+
+  .fractional-offset-text {
+    font-size: 7px;
+  }
+
+  .track-info {
+    min-width: 140px;
+    padding: 6px;
+  }
+
+  .track-timezone-name {
+    font-size: var(--text-sm);
+  }
+}

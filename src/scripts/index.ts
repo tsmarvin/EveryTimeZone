@@ -731,7 +731,7 @@ export class TimelineManager {
   private dateTimeModal: DateTimeModal;
   private selectedTimezones: TimeZone[] = [];
   private selectedDate: Date = new Date(); // Default to today
-  private visualizationMode: 'grid' | 'continuous' | 'hybrid' = 'grid'; // Default to original grid mode
+  private visualizationMode: 'grid' | 'continuous' | 'hybrid' | 'comparison' | 'circular' | 'sliding' = 'grid'; // Default to original grid mode
 
   constructor() {
     this.container = document.getElementById('timeline-container') as HTMLElement;
@@ -800,12 +800,12 @@ export class TimelineManager {
     this.dateTimeModal.open();
   }
 
-  public setVisualizationMode(mode: 'grid' | 'continuous' | 'hybrid'): void {
+  public setVisualizationMode(mode: 'grid' | 'continuous' | 'hybrid' | 'comparison' | 'circular' | 'sliding'): void {
     this.visualizationMode = mode;
     this.renderTimeline();
   }
 
-  public getVisualizationMode(): 'grid' | 'continuous' | 'hybrid' {
+  public getVisualizationMode(): 'grid' | 'continuous' | 'hybrid' | 'comparison' | 'circular' | 'sliding' {
     return this.visualizationMode;
   }
 
@@ -859,6 +859,18 @@ export class TimelineManager {
           modeTitle = 'Switch to hybrid grid (grid with offset indicators)';
           break;
         case 'hybrid':
+          modeText = '📋 Switch to Comparison';
+          modeTitle = 'Switch to comparison timeline (side-by-side analysis)';
+          break;
+        case 'comparison':
+          modeText = '🕐 Switch to Circular';
+          modeTitle = 'Switch to circular clock view (timezone wheel)';
+          break;
+        case 'circular':
+          modeText = '📏 Switch to Sliding';
+          modeTitle = 'Switch to sliding scale (proportional positioning)';
+          break;
+        case 'sliding':
           modeText = '📋 Switch to Grid';
           modeTitle = 'Switch to original grid timeline';
           break;
@@ -867,8 +879,8 @@ export class TimelineManager {
       modeToggle.textContent = modeText;
       modeToggle.title = modeTitle;
       modeToggle.addEventListener('click', () => {
-        // Cycle through the modes: grid -> continuous -> hybrid -> grid
-        let nextMode: 'grid' | 'continuous' | 'hybrid';
+        // Cycle through the modes: grid -> continuous -> hybrid -> comparison -> circular -> sliding -> grid
+        let nextMode: 'grid' | 'continuous' | 'hybrid' | 'comparison' | 'circular' | 'sliding';
         switch (this.visualizationMode) {
           case 'grid':
             nextMode = 'continuous';
@@ -877,6 +889,15 @@ export class TimelineManager {
             nextMode = 'hybrid';
             break;
           case 'hybrid':
+            nextMode = 'comparison';
+            break;
+          case 'comparison':
+            nextMode = 'circular';
+            break;
+          case 'circular':
+            nextMode = 'sliding';
+            break;
+          case 'sliding':
             nextMode = 'grid';
             break;
         }
@@ -898,6 +919,12 @@ export class TimelineManager {
       this.renderContinuousTimeline(numHours);
     } else if (this.visualizationMode === 'hybrid') {
       this.renderHybridTimeline(numHours);
+    } else if (this.visualizationMode === 'comparison') {
+      this.renderComparisonTimeline(numHours);
+    } else if (this.visualizationMode === 'circular') {
+      this.renderCircularTimeline();
+    } else if (this.visualizationMode === 'sliding') {
+      this.renderSlidingTimeline(numHours);
     } else {
       this.renderGridTimeline(numHours, timeFormat);
     }
@@ -905,7 +932,13 @@ export class TimelineManager {
 
   private renderGridTimeline(numHours: number, timeFormat: string): void {
     // Remove timeline mode classes
-    this.container.classList.remove('continuous-timeline', 'hybrid-timeline');
+    this.container.classList.remove(
+      'continuous-timeline',
+      'hybrid-timeline',
+      'comparison-timeline',
+      'circular-clock',
+      'sliding-scale',
+    );
 
     // Create timeline rows for selected timezones
     // For initial load, preserve the centered order from getTimezonesForTimeline
@@ -1018,6 +1051,39 @@ export class TimelineManager {
 
     // Render continuous timeline
     renderContinuousTimeline(this.container, timelineData);
+  }
+
+  private async renderComparisonTimeline(numHours: number): Promise<void> {
+    // Import comparison timeline module dynamically
+    const { createComparisonTimelineData, renderComparisonTimeline } = await import('./timeline-comparison.js');
+
+    // Create comparison timeline data
+    const timelineData = createComparisonTimelineData(numHours, this.selectedTimezones, this.selectedDate);
+
+    // Render comparison timeline
+    renderComparisonTimeline(this.container, timelineData);
+  }
+
+  private async renderCircularTimeline(): Promise<void> {
+    // Import circular timeline module dynamically
+    const { createCircularClockData, renderCircularClock } = await import('./timeline-circular.js');
+
+    // Create circular clock data
+    const clockData = createCircularClockData(this.selectedTimezones, this.selectedDate);
+
+    // Render circular clock
+    renderCircularClock(this.container, clockData);
+  }
+
+  private async renderSlidingTimeline(numHours: number): Promise<void> {
+    // Import sliding scale timeline module dynamically
+    const { createSlidingScaleData, renderSlidingScale } = await import('./timeline-sliding.js');
+
+    // Create sliding scale data
+    const scaleData = createSlidingScaleData(numHours, this.selectedTimezones, this.selectedDate);
+
+    // Render sliding scale
+    renderSlidingScale(this.container, scaleData);
   }
 }
 
