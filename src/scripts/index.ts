@@ -731,7 +731,7 @@ export class TimelineManager {
   private dateTimeModal: DateTimeModal;
   private selectedTimezones: TimeZone[] = [];
   private selectedDate: Date = new Date(); // Default to today
-  private visualizationMode: 'grid' | 'continuous' = 'grid'; // Default to original grid mode
+  private visualizationMode: 'grid' | 'continuous' | 'hybrid' = 'grid'; // Default to original grid mode
 
   constructor() {
     this.container = document.getElementById('timeline-container') as HTMLElement;
@@ -800,12 +800,12 @@ export class TimelineManager {
     this.dateTimeModal.open();
   }
 
-  public setVisualizationMode(mode: 'grid' | 'continuous'): void {
+  public setVisualizationMode(mode: 'grid' | 'continuous' | 'hybrid'): void {
     this.visualizationMode = mode;
     this.renderTimeline();
   }
 
-  public getVisualizationMode(): 'grid' | 'continuous' {
+  public getVisualizationMode(): 'grid' | 'continuous' | 'hybrid' {
     return this.visualizationMode;
   }
 
@@ -842,15 +842,45 @@ export class TimelineManager {
       addButton.textContent = '+ Add Timezone';
       addButton.addEventListener('click', () => this.openTimezoneModal());
 
-      // Create visualization mode toggle
+      // Create visualization mode toggle with cycling between all options
       const modeToggle = document.createElement('button');
       modeToggle.className = 'button secondary mode-toggle-btn';
-      modeToggle.textContent = this.visualizationMode === 'grid' ? '📊 Switch to Continuous' : '🔗 Switch to Grid';
-      modeToggle.title = this.visualizationMode === 'grid' 
-        ? 'Switch to continuous timeline (better for non-even offsets)' 
-        : 'Switch to grid timeline (original view)';
+
+      let modeText: string;
+      let modeTitle: string;
+
+      switch (this.visualizationMode) {
+        case 'grid':
+          modeText = '📊 Switch to Continuous';
+          modeTitle = 'Switch to continuous timeline (better for non-even offsets)';
+          break;
+        case 'continuous':
+          modeText = '🔗 Switch to Hybrid';
+          modeTitle = 'Switch to hybrid grid (grid with offset indicators)';
+          break;
+        case 'hybrid':
+          modeText = '📋 Switch to Grid';
+          modeTitle = 'Switch to original grid timeline';
+          break;
+      }
+
+      modeToggle.textContent = modeText;
+      modeToggle.title = modeTitle;
       modeToggle.addEventListener('click', () => {
-        this.setVisualizationMode(this.visualizationMode === 'grid' ? 'continuous' : 'grid');
+        // Cycle through the modes: grid -> continuous -> hybrid -> grid
+        let nextMode: 'grid' | 'continuous' | 'hybrid';
+        switch (this.visualizationMode) {
+          case 'grid':
+            nextMode = 'continuous';
+            break;
+          case 'continuous':
+            nextMode = 'hybrid';
+            break;
+          case 'hybrid':
+            nextMode = 'grid';
+            break;
+        }
+        this.setVisualizationMode(nextMode);
       });
 
       const buttonContainer = document.createElement('div');
@@ -865,16 +895,18 @@ export class TimelineManager {
 
     // Render based on visualization mode
     if (this.visualizationMode === 'continuous') {
-      this.renderContinuousTimeline(numHours, timeFormat);
+      this.renderContinuousTimeline(numHours);
+    } else if (this.visualizationMode === 'hybrid') {
+      this.renderHybridTimeline(numHours);
     } else {
       this.renderGridTimeline(numHours, timeFormat);
     }
   }
 
   private renderGridTimeline(numHours: number, timeFormat: string): void {
-    // Remove continuous timeline class
-    this.container.classList.remove('continuous-timeline');
-    
+    // Remove timeline mode classes
+    this.container.classList.remove('continuous-timeline', 'hybrid-timeline');
+
     // Create timeline rows for selected timezones
     // For initial load, preserve the centered order from getTimezonesForTimeline
     // For manually added timezones, sort by offset for logical progression
@@ -956,18 +988,34 @@ export class TimelineManager {
     window.requestAnimationFrame(scrollToCurrentHour);
   }
 
-  private async renderContinuousTimeline(numHours: number, timeFormat: string): Promise<void> {
+  private async renderHybridTimeline(numHours: number): Promise<void> {
+    // Import hybrid timeline module dynamically
+    const { createHybridTimelineData, renderHybridTimeline } = await import('./timeline-hybrid.js');
+
+    // Create hybrid timeline data
+    const timelineData = createHybridTimelineData(
+      numHours,
+      this.selectedTimezones.length,
+      this.selectedTimezones,
+      this.selectedDate,
+    );
+
+    // Render hybrid timeline
+    renderHybridTimeline(this.container, timelineData);
+  }
+
+  private async renderContinuousTimeline(numHours: number): Promise<void> {
     // Import continuous timeline module dynamically to avoid circular dependencies
     const { createContinuousTimelineData, renderContinuousTimeline } = await import('./timeline-continuous.js');
-    
+
     // Create continuous timeline data
     const timelineData = createContinuousTimelineData(
-      numHours, 
-      this.selectedTimezones.length, 
-      this.selectedTimezones, 
-      this.selectedDate
+      numHours,
+      this.selectedTimezones.length,
+      this.selectedTimezones,
+      this.selectedDate,
     );
-    
+
     // Render continuous timeline
     renderContinuousTimeline(this.container, timelineData);
   }

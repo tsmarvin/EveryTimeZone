@@ -2499,7 +2499,7 @@ p {
   color: var(--color-text-secondary);
   font-family: 'Courier New', monospace;
   font-weight: 600;
-  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.05) 50%, transparent 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.05) 50%, transparent 100%);
   padding: 0 var(--space-xs);
   border-left: 1px solid var(--color-border);
   min-width: 60px;
@@ -2698,15 +2698,15 @@ p {
   .continuous-timezone-label {
     width: 200px;
   }
-  
+
   .continuous-timezone-label-spacer {
     width: 200px;
   }
-  
+
   .continuous-hours-container {
     margin-left: 200px;
   }
-  
+
   .continuous-hour {
     width: 50px;
     height: 35px;
@@ -2718,26 +2718,358 @@ p {
   .continuous-timezone-label {
     width: 150px;
   }
-  
+
   .continuous-timezone-label-spacer {
     width: 150px;
   }
-  
+
   .continuous-hours-container {
     margin-left: 150px;
   }
-  
+
   .continuous-hour {
     width: 45px;
     height: 30px;
     font-size: var(--text-xs);
   }
-  
+
   .continuous-timezone-label .timezone-name {
     font-size: var(--text-xs);
   }
-  
+
   .continuous-timezone-label .timezone-offset {
     font-size: 10px;
+  }
+}
+
+/* =============================================================================
+   HYBRID GRID TIMELINE STYLES - Option 2
+   ============================================================================= */
+
+/* Hybrid Timeline Container */
+.timeline-container.hybrid-timeline {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+/* Hybrid Timeline Header */
+.hybrid-timeline-header {
+  display: flex;
+  border-bottom: 2px solid var(--color-border);
+  background: linear-gradient(135deg, var(--color-surface-variant), var(--color-surface));
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.hybrid-timezone-label-spacer {
+  min-width: 160px;
+  width: 160px;
+  background: var(--color-surface-variant);
+  border-right: 2px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.hybrid-hour-header {
+  min-width: 60px;
+  max-width: 60px;
+  height: 30px;
+  position: relative;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.hybrid-hour-header:last-child {
+  border-right: none;
+}
+
+/* Sub-grid markers for fractional offsets */
+.half-hour-marker {
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  bottom: 10%;
+  width: 1px;
+  background: linear-gradient(180deg, var(--color-accent), rgba(220, 38, 38, 0.3));
+  transform: translateX(-50%);
+  opacity: 0.6;
+}
+
+.quarter-hour-marker {
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  width: 1px;
+  background: rgba(220, 38, 38, 0.4);
+  opacity: 0.5;
+}
+
+.quarter-hour-marker.quarter-1 {
+  left: 25%;
+  transform: translateX(-50%);
+}
+
+.quarter-hour-marker.quarter-3 {
+  left: 75%;
+  transform: translateX(-50%);
+}
+
+/* Hybrid Timeline Rows */
+.hybrid-timeline-row {
+  position: relative;
+  border-bottom: 1px solid var(--color-border);
+  transition: var(--transition);
+}
+
+.hybrid-timeline-row:hover {
+  background: var(--color-surface-variant);
+}
+
+.hybrid-timeline-row.user-timezone {
+  background: linear-gradient(135deg, rgba(79, 107, 179, 0.1), rgba(74, 139, 107, 0.1));
+  border: 2px solid var(--color-primary);
+  border-left: none;
+  border-right: none;
+}
+
+.hybrid-timeline-row.non-even-offset {
+  border-left: 4px solid var(--color-accent);
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.03), rgba(239, 68, 68, 0.03));
+}
+
+/* Enhanced timezone labels for hybrid grid */
+.hybrid-timezone-label {
+  position: relative;
+  background: var(--color-surface-variant);
+  border-right: 2px solid var(--color-border);
+}
+
+.hybrid-timezone-label .timezone-info {
+  position: relative;
+}
+
+.hybrid-timezone-label .offset-type-indicator {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  font-weight: 600;
+  background: rgba(220, 38, 38, 0.1);
+  padding: 2px var(--space-xs);
+  border-radius: var(--border-radius);
+  display: inline-block;
+  margin-top: var(--space-xs);
+}
+
+/* Hybrid Hour Cells */
+.hybrid-hour {
+  position: relative;
+  background: var(--color-background);
+  transition: var(--transition);
+}
+
+.hybrid-hour:hover {
+  background: var(--color-surface-variant);
+}
+
+/* Fractional offset hour styling */
+.hybrid-hour.fractional-offset {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(239, 68, 68, 0.05));
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  position: relative;
+}
+
+.hybrid-hour.half-hour-offset {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(239, 68, 68, 0.08));
+}
+
+.hybrid-hour.three-quarter-offset {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(239, 68, 68, 0.1));
+}
+
+.hybrid-hour.quarter-hour-offset {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(239, 68, 68, 0.03));
+}
+
+/* Fractional offset indicators */
+.fractional-offset-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  opacity: 0.8;
+  transition: var(--transition);
+}
+
+.half-hour-offset .fractional-offset-indicator {
+  background: linear-gradient(135deg, var(--color-accent), rgba(220, 38, 38, 0.8));
+  transform: scale(1.2);
+}
+
+.three-quarter-offset .fractional-offset-indicator {
+  background: linear-gradient(135deg, var(--color-accent), rgba(220, 38, 38, 0.9));
+  transform: scale(1.3);
+  box-shadow: 0 0 4px rgba(220, 38, 38, 0.4);
+}
+
+.quarter-hour-offset .fractional-offset-indicator {
+  background: rgba(220, 38, 38, 0.6);
+  transform: scale(1.1);
+}
+
+/* Visual positioning for fractional offsets in grid */
+.hybrid-timeline-row[data-offset-fraction='0.5'] .hybrid-hour {
+  transform: translateX(50%);
+  margin-right: -50%;
+  z-index: 2;
+}
+
+.hybrid-timeline-row[data-offset-fraction='0.75'] .hybrid-hour {
+  transform: translateX(75%);
+  margin-right: -75%;
+  z-index: 2;
+}
+
+.hybrid-timeline-row[data-offset-fraction='0.25'] .hybrid-hour {
+  transform: translateX(25%);
+  margin-right: -25%;
+  z-index: 2;
+}
+
+/* Enhanced current hour styling for hybrid */
+.hybrid-hour.current-hour {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border: 2px solid white !important;
+  box-shadow: 0 4px 16px rgba(79, 107, 179, 0.4) !important;
+  z-index: 5 !important;
+  transform: scale(1.05) !important;
+}
+
+.hybrid-hour.current-hour.fractional-offset {
+  transform: scale(1.05) translateX(var(--fractional-offset, 0)) !important;
+}
+
+/* Working hours for hybrid timeline */
+.hybrid-hour.working-hours {
+  background: linear-gradient(135deg, rgba(74, 139, 107, 0.2), rgba(74, 139, 107, 0.1));
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+  font-weight: 600;
+}
+
+.hybrid-hour.working-hours.fractional-offset {
+  background: linear-gradient(135deg, rgba(74, 139, 107, 0.25), rgba(220, 38, 38, 0.1));
+}
+
+/* Daylight and Night Indicators for Hybrid Timeline */
+.hybrid-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--golden-yellow), var(--golden-amber));
+  color: var(--brown-dark);
+  font-weight: 600;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+}
+
+.hybrid-hour.daylight-hour.fractional-offset {
+  background: linear-gradient(135deg, var(--golden-yellow), var(--golden-amber), rgba(220, 38, 38, 0.1));
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.hybrid-hour.night-hour {
+  background: linear-gradient(135deg, var(--slate-dark), var(--slate-darkest));
+  color: var(--gray-blue);
+  font-weight: 500;
+  border: 1px solid rgba(30, 41, 59, 0.7);
+}
+
+.hybrid-hour.night-hour.fractional-offset {
+  background: linear-gradient(135deg, var(--slate-dark), var(--slate-darkest), rgba(220, 38, 38, 0.1));
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.4);
+}
+
+/* Light theme adjustments for hybrid timeline */
+.light-theme .hybrid-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--cream-pale), var(--cream-light));
+  color: var(--brown-medium);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+.light-theme .hybrid-hour.daylight-hour.fractional-offset {
+  background: linear-gradient(135deg, var(--cream-pale), var(--cream-light), rgba(220, 38, 38, 0.08));
+}
+
+.light-theme .hybrid-hour.night-hour {
+  background: linear-gradient(135deg, var(--gray-750), var(--gray-850));
+  color: var(--gray-warm);
+  border: 1px solid rgba(55, 65, 81, 0.4);
+}
+
+.light-theme .hybrid-hour.night-hour.fractional-offset {
+  background: linear-gradient(135deg, var(--gray-750), var(--gray-850), rgba(220, 38, 38, 0.08));
+}
+
+/* Responsive adjustments for hybrid timeline */
+@media (max-width: 768px) {
+  .hybrid-timezone-label-spacer {
+    width: 120px;
+    min-width: 120px;
+  }
+
+  .hybrid-hour {
+    min-width: 50px;
+    max-width: 50px;
+  }
+
+  .hybrid-hour-header {
+    min-width: 50px;
+    max-width: 50px;
+  }
+
+  .fractional-offset-indicator {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .hybrid-timezone-label-spacer {
+    width: 100px;
+    min-width: 100px;
+  }
+
+  .hybrid-hour {
+    min-width: 45px;
+    max-width: 45px;
+    font-size: var(--text-xs);
+  }
+
+  .hybrid-hour-header {
+    min-width: 45px;
+    max-width: 45px;
+    height: 25px;
+  }
+
+  .half-hour-marker {
+    top: 15%;
+    bottom: 15%;
+  }
+
+  .quarter-hour-marker {
+    top: 25%;
+    bottom: 25%;
+  }
+
+  .fractional-offset-indicator {
+    width: 5px;
+    height: 5px;
+  }
+
+  .hybrid-timezone-label .offset-type-indicator {
+    font-size: 10px;
+    padding: 1px 4px;
   }
 }
