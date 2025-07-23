@@ -386,25 +386,12 @@ p {
   /* Remove background, borders, and shadows to blend with page */
 }
 
-/* Allow timeline to extend beyond normal container constraints on desktop */
-@media (min-width: 1200px) {
-  .timeline-container {
-    /* Break out of container constraints to use more screen width */
-    margin-left: calc(-1 * var(--space-xl));
-    margin-right: calc(-1 * var(--space-xl));
-    padding-left: var(--space-xl);
-    padding-right: var(--space-xl);
-  }
-}
-
-@media (min-width: 1600px) {
-  .timeline-container {
-    /* Even more expansion on large screens */
-    margin-left: calc(-2 * var(--space-xl));
-    margin-right: calc(-2 * var(--space-xl));
-    padding-left: calc(2 * var(--space-xl));
-    padding-right: calc(2 * var(--space-xl));
-  }
+/* Make timeline container extend to full page width */
+.timeline-container {
+  /* Break out of container constraints and fill full viewport width */
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
 }
 
 .timeline-header {
