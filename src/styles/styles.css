@@ -408,6 +408,7 @@ p {
   display: flex;
   border-bottom: 1px solid var(--color-border);
   transition: var(--transition);
+  min-width: fit-content; /* Ensure row expands to contain all timeline cells */
 }
 
 .timeline-row:hover {
