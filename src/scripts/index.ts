@@ -731,6 +731,7 @@ export class TimelineManager {
   private dateTimeModal: DateTimeModal;
   private selectedTimezones: TimeZone[] = [];
   private selectedDate: Date = new Date(); // Default to today
+  private visualizationMode: 'grid' | 'continuous' = 'grid'; // Default to original grid mode
 
   constructor() {
     this.container = document.getElementById('timeline-container') as HTMLElement;
@@ -799,6 +800,15 @@ export class TimelineManager {
     this.dateTimeModal.open();
   }
 
+  public setVisualizationMode(mode: 'grid' | 'continuous'): void {
+    this.visualizationMode = mode;
+    this.renderTimeline();
+  }
+
+  public getVisualizationMode(): 'grid' | 'continuous' {
+    return this.visualizationMode;
+  }
+
   private renderTimeline(): void {
     const { numHours } = getTimelineDimensions();
 
@@ -809,7 +819,7 @@ export class TimelineManager {
     // Clear container
     this.container.innerHTML = '';
 
-    // Create timeline controls (date picker and add timezone button)
+    // Create timeline controls (date picker, add timezone button, and mode toggle)
     const timelineSection = this.container.closest('.timeline-section');
     if (timelineSection) {
       // Remove existing controls if present
@@ -832,15 +842,39 @@ export class TimelineManager {
       addButton.textContent = '+ Add Timezone';
       addButton.addEventListener('click', () => this.openTimezoneModal());
 
+      // Create visualization mode toggle
+      const modeToggle = document.createElement('button');
+      modeToggle.className = 'button secondary mode-toggle-btn';
+      modeToggle.textContent = this.visualizationMode === 'grid' ? '📊 Switch to Continuous' : '🔗 Switch to Grid';
+      modeToggle.title = this.visualizationMode === 'grid' 
+        ? 'Switch to continuous timeline (better for non-even offsets)' 
+        : 'Switch to grid timeline (original view)';
+      modeToggle.addEventListener('click', () => {
+        this.setVisualizationMode(this.visualizationMode === 'grid' ? 'continuous' : 'grid');
+      });
+
       const buttonContainer = document.createElement('div');
       buttonContainer.className = 'timeline-controls';
       buttonContainer.appendChild(dateButton);
+      buttonContainer.appendChild(modeToggle);
       buttonContainer.appendChild(addButton);
 
       // Insert the button container before the timeline container
       timelineSection.insertBefore(buttonContainer, this.container);
     }
 
+    // Render based on visualization mode
+    if (this.visualizationMode === 'continuous') {
+      this.renderContinuousTimeline(numHours, timeFormat);
+    } else {
+      this.renderGridTimeline(numHours, timeFormat);
+    }
+  }
+
+  private renderGridTimeline(numHours: number, timeFormat: string): void {
+    // Remove continuous timeline class
+    this.container.classList.remove('continuous-timeline');
+    
     // Create timeline rows for selected timezones
     // For initial load, preserve the centered order from getTimezonesForTimeline
     // For manually added timezones, sort by offset for logical progression
@@ -920,6 +954,22 @@ export class TimelineManager {
     scrollToCurrentHour();
     // Also apply after next frame to handle any layout shifts
     window.requestAnimationFrame(scrollToCurrentHour);
+  }
+
+  private async renderContinuousTimeline(numHours: number, timeFormat: string): Promise<void> {
+    // Import continuous timeline module dynamically to avoid circular dependencies
+    const { createContinuousTimelineData, renderContinuousTimeline } = await import('./timeline-continuous.js');
+    
+    // Create continuous timeline data
+    const timelineData = createContinuousTimelineData(
+      numHours, 
+      this.selectedTimezones.length, 
+      this.selectedTimezones, 
+      this.selectedDate
+    );
+    
+    // Render continuous timeline
+    renderContinuousTimeline(this.container, timelineData);
   }
 }
 

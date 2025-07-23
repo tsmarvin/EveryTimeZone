@@ -2452,3 +2452,292 @@ p {
 .theme-option.theme-sunset-warmth .theme-description {
   color: var(--sunset-peach); /* Medium warm text */
 }
+
+/* =============================================================================
+   CONTINUOUS TIMELINE STYLES - Option 1
+   ============================================================================= */
+
+/* Continuous Timeline Container */
+.timeline-container.continuous-timeline {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: visible;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--space-sm) 0;
+}
+
+/* Continuous Timeline Header */
+.continuous-timeline-header {
+  position: relative;
+  height: 40px;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: var(--space-sm);
+  background: linear-gradient(135deg, var(--color-surface-variant), var(--color-surface));
+}
+
+.continuous-timezone-label-spacer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 300px; /* Match timezone label width */
+  height: 100%;
+  background: var(--color-surface-variant);
+  border-right: 2px solid var(--color-border);
+  z-index: 5;
+}
+
+.continuous-hour-marker {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.05) 50%, transparent 100%);
+  padding: 0 var(--space-xs);
+  border-left: 1px solid var(--color-border);
+  min-width: 60px;
+  text-align: center;
+}
+
+.continuous-hour-marker:first-of-type {
+  border-left: none;
+}
+
+/* Continuous Timeline Rows */
+.continuous-timeline-row {
+  position: relative;
+  min-height: 60px;
+  margin-bottom: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-background);
+  transition: var(--transition);
+}
+
+.continuous-timeline-row:hover {
+  background: var(--color-surface-variant);
+  box-shadow: var(--shadow-sm);
+}
+
+.continuous-timeline-row.user-timezone {
+  background: linear-gradient(135deg, rgba(79, 107, 179, 0.1), rgba(74, 139, 107, 0.1));
+  border: 2px solid var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.continuous-timeline-row.non-even-offset {
+  border-left: 4px solid var(--color-accent);
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.05), rgba(239, 68, 68, 0.05));
+}
+
+/* Continuous Timeline Labels */
+.continuous-timezone-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 300px;
+  height: 100%;
+  background: var(--color-surface-variant);
+  border-right: 2px solid var(--color-border);
+  padding: var(--space-sm);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  border-radius: var(--border-radius) 0 0 var(--border-radius);
+}
+
+.continuous-timezone-label .timezone-info {
+  width: 100%;
+}
+
+.continuous-timezone-label .timezone-name {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  margin-bottom: var(--space-xs);
+}
+
+.continuous-timezone-label .timezone-offset {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  font-family: 'Courier New', monospace;
+  margin-bottom: var(--space-xs);
+}
+
+.continuous-timezone-label .offset-indicator {
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  font-weight: 600;
+  background: rgba(220, 38, 38, 0.1);
+  padding: 2px var(--space-xs);
+  border-radius: var(--border-radius);
+  display: inline-block;
+}
+
+/* Continuous Hours Container */
+.continuous-hours-container {
+  position: relative;
+  height: 100%;
+  margin-left: 300px; /* Account for timezone label */
+  padding: var(--space-sm) 0;
+}
+
+/* Continuous Hour Elements */
+.continuous-hour {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  z-index: 2;
+}
+
+.continuous-hour:hover {
+  background: var(--color-surface-variant);
+  box-shadow: var(--shadow-sm);
+  z-index: 3;
+}
+
+/* Non-even offset hour styling */
+.continuous-hour.offset-hour {
+  background: linear-gradient(135deg, var(--color-accent), rgba(220, 38, 38, 0.8));
+  color: white;
+  font-weight: 600;
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.continuous-hour.offset-hour:hover {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.9), var(--color-accent));
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+/* Working hours */
+.continuous-hour.working-hours {
+  background: linear-gradient(135deg, rgba(74, 139, 107, 0.2), rgba(74, 139, 107, 0.1));
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+  font-weight: 600;
+}
+
+/* Daylight and Night Indicators for Continuous Timeline */
+.continuous-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--golden-yellow), var(--golden-amber));
+  color: var(--brown-dark);
+  font-weight: 600;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.continuous-hour.night-hour {
+  background: linear-gradient(135deg, var(--slate-dark), var(--slate-darkest));
+  color: var(--gray-blue);
+  font-weight: 500;
+  border: 1px solid rgba(30, 41, 59, 0.7);
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.3);
+}
+
+/* Light theme adjustments */
+.light-theme .continuous-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--cream-pale), var(--cream-light));
+  color: var(--brown-medium);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.15);
+}
+
+.light-theme .continuous-hour.night-hour {
+  background: linear-gradient(135deg, var(--gray-750), var(--gray-850));
+  color: var(--gray-warm);
+  border: 1px solid rgba(55, 65, 81, 0.4);
+  box-shadow: 0 2px 8px rgba(55, 65, 81, 0.2);
+}
+
+/* Current hour styling with highest priority */
+.continuous-hour.current-hour {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border: 2px solid white !important;
+  box-shadow: 0 4px 16px rgba(79, 107, 179, 0.4) !important;
+  z-index: 5 !important;
+  transform: translateY(-50%) scale(1.1) !important;
+}
+
+.continuous-hour.current-hour::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--color-primary);
+}
+
+/* Responsive adjustments for continuous timeline */
+@media (max-width: 768px) {
+  .continuous-timezone-label {
+    width: 200px;
+  }
+  
+  .continuous-timezone-label-spacer {
+    width: 200px;
+  }
+  
+  .continuous-hours-container {
+    margin-left: 200px;
+  }
+  
+  .continuous-hour {
+    width: 50px;
+    height: 35px;
+    font-size: var(--text-xs);
+  }
+}
+
+@media (max-width: 576px) {
+  .continuous-timezone-label {
+    width: 150px;
+  }
+  
+  .continuous-timezone-label-spacer {
+    width: 150px;
+  }
+  
+  .continuous-hours-container {
+    margin-left: 150px;
+  }
+  
+  .continuous-hour {
+    width: 45px;
+    height: 30px;
+    font-size: var(--text-xs);
+  }
+  
+  .continuous-timezone-label .timezone-name {
+    font-size: var(--text-xs);
+  }
+  
+  .continuous-timezone-label .timezone-offset {
+    font-size: 10px;
+  }
+}
