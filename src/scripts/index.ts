@@ -539,6 +539,28 @@ function getCellWidth(): number {
 }
 
 /**
+ * Calculate the visual offset for timezones with fractional hour offsets
+ * This allows timezones like +4:30, -9:30, +12:45 to be visually positioned
+ * between even-hour timezones to show their true time relationships
+ * @param timezone The timezone to calculate offset for
+ * @returns Offset in pixels to apply as margin-left
+ */
+function calculateFractionalOffset(timezone: TimeZone): number {
+  // Extract the fractional part of the UTC offset
+  const fractionalHours = Math.abs(timezone.offset % 1);
+
+  // If there's no fractional part, no offset needed
+  if (fractionalHours === 0) {
+    return 0;
+  }
+
+  // Convert fractional hours to pixels
+  // 0.25 = 15 minutes, 0.5 = 30 minutes, 0.75 = 45 minutes
+  const cellWidth = getCellWidth();
+  return fractionalHours * cellWidth;
+}
+
+/**
  * Calculate scroll position to place current hour immediately to the right of timezone labels
  * @returns Scroll position in pixels
  */
@@ -692,6 +714,12 @@ export function renderTimeline(): void {
 
     if (row.isUserTimezone) {
       rowElement.classList.add('user-timezone');
+    }
+
+    // Apply fractional offset for timezones with non-even hour offsets
+    const fractionalOffset = calculateFractionalOffset(row.timezone);
+    if (fractionalOffset > 0) {
+      rowElement.style.marginLeft = `${fractionalOffset}px`;
     }
 
     // Timezone label
@@ -896,6 +924,12 @@ export class TimelineManager {
       const userTz = getUserTimezone();
       if (timezone.iana === userTz.iana) {
         rowElement.classList.add('user-timezone');
+      }
+
+      // Apply fractional offset for timezones with non-even hour offsets
+      const fractionalOffset = calculateFractionalOffset(timezone);
+      if (fractionalOffset > 0) {
+        rowElement.style.marginLeft = `${fractionalOffset}px`;
       }
 
       // Timezone label with remove button
