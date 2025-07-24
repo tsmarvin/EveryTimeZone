@@ -48,24 +48,11 @@ export interface TimelineHour {
   isDaylight?: boolean;
 }
 
-/** Individual 15-minute segment in the timeline display */
-export interface TimelineSegment {
-  hour: number;
-  minute: number;
-  date: Date;
-  time12: string; // "2 PM" (only for :00 minutes)
-  time24: string; // "14" (only for :00 minutes)
-  isHourMark: boolean; // true for :00 minutes, false for :15, :30, :45
-  isDaylight?: boolean;
-}
-
 /** Complete timeline row for a single timezone */
 export interface TimelineRow {
   timezone: TimeZone;
   hours: TimelineHour[];
-  segments: TimelineSegment[];
   isUserTimezone: boolean;
-  offsetInSegments: number; // Offset in 15-minute segments for positioning
 }
 
 /**
@@ -479,69 +466,6 @@ function formatOffset(offset: number): string {
 }
 
 /**
- * Generate timeline segments in 15-minute increments for display
- * @param numHours Number of hours to display in the timeline (will be converted to 15-minute segments)
- * @param timezone Target timezone to calculate segments for
- * @param baseDate Date to center the timeline on (defaults to current date)
- * @returns Array of timeline segments with 15-minute precision
- */
-export function generateTimelineSegments(numHours: number, timezone: TimeZone, baseDate?: Date): TimelineSegment[] {
-  const now = baseDate || new Date();
-  const userTz = getUserTimezone();
-
-  // Get current hour in user's timezone and round down to hour
-  const currentUserHour = new Date(now.toLocaleString('en-US', { timeZone: userTz.iana }));
-  currentUserHour.setMinutes(0, 0, 0);
-
-  const segments: TimelineSegment[] = [];
-
-  // Convert hours to 15-minute segments (4 segments per hour)
-  const numSegments = numHours * 4;
-  const startOffset = -24; // Start 24 hours before current time
-
-  for (let i = 0; i < numSegments; i++) {
-    // Calculate the time in the target timezone
-    const segmentOffset = startOffset + i / 4; // Each segment is 0.25 hours (15 minutes)
-    const baseTime = new Date(currentUserHour.getTime() + segmentOffset * 60 * 60 * 1000);
-    const offsetDiff = (timezone.offset - userTz.offset) * 60 * 60 * 1000;
-    const timeInTz = new Date(baseTime.getTime() + offsetDiff);
-
-    const minute = timeInTz.getMinutes();
-    const isHourMark = minute === 0;
-
-    // Only show time labels for hour marks
-    let hour12 = '';
-    let hour24 = '';
-    if (isHourMark) {
-      hour12 = timeInTz.toLocaleString('en-US', {
-        hour: 'numeric',
-        hour12: true,
-      });
-
-      hour24 = timeInTz.toLocaleString('en-US', {
-        hour: '2-digit',
-        hour12: false,
-      });
-    }
-
-    // Calculate daylight status for this segment
-    const isDaylight = isHourInDaylight(timezone, timeInTz);
-
-    segments.push({
-      hour: timeInTz.getHours(),
-      minute: minute,
-      date: timeInTz,
-      time12: hour12,
-      time24: hour24,
-      isHourMark,
-      isDaylight,
-    });
-  }
-
-  return segments;
-}
-
-/**
  * Generate timeline hours for display
  * @param numHours Number of hours to display in the timeline
  * @param timezone Target timezone to calculate hours for
@@ -595,40 +519,45 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
 }
 
 /**
- * Calculate the offset in 15-minute segments for timezone positioning
- * This allows timezones with fractional hour offsets to be positioned correctly
- * @param timezone The timezone to calculate offset for
- * @returns Number of 15-minute segments to offset from base position
- */
-function calculateOffsetInSegments(timezone: TimeZone): number {
-  // Extract the fractional part of the UTC offset
-  const fractionalHours = timezone.offset % 1;
-
-  // Convert to 15-minute segments (4 segments per hour)
-  // 0.25 hours = 1 segment, 0.5 hours = 2 segments, 0.75 hours = 3 segments
-  return Math.round(fractionalHours * 4);
-}
-
-/**
  * Get the current cell width based on screen size
  * Matches the CSS media query breakpoints for .timeline-cell exactly
- * Returns width for 15-minute segments (quarter of hour cell width)
- * @returns Cell width in pixels for 15-minute segments
+ * @returns Cell width in pixels
  */
 function getCellWidth(): number {
   const screenWidth = window.innerWidth;
 
   // Match CSS media query breakpoints for .timeline-cell min-width exactly
-  // Then divide by 4 to get 15-minute segment width
   if (screenWidth >= 1400) {
-    return 120 / 4; // 30px per 15-minute segment
+    return 120; // Extra large devices - @media (min-width: 1400px)
   } else if (screenWidth >= 992) {
-    return 100 / 4; // 25px per 15-minute segment
+    return 100; // Large devices - @media (min-width: 992px)
   } else if (screenWidth >= 768) {
-    return 90 / 4; // 22.5px per 15-minute segment
+    return 90; // Medium devices - @media (min-width: 768px)
   } else {
-    return 60 / 4; // 15px per 15-minute segment
+    return 60; // Default and small devices - matches base CSS and @media (max-width: 576px)
   }
+}
+
+/**
+ * Calculate the visual offset for timezones with fractional hour offsets
+ * This allows timezones like +4:30, -9:30, +12:45 to be visually positioned
+ * between even-hour timezones to show their true time relationships
+ * @param timezone The timezone to calculate offset for
+ * @returns Offset in pixels to apply as margin-left
+ */
+function calculateFractionalOffset(timezone: TimeZone): number {
+  // Extract the fractional part of the UTC offset
+  const fractionalHours = Math.abs(timezone.offset % 1);
+
+  // If there's no fractional part, no offset needed
+  if (fractionalHours === 0) {
+    return 0;
+  }
+
+  // Convert fractional hours to pixels
+  // 0.25 = 15 minutes, 0.5 = 30 minutes, 0.75 = 45 minutes
+  const cellWidth = getCellWidth();
+  return fractionalHours * cellWidth;
 }
 
 /**
@@ -638,13 +567,13 @@ function getCellWidth(): number {
 function getCurrentHourScrollPosition(): number {
   const cellWidth = getCellWidth();
 
-  // The current hour should always be at segment index 96 in a properly structured timeline
-  // (24 hours before current * 4 segments per hour = 96 segments)
-  const currentHourSegmentIndex = 96;
+  // The current hour should always be at index 24 in a properly structured 48-hour timeline
+  // (24 hours before current + current hour = index 24)
+  const currentHourIndex = 24;
 
   // Position current hour as the first visible hour after the sticky timezone label
   // This places the current hour immediately to the right of the timezone labels
-  const scrollPosition = currentHourSegmentIndex * cellWidth;
+  const scrollPosition = currentHourIndex * cellWidth;
 
   // Ensure we don't scroll to negative position
   return Math.max(0, scrollPosition);
@@ -664,9 +593,7 @@ export function createTimelineData(numHours: number, numRows: number, baseDate?:
   return timezones.map(timezone => ({
     timezone,
     hours: generateTimelineHours(numHours, timezone, baseDate),
-    segments: generateTimelineSegments(numHours, timezone, baseDate),
     isUserTimezone: timezone.iana === userTz.iana,
-    offsetInSegments: calculateOffsetInSegments(timezone),
   }));
 }
 
@@ -760,7 +687,7 @@ function adjustTimezoneLabelWidths(): void {
 }
 
 /**
- * Render the timeline visualization using 15-minute segments
+ * Render the timeline visualization
  */
 export function renderTimeline(): void {
   const container = document.getElementById('timeline-container');
@@ -789,12 +716,10 @@ export function renderTimeline(): void {
       rowElement.classList.add('user-timezone');
     }
 
-    // Apply offset for timezones with fractional hour offsets
-    if (row.offsetInSegments > 0) {
-      rowElement.classList.add('offset');
-      const cellWidth = getCellWidth();
-      const offsetPixels = row.offsetInSegments * cellWidth;
-      rowElement.style.marginLeft = `${offsetPixels}px`;
+    // Apply fractional offset for timezones with non-even hour offsets
+    const fractionalOffset = calculateFractionalOffset(row.timezone);
+    if (fractionalOffset > 0) {
+      rowElement.style.marginLeft = `${fractionalOffset}px`;
     }
 
     // Timezone label
@@ -808,41 +733,35 @@ export function renderTimeline(): void {
     `;
     rowElement.appendChild(labelCell);
 
-    // Segment cells
-    row.segments.forEach((segment, index) => {
-      const segmentCell = document.createElement('div');
+    // Hour cells
+    row.hours.forEach((hour, index) => {
+      const hourCell = document.createElement('div');
+      hourCell.className = 'timeline-cell timeline-hour';
+      // Use consistent format based on setting
+      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
-      if (segment.isHourMark) {
-        // Hour mark - wider cell with text
-        segmentCell.className = 'timeline-cell timeline-segment timeline-hour hour-mark';
-        segmentCell.textContent = timeFormat === '12h' ? segment.time12 : segment.time24;
+      // Mark current hour (index 24 since we start from -24 hours)
+      if (index === 24) {
+        hourCell.classList.add('current-hour');
+      }
 
-        // Mark current hour (segment index 96 since we start from -24 hours * 4 segments/hour)
-        if (index === 96) {
-          segmentCell.classList.add('current-hour');
-        }
-
-        // Add working hours class (9 AM to 5 PM)
-        if (segment.hour >= 9 && segment.hour < 17) {
-          segmentCell.classList.add('working-hours');
-        }
-      } else {
-        // Non-hour segment - narrow cell, no text
-        segmentCell.className = 'timeline-cell timeline-segment';
+      // Add working hours class (9 AM to 5 PM)
+      if (hour.hour >= 9 && hour.hour < 17) {
+        hourCell.classList.add('working-hours');
       }
 
       // Add daylight/night indicator
-      if (segment.isDaylight !== undefined) {
-        if (segment.isDaylight) {
-          segmentCell.classList.add('daylight-hour');
-          segmentCell.title = 'Daylight hours';
+      if (hour.isDaylight !== undefined) {
+        if (hour.isDaylight) {
+          hourCell.classList.add('daylight-hour');
+          hourCell.title = 'Daylight hours';
         } else {
-          segmentCell.classList.add('night-hour');
-          segmentCell.title = 'Night hours';
+          hourCell.classList.add('night-hour');
+          hourCell.title = 'Night hours';
         }
       }
 
-      rowElement.appendChild(segmentCell);
+      rowElement.appendChild(hourCell);
     });
 
     container.appendChild(rowElement);
@@ -1007,13 +926,10 @@ export class TimelineManager {
         rowElement.classList.add('user-timezone');
       }
 
-      // Apply offset for timezones with fractional hour offsets
-      const offsetInSegments = calculateOffsetInSegments(timezone);
-      if (offsetInSegments > 0) {
-        rowElement.classList.add('offset');
-        const cellWidth = getCellWidth();
-        const offsetPixels = offsetInSegments * cellWidth;
-        rowElement.style.marginLeft = `${offsetPixels}px`;
+      // Apply fractional offset for timezones with non-even hour offsets
+      const fractionalOffset = calculateFractionalOffset(timezone);
+      if (fractionalOffset > 0) {
+        rowElement.style.marginLeft = `${fractionalOffset}px`;
       }
 
       // Timezone label with remove button
@@ -1033,42 +949,25 @@ export class TimelineManager {
 
       rowElement.appendChild(labelCell);
 
-      // Segment cells
-      const timezoneSegments = generateTimelineSegments(numHours, timezone, this.selectedDate);
-      timezoneSegments.forEach((segment, index) => {
-        const segmentCell = document.createElement('div');
+      // Hour cells
+      const timezoneHours = generateTimelineHours(numHours, timezone, this.selectedDate);
+      timezoneHours.forEach((hour, index) => {
+        const hourCell = document.createElement('div');
+        hourCell.className = 'timeline-cell timeline-hour';
+        // Use consistent format based on setting
+        hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
 
-        if (segment.isHourMark) {
-          // Hour mark - wider cell with text
-          segmentCell.className = 'timeline-cell timeline-segment timeline-hour hour-mark';
-          segmentCell.textContent = timeFormat === '12h' ? segment.time12 : segment.time24;
-
-          // Mark current hour (segment index 96 since we start from -24 hours * 4 segments/hour)
-          if (index === 96) {
-            segmentCell.classList.add('current-hour');
-          }
-
-          // Add working hours class (9 AM to 5 PM)
-          if (segment.hour >= 9 && segment.hour < 17) {
-            segmentCell.classList.add('working-hours');
-          }
-        } else {
-          // Non-hour segment - narrow cell, no text
-          segmentCell.className = 'timeline-cell timeline-segment';
+        // Mark current hour (index 24 since we start from -24 hours)
+        if (index === 24) {
+          hourCell.classList.add('current-hour');
         }
 
-        // Add daylight/night indicator
-        if (segment.isDaylight !== undefined) {
-          if (segment.isDaylight) {
-            segmentCell.classList.add('daylight-hour');
-            segmentCell.title = 'Daylight hours';
-          } else {
-            segmentCell.classList.add('night-hour');
-            segmentCell.title = 'Night hours';
-          }
+        // Add working hours class (9 AM to 5 PM)
+        if (hour.hour >= 9 && hour.hour < 17) {
+          hourCell.classList.add('working-hours');
         }
 
-        rowElement.appendChild(segmentCell);
+        rowElement.appendChild(hourCell);
       });
 
       this.container.appendChild(rowElement);
