@@ -328,8 +328,64 @@ p {
 .timeline-controls {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 0; /* Remove margin to minimize whitespace */
   gap: var(--space-sm);
+}
+
+/* Sort Controls */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.sort-select {
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 180px;
+}
+
+.sort-select:hover {
+  background: var(--color-border);
+}
+
+.sort-select:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-color: var(--color-primary);
+}
+
+.sort-direction-btn {
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: var(--space-xs);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: var(--text-base);
+  font-weight: bold;
+  transition: var(--transition);
+  min-width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sort-direction-btn:hover {
+  background: var(--color-border);
+  transform: translateY(-1px);
+}
+
+.sort-direction-btn:active {
+  transform: translateY(0);
 }
 
 .add-timezone-btn {
@@ -512,7 +568,7 @@ p {
   align-items: center;
   justify-content: flex-start;
   text-align: left;
-  padding: var(--space-sm) calc(var(--space-md) + 1.5rem) var(--space-sm) var(--space-md);
+  padding: var(--space-sm) calc(var(--space-md) + 1.5rem) var(--space-sm) var(--space-xs);
   position: sticky; /* Keep timezone labels fixed during horizontal scroll */
   left: 0;
   z-index: 10; /* Ensure it stays above hour cells */
@@ -534,6 +590,57 @@ p {
   color: var(--color-text-secondary);
   font-family: 'Courier New', monospace;
   white-space: nowrap;
+}
+
+/* Drag and Drop Styles */
+.drag-handle {
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: bold;
+  cursor: grab;
+  padding: var(--space-xs);
+  margin-right: var(--space-xs);
+  line-height: 1;
+  user-select: none;
+  transition: var(--transition);
+}
+
+.drag-handle:hover {
+  color: var(--color-text);
+  background: var(--color-border);
+  border-radius: var(--border-radius);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.timeline-row.dragging {
+  opacity: 0.5;
+  transform: rotate(3deg);
+  z-index: 1000;
+  transition: none;
+}
+
+.timeline-row.drag-over-top {
+  border-top: 3px solid var(--color-primary);
+  margin-top: -3px;
+}
+
+.timeline-row.drag-over-bottom {
+  border-bottom: 3px solid var(--color-primary);
+  margin-bottom: -3px;
+}
+
+/* Enhanced timeline row hover for drag and drop feedback */
+.timeline-row:hover {
+  background-color: var(--color-surface-variant);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.timeline-row {
+  cursor: move; /* Indicate the entire row is draggable */
 }
 
 .timeline-hour {
