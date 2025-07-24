@@ -2216,8 +2216,8 @@ p {
   --color-primary-subtle: rgba(230, 81, 0, 0.1);
   --color-secondary: var(--sunset-light-secondary);
   --color-accent: var(--sunset-light-accent);
-  --color-text: var(--sunset-light-text);
-  --color-text-secondary: var(--sunset-light-text-secondary);
+  --color-text: var(--sunset-coffee);
+  --color-text-secondary: var(--sunset-mocha);
   --color-border: var(--sunset-light-border);
   --color-gradient-start: var(--sunset-light-primary);
   --color-gradient-end: var(--sunset-light-secondary);
