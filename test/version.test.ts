@@ -22,7 +22,7 @@ function getGitVersion(): string {
       // Parse the tag version
       const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
       if (!match) {
-        return '0.0.1-alpha.0';
+        return '1.0.0';
       }
       
       const major = parseInt(match[1], 10);
@@ -42,7 +42,7 @@ function getGitVersion(): string {
       return `${major}.${minor}.${patch}`;
     } catch (gitError) {
       // No git or tags available, use default
-      return '0.0.1-alpha.0';
+      return '1.0.0';
     }
   }
 }
@@ -69,7 +69,7 @@ describe('Version Management', () => {
     it('should keep package.json version static in source control', () => {
       // Verify the package.json version remains static as requested
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-      expect(packageJson.version).toBe('0.0.1-alpha');
+      expect(packageJson.version).toBe('1.0.0');
     });
     
     it('should generate version different from package.json static version', () => {
