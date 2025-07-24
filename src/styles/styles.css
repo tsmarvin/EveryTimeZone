@@ -459,6 +459,12 @@ p {
   border-bottom: 1px solid var(--color-border);
   transition: var(--transition);
   min-width: fit-content; /* Ensure row expands to contain all timeline cells */
+  position: relative; /* Allow for positioning offset */
+}
+
+.timeline-row.offset {
+  /* Used for timezones with fractional hour offsets */
+  /* The actual margin-left will be set dynamically via JavaScript */
 }
 
 .timeline-row:hover {
@@ -484,8 +490,8 @@ p {
 }
 
 .timeline-cell {
-  min-width: 60px; /* Fixed minimum width for hour cells to ensure 24 hours fit properly */
-  max-width: 60px; /* Fixed width for consistent layout */
+  min-width: 15px; /* Fixed minimum width for 15-minute segments */
+  max-width: 15px; /* Fixed width for consistent layout */
   padding: var(--space-sm);
   text-align: center;
   border-right: 1px solid var(--color-border);
@@ -497,6 +503,30 @@ p {
   overflow: hidden; /* Prevent text overflow */
   text-overflow: ellipsis; /* Show ellipsis for extreme overflow */
   flex-shrink: 0; /* Prevent cells from shrinking */
+}
+
+.timeline-segment {
+  min-width: 15px; /* Base width for 15-minute segments */
+  max-width: 15px;
+  padding: var(--space-xs);
+  text-align: center;
+  border-right: 1px solid transparent; /* Subtle separator for segments */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+}
+
+.timeline-segment.hour-mark {
+  border-right: 1px solid var(--color-border); /* Stronger border for hour marks */
+  min-width: 60px; /* Wider for hour labels - equivalent to 4 segments */
+  max-width: 60px;
+  font-size: var(--text-sm);
 }
 
 .timeline-cell:last-child {
@@ -1326,8 +1356,21 @@ p {
   }
 
   .timeline-cell {
-    min-width: 60px;
+    min-width: 15px;
     padding: var(--space-xs);
+    font-size: var(--text-xs);
+  }
+
+  .timeline-segment {
+    min-width: 15px;
+    max-width: 15px;
+    padding: 2px;
+    font-size: 10px;
+  }
+
+  .timeline-segment.hour-mark {
+    min-width: 60px;
+    max-width: 60px;
     font-size: var(--text-xs);
   }
 
@@ -1413,7 +1456,17 @@ p {
   }
 
   .timeline-cell {
+    min-width: 22px;
+  }
+
+  .timeline-segment {
+    min-width: 22px;
+    max-width: 22px;
+  }
+
+  .timeline-segment.hour-mark {
     min-width: 90px;
+    max-width: 90px;
   }
 
   .timeline-timezone-label {
@@ -1437,8 +1490,18 @@ p {
   }
 
   .timeline-cell {
-    min-width: 100px;
+    min-width: 25px;
     padding: var(--space-md);
+  }
+
+  .timeline-segment {
+    min-width: 25px;
+    max-width: 25px;
+  }
+
+  .timeline-segment.hour-mark {
+    min-width: 100px;
+    max-width: 100px;
   }
 
   .timeline-timezone-label {
@@ -1479,7 +1542,17 @@ p {
   }
 
   .timeline-cell {
+    min-width: 30px;
+  }
+
+  .timeline-segment {
+    min-width: 30px;
+    max-width: 30px;
+  }
+
+  .timeline-segment.hour-mark {
     min-width: 120px;
+    max-width: 120px;
   }
 
   .timeline-timezone-label {
