@@ -30,8 +30,8 @@ function getGitVersion(): string {
       // Parse the tag version
       const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
       if (!match || !match[1] || !match[2] || !match[3]) {
-        console.log('Using default fallback version: 0.0.1-alpha.0');
-        return '0.0.1-alpha.0';
+        console.log('Using default fallback version: 1.0.0');
+        return '1.0.0';
       }
 
       const major = parseInt(match[1], 10);
@@ -57,8 +57,8 @@ function getGitVersion(): string {
       return version;
     } catch {
       // No git or tags available, use default
-      console.log('No git available, using default version: 0.0.1-alpha.0');
-      return '0.0.1-alpha.0';
+      console.log('No git available, using default version: 1.0.0');
+      return '1.0.0';
     }
   }
 }

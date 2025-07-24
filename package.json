@@ -1,6 +1,6 @@
 {
   "name": "every-time-zone",
-  "version": "0.0.1-alpha",
+  "version": "1.0.0",
   "description": "A static timezone overlap visualization tool for easy sharing and collaboration",
   "main": "dist/index.js",
   "type": "module",
