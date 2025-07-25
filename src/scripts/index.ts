@@ -55,6 +55,28 @@ export interface TimelineRow {
   isUserTimezone: boolean;
 }
 
+/** Sort criteria for timezone ordering */
+export enum SortCriteria {
+  OFFSET = 'offset',
+  NAME = 'name',
+  LOCATION = 'location',
+  DAYLIGHT = 'daylight',
+  CUSTOM = 'custom',
+}
+
+/** Sort direction */
+export enum SortDirection {
+  ASC = 'asc',
+  DESC = 'desc',
+}
+
+/** Sort configuration */
+export interface SortConfig {
+  criteria: SortCriteria;
+  direction: SortDirection;
+  customOrder?: string[]; // Array of timezone IANA identifiers in custom order
+}
+
 /**
  * Get user's current timezone using Intl API
  * @returns TimeZone object with user's timezone details
@@ -792,6 +814,11 @@ export class TimelineManager {
   private dateTimeModal: DateTimeModal;
   private selectedTimezones: TimeZone[] = [];
   private selectedDate: Date = new Date(); // Default to today
+  private currentSort: SortConfig = {
+    criteria: SortCriteria.OFFSET,
+    direction: SortDirection.ASC,
+  };
+  private draggedIndex = -1;
 
   constructor() {
     this.container = document.getElementById('timeline-container') as HTMLElement;
@@ -860,6 +887,109 @@ export class TimelineManager {
     this.dateTimeModal.open();
   }
 
+  /**
+   * Sort timezones based on the provided criteria
+   */
+  public sortTimezones(criteria: SortCriteria, direction: SortDirection = SortDirection.ASC): void {
+    this.currentSort = { criteria, direction };
+
+    switch (criteria) {
+      case SortCriteria.OFFSET:
+        this.selectedTimezones.sort((a, b) => {
+          const comparison = a.offset - b.offset;
+          return direction === SortDirection.ASC ? comparison : -comparison;
+        });
+        break;
+
+      case SortCriteria.NAME:
+        this.selectedTimezones.sort((a, b) => {
+          const comparison = a.cityName.localeCompare(b.cityName);
+          return direction === SortDirection.ASC ? comparison : -comparison;
+        });
+        break;
+
+      case SortCriteria.LOCATION:
+        this.selectedTimezones.sort((a, b) => {
+          const comparison = a.iana.localeCompare(b.iana);
+          return direction === SortDirection.ASC ? comparison : -comparison;
+        });
+        break;
+
+      case SortCriteria.DAYLIGHT:
+        // For daylight sorting, we need to calculate daylight hours for each timezone
+        // This is a more complex sort that requires current time calculation
+        this.selectedTimezones.sort((a, b) => {
+          const now = new Date();
+          const isDaylightA = this.isDaylightTimezone(a, now);
+          const isDaylightB = this.isDaylightTimezone(b, now);
+          const comparison = Number(isDaylightB) - Number(isDaylightA); // Daylight first
+          return direction === SortDirection.ASC ? comparison : -comparison;
+        });
+        break;
+
+      case SortCriteria.CUSTOM:
+        // Custom order is managed by drag and drop
+        // This case is handled when custom order is set
+        break;
+    }
+
+    this.renderTimeline();
+  }
+
+  /**
+   * Helper method to determine if a timezone is currently in daylight
+   */
+  private isDaylightTimezone(timezone: TimeZone, date: Date): boolean {
+    // Simple heuristic: check if current hour in timezone is between 6 AM and 6 PM
+    try {
+      const timeInTimezone = new Date(date.toLocaleString('en-US', { timeZone: timezone.iana }));
+      const hour = timeInTimezone.getHours();
+      return hour >= 6 && hour < 18;
+    } catch {
+      return false; // Fallback for invalid timezones
+    }
+  }
+
+  /**
+   * Reorder timezones by moving a timezone from one position to another
+   */
+  public reorderTimezones(fromIndex: number, toIndex: number): void {
+    if (
+      fromIndex < 0 ||
+      fromIndex >= this.selectedTimezones.length ||
+      toIndex < 0 ||
+      toIndex >= this.selectedTimezones.length ||
+      fromIndex === toIndex
+    ) {
+      return;
+    }
+
+    // Remove timezone from old position and insert at new position
+    const movedTimezones = this.selectedTimezones.splice(fromIndex, 1);
+    if (movedTimezones.length === 0) return;
+
+    const movedTimezone = movedTimezones[0];
+    if (!movedTimezone) return;
+
+    this.selectedTimezones.splice(toIndex, 0, movedTimezone);
+
+    // When reordering manually, switch to custom sort
+    this.currentSort = {
+      criteria: SortCriteria.CUSTOM,
+      direction: SortDirection.ASC,
+      customOrder: this.selectedTimezones.map(tz => tz.iana),
+    };
+
+    this.renderTimeline();
+  }
+
+  /**
+   * Get current sort configuration
+   */
+  public getCurrentSort(): SortConfig {
+    return { ...this.currentSort };
+  }
+
   private renderTimeline(): void {
     const { numHours } = getTimelineDimensions();
 
@@ -893,9 +1023,13 @@ export class TimelineManager {
       addButton.textContent = '+ Add Timezone';
       addButton.addEventListener('click', () => this.openTimezoneModal());
 
+      // Create sort controls
+      const sortControls = this.createSortControls();
+
       const buttonContainer = document.createElement('div');
       buttonContainer.className = 'timeline-controls';
       buttonContainer.appendChild(dateButton);
+      buttonContainer.appendChild(sortControls);
       buttonContainer.appendChild(addButton);
 
       // Insert the button container before the timeline container
@@ -903,28 +1037,39 @@ export class TimelineManager {
     }
 
     // Create timeline rows for selected timezones
-    // For initial load, preserve the centered order from getTimezonesForTimeline
-    // For manually added timezones, sort by offset for logical progression
-    const userTz = getUserTimezone();
-    const userIndex = this.selectedTimezones.findIndex(tz => tz.iana === userTz.iana);
-
+    // Apply current sort if not using custom order
     let timezonesToRender: TimeZone[];
-    if (userIndex !== -1) {
-      // User timezone exists - preserve order to maintain centering
-      timezonesToRender = this.selectedTimezones;
+    if (this.currentSort.criteria === SortCriteria.CUSTOM && this.currentSort.customOrder) {
+      // Use custom order
+      timezonesToRender = this.currentSort.customOrder
+        .map(iana => this.selectedTimezones.find(tz => tz.iana === iana))
+        .filter((tz): tz is TimeZone => tz !== undefined);
+
+      // Add any timezones not in custom order to the end
+      const customOrderSet = new Set(this.currentSort.customOrder);
+      const remainingTimezones = this.selectedTimezones.filter(tz => !customOrderSet.has(tz.iana));
+      timezonesToRender.push(...remainingTimezones);
     } else {
-      // Fallback to sorting by offset if user timezone not found
-      timezonesToRender = [...this.selectedTimezones].sort((a, b) => a.offset - b.offset);
+      // Use the already sorted selectedTimezones array
+      timezonesToRender = [...this.selectedTimezones];
     }
 
-    timezonesToRender.forEach(timezone => {
+    timezonesToRender.forEach((timezone, index) => {
       const rowElement = document.createElement('div');
       rowElement.className = 'timeline-row';
+      rowElement.draggable = true;
+
+      // Store timezone info for drag and drop
+      rowElement.dataset.timezoneIndex = index.toString();
+      rowElement.dataset.timezoneIana = timezone.iana;
 
       const userTz = getUserTimezone();
       if (timezone.iana === userTz.iana) {
         rowElement.classList.add('user-timezone');
       }
+
+      // Add drag and drop event listeners
+      this.addDragAndDropListeners(rowElement, index);
 
       // Apply fractional offset for timezones with non-even hour offsets
       const fractionalOffset = calculateFractionalOffset(timezone);
@@ -932,15 +1077,18 @@ export class TimelineManager {
         rowElement.style.marginLeft = `${fractionalOffset}px`;
       }
 
-      // Timezone label with remove button
+      // Timezone label with remove button and drag handle
       const labelCell = document.createElement('div');
       labelCell.className = 'timeline-cell timeline-timezone-label';
       labelCell.innerHTML = `
-        <div class="timezone-info">
-          <div class="timezone-name">${extractCityName(timezone.iana)}</div>
-          <div class="timezone-offset">${timezone.displayName} (${formatOffset(timezone.offset)})</div>
+        <div class="timezone-content">
+          <div class="timezone-info">
+            <div class="timezone-name">${extractCityName(timezone.iana)}</div>
+            <div class="timezone-offset">${timezone.displayName} (${formatOffset(timezone.offset)})</div>
+          </div>
+          <button class="remove-timezone-btn" title="Remove timezone">×</button>
         </div>
-        <button class="remove-timezone-btn" title="Remove timezone">×</button>
+        <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
       `;
 
       // Add remove button functionality
@@ -987,6 +1135,135 @@ export class TimelineManager {
     scrollToCurrentHour();
     // Also apply after next frame to handle any layout shifts
     window.requestAnimationFrame(scrollToCurrentHour);
+  }
+
+  /**
+   * Create sort controls UI
+   */
+  private createSortControls(): HTMLElement {
+    const sortContainer = document.createElement('div');
+    sortContainer.className = 'sort-controls';
+
+    // Sort dropdown
+    const sortSelect = document.createElement('select');
+    sortSelect.className = 'sort-select';
+    sortSelect.title = 'Sort timezones by';
+
+    const options = [
+      { value: SortCriteria.OFFSET, label: 'Sort by UTC Offset' },
+      { value: SortCriteria.NAME, label: 'Sort by City Name' },
+      { value: SortCriteria.LOCATION, label: 'Sort by Location (A-Z)' },
+      { value: SortCriteria.DAYLIGHT, label: 'Sort by Daylight/Night' },
+      { value: SortCriteria.CUSTOM, label: 'Custom Order (Drag to arrange)' },
+    ];
+
+    options.forEach(option => {
+      const optionElement = document.createElement('option');
+      optionElement.value = option.value;
+      optionElement.textContent = option.label;
+      optionElement.selected = option.value === this.currentSort.criteria;
+      sortSelect.appendChild(optionElement);
+    });
+
+    // Sort direction button
+    const directionButton = document.createElement('button');
+    directionButton.className = 'sort-direction-btn';
+    directionButton.type = 'button';
+    directionButton.title = 'Toggle sort direction';
+    directionButton.textContent = this.currentSort.direction === SortDirection.ASC ? '↑' : '↓';
+
+    // Event listeners
+    sortSelect.addEventListener('change', e => {
+      const target = e.target as HTMLSelectElement;
+      const criteria = target.value as SortCriteria;
+      this.sortTimezones(criteria, this.currentSort.direction);
+    });
+
+    directionButton.addEventListener('click', () => {
+      const newDirection = this.currentSort.direction === SortDirection.ASC ? SortDirection.DESC : SortDirection.ASC;
+      this.sortTimezones(this.currentSort.criteria, newDirection);
+      directionButton.textContent = newDirection === SortDirection.ASC ? '↑' : '↓';
+    });
+
+    sortContainer.appendChild(sortSelect);
+    sortContainer.appendChild(directionButton);
+
+    return sortContainer;
+  }
+
+  /**
+   * Add drag and drop event listeners to a timeline row
+   */
+  private addDragAndDropListeners(rowElement: HTMLElement, index: number): void {
+    rowElement.addEventListener('dragstart', e => {
+      this.draggedIndex = index;
+      rowElement.classList.add('dragging');
+
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', index.toString());
+      }
+    });
+
+    rowElement.addEventListener('dragend', () => {
+      rowElement.classList.remove('dragging');
+      this.draggedIndex = -1;
+
+      // Remove drag-over classes from all rows
+      const allRows = this.container.querySelectorAll('.timeline-row');
+      allRows.forEach(row => row.classList.remove('drag-over', 'drag-over-top', 'drag-over-bottom'));
+    });
+
+    rowElement.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (this.draggedIndex === -1 || this.draggedIndex === index) return;
+
+      const rect = rowElement.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const isTopHalf = e.clientY < midY;
+
+      // Remove existing drag-over classes
+      rowElement.classList.remove('drag-over-top', 'drag-over-bottom');
+
+      // Add appropriate drag-over class
+      if (isTopHalf) {
+        rowElement.classList.add('drag-over-top');
+      } else {
+        rowElement.classList.add('drag-over-bottom');
+      }
+    });
+
+    rowElement.addEventListener('dragleave', e => {
+      // Only remove classes if we're actually leaving the element
+      const rect = rowElement.getBoundingClientRect();
+      if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+        rowElement.classList.remove('drag-over-top', 'drag-over-bottom');
+      }
+    });
+
+    rowElement.addEventListener('drop', e => {
+      e.preventDefault();
+
+      if (this.draggedIndex === -1 || this.draggedIndex === index) return;
+
+      const rect = rowElement.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const isTopHalf = e.clientY < midY;
+
+      let targetIndex = index;
+      if (!isTopHalf && this.draggedIndex < index) {
+        // Dropping below, but dragged item was above target
+        targetIndex = index;
+      } else if (isTopHalf && this.draggedIndex > index) {
+        // Dropping above, but dragged item was below target
+        targetIndex = index;
+      } else if (!isTopHalf) {
+        // Dropping below
+        targetIndex = index + 1;
+      }
+
+      this.reorderTimezones(this.draggedIndex, targetIndex);
+    });
   }
 }
 
