@@ -16,7 +16,6 @@ updates:
     # Add labels to PRs
     labels:
       - "dependencies"
-      - "npm"
     # Group dependency updates to reduce PR noise
     groups:
       dev-dependencies:
