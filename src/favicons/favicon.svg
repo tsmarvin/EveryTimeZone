@@ -24,16 +24,16 @@
   
   <!-- Time displays for major timezones -->
   <!-- Eastern Time Zone (NYC) -->
-  <text x="3" y="7" font-family="Arial, sans-serif" font-size="1.8" fill="#ffffff" font-weight="bold">EST -5</text>
-  <text x="3" y="9.5" font-family="Arial, sans-serif" font-size="1.8" fill="#e0e0e0">12:00</text>
+  <text x="6" y="7" font-family="Arial, sans-serif" font-size="1.8" fill="#ffffff" font-weight="bold">EST -5</text>
+  <text x="6" y="9.5" font-family="Arial, sans-serif" font-size="1.8" fill="#e0e0e0">12:00</text>
 
   <!-- Greenwich Mean Time (London) -->
-  <text x="12" y="3.5" font-family="Arial, sans-serif" font-size="1.8" fill="#ffffff" font-weight="bold">GMT +0</text>
-  <text x="12.5" y="6" font-family="Arial, sans-serif" font-size="1.8" fill="#e0e0e0">17:00</text>
+  <text x="14" y="3.5" font-family="Arial, sans-serif" font-size="1.8" fill="#ffffff" font-weight="bold">GMT +0</text>
+  <text x="14.5" y="6" font-family="Arial, sans-serif" font-size="1.8" fill="#e0e0e0">17:00</text>
 
   <!-- Japan Standard Time (Tokyo) -->
-  <text x="21" y="7" font-family="Arial, sans-serif" font-size="1.8" fill="#ffffff" font-weight="bold">JST +9</text>
-  <text x="21.5" y="9.5" font-family="Arial, sans-serif" font-size="1.8" fill="#e0e0e0">02:00</text>
+  <text x="22" y="7" font-family="Arial, sans-serif" font-size="1.8" fill="#ffffff" font-weight="bold">JST +9</text>
+  <text x="22.5" y="9.5" font-family="Arial, sans-serif" font-size="1.8" fill="#e0e0e0">02:00</text>
   
   <!-- City markers with better positioning -->
   <circle cx="8" cy="15" r="0.8" fill="#ff6b6b" stroke="#ffffff" stroke-width="0.2"/>   <!-- NYC -->
