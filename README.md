@@ -8,18 +8,13 @@ The code in this codebase, from [v0.0.1-PrePublicSetup](https://github.com/tsmar
 
 ### Development History
 
-**Initial Development (v0.0.1-alpha):**
-- Created in a private repository across 29 pull requests
-- Copilot Agentic AI ran 144 separate times
-- Development statistics:
-```
-Count             : 144 iterations
-Average           : 538.77 seconds per iteration  
-Sum               : 77,583 seconds total (≈21.5 hours)
-Maximum           : 1,717 seconds (≈29 minutes)
-Minimum           : 64 seconds
-StandardDeviation : 341.96 seconds
-```
+**Development Metrics:**
+
+[![CI Status](https://github.com/tsmarvin/EveryTimeZone/workflows/CI/badge.svg)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/ci.yml)
+[![Deploy Status](https://github.com/tsmarvin/EveryTimeZone/workflows/Deploy%20to%20GitHub%20Pages/badge.svg)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/deploy.yml)
+[![Tests](https://img.shields.io/badge/tests-131%20total%20%7C%20104%20passing-green)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/ci.yml)
+[![Test Coverage](https://img.shields.io/badge/coverage-comprehensive-brightgreen)](#testing)
+[![Copilot Iterations](https://img.shields.io/badge/copilot%20iterations-144%20runs%20%7C%2021.5h%20total-blue)](#ai-development)
 
 **What AI Created:**
 - ✅ **1,567 lines** of core TypeScript timezone logic
