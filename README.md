@@ -4,12 +4,12 @@ A static timezone visualization tool for easy sharing and collaboration. Visuali
 
 ## 🤖 AI-Generated Codebase
 
-**This entire application was created nearly 100% by GitHub Copilot Agent Mode.** The sophisticated timezone visualization, responsive design system, comprehensive test suite, and modern TypeScript architecture were all generated through AI collaboration.
+The code in this codebase, from [v0.0.1-PrePublicSetup](https://github.com/tsmarvin/EveryTimeZone/tree/v0.0.1-PrePublicSetup) through [v1.0.0](https://github.com/tsmarvin/EveryTimeZone/tree/v1.0.0) (and onwards!), was created nearly 100% by GitHub Copilot Agent Mode. The intuitive timezone visualization, responsive site design, comprehensive test suite, automated CI/CD, and modern TypeScript architecture were all generated through AI collaboration.
 
 ### Development History
 
 **Initial Development (v0.0.1-alpha):**
-- Created in private repository with 29 pull requests
+- Created in a private repository across 29 pull requests
 - Copilot Agentic AI ran 144 separate times
 - Development statistics:
 ```
@@ -21,26 +21,20 @@ Minimum           : 64 seconds
 StandardDeviation : 341.96 seconds
 ```
 
-**v1.0 Release Preparation:**
-- Comprehensive final review and documentation updates
-- All code quality verification and test validation
-- UI functionality verification across multiple screen sizes and themes
-- Nearly 100% AI-generated codebase with minimal human intervention
-
 **What AI Created:**
 - ✅ **1,567 lines** of core TypeScript timezone logic
 - ✅ **2,454 lines** of sophisticated CSS with theming system  
-- ✅ **2,049 lines** of comprehensive test coverage (104 tests)
+- ✅ **2,238 lines** of comprehensive test coverage (131 tests)
 - ✅ **Responsive design** supporting 6 screen sizes
 - ✅ **Theme system** with 6 color themes and light/dark modes
 - ✅ **Build system** with TypeScript, linting, and CI/CD
 - ✅ **URL-based configuration** for easy sharing
 - ✅ **Astronomical calculations** using SunCalc library integration
 
-**Human Contributions:**
+**Direct Human Code Contributions:**
 - Some merge commits and repository setup
 - Minor README updates and Copilot instruction refinements
-- Final review coordination (this document)
+- Project architecture, planning and coordination, and code feedback
 
 
 ## Features
@@ -58,8 +52,6 @@ StandardDeviation : 341.96 seconds
 ## Live Site
 
 [View the live application](https://www.everytimezone.net/?mode=light)
-
-**🎯 Ready for Production:** Version 1.0 represents a fully-featured, production-ready timezone visualization tool with comprehensive testing and robust architecture.
 
 
 ## Quick Start
@@ -162,7 +154,7 @@ This project uses several tools to maintain code quality:
 - **Timezone Logic:** Native browser Intl APIs for timezone detection and formatting
 - **Astronomical Calculations:** SunCalc library for sunrise/sunset times
 - **Build Process:** TypeScript compiler (tsc) with asset copying - no bundling required
-- **Testing:** Vitest with jsdom for DOM environment simulation (104 tests, 7 test files)
+- **Testing:** Vitest with jsdom for DOM environment simulation (131 tests, 8 test files)
 - **Code Quality:** ESLint + Prettier + TypeScript strict mode + Commitlint
 - **Development:** Native ES modules with HTTP server for local development
 - **Deployment:** GitHub Pages with automated deployment via GitHub Actions
@@ -171,8 +163,7 @@ This project uses several tools to maintain code quality:
 **Production Stats:**
 - **📁 2,063 source lines:** TypeScript application logic
 - **🎨 2,454 CSS lines:** Responsive design and theming system  
-- **🧪 2,049 test lines:** Comprehensive test coverage (104 tests passing)
-- **⚡ Zero dependencies:** in production build (only SunCalc for astronomical calculations)
+- **🧪 2,238 test lines:** Comprehensive test coverage (131 tests passing)
 - **📱 Responsive:** 6 screen sizes from 375px mobile to 7680px TV displays
 - **🎭 Themeable:** 6 color themes × 2 modes = 12 appearance combinations
 
@@ -210,7 +201,7 @@ The application automatically deploys to production when code is merged into the
 #### Version Management
 
 The application uses GitVersion for semantic versioning:
-- **📝 Source Control:** package.json maintains static version `1.0.0`
+- **📝 Source Control:** package.json maintains static version `1.0.0` which is also what's in the published artifact
 - **🏷️ Runtime Version:** Dynamically generated from git tags and commits during build
 - **📍 Version Display:** Injected into built HTML and displayed in footer
-- **🔀 Branch Strategy:** Main branch releases, feature branches get alpha versions
+- **🔀 Branch Strategy:** Main branch releases, feature branches get prerelease versions
