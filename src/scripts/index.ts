@@ -805,13 +805,27 @@ export class TimelineManager {
     // Initialize datetime modal with callback
     this.dateTimeModal = new DateTimeModal((dateTime: Date) => this.setSelectedDate(dateTime));
 
-    // Initialize with user's timezone and a few others
-    this.initializeDefaultTimezones();
+    // Initialize timezones from URL or defaults
+    this.initializeTimezones();
 
     // Listen for settings changes to refresh timeline
     window.addEventListener('settingsChanged', () => {
       this.renderTimeline();
     });
+  }
+
+  private initializeTimezones(): void {
+    // Try to parse timezones from URL first
+    const urlTimezones = this.parseTimezonesFromURL();
+
+    if (urlTimezones.length > 0) {
+      this.selectedTimezones = urlTimezones;
+    } else {
+      // Fallback to default timezones
+      this.initializeDefaultTimezones();
+    }
+
+    this.renderTimeline();
   }
 
   private initializeDefaultTimezones(): void {
@@ -820,8 +834,53 @@ export class TimelineManager {
 
     // Get properly centered timezones with user timezone in the middle
     this.selectedTimezones = getTimezonesForTimeline(numRows);
+  }
 
-    this.renderTimeline();
+  /**
+   * Parse timezones from URL parameters
+   */
+  private parseTimezonesFromURL(): TimeZone[] {
+    const urlParams = new URLSearchParams(window.location.search);
+    const timezonesParam = urlParams.get('timezones');
+
+    if (!timezonesParam) {
+      return [];
+    }
+
+    // Split by comma and decode URI components
+    const timezoneIds = timezonesParam.split(',').map(id => decodeURIComponent(id.trim()));
+    const validTimezones: TimeZone[] = [];
+
+    // Get all available timezones for lookup
+    const allTimezones = getAllTimezonesOrdered();
+    const timezoneMap = new Map(allTimezones.map(tz => [tz.iana, tz]));
+
+    for (const id of timezoneIds) {
+      const timezone = timezoneMap.get(id);
+      if (timezone) {
+        validTimezones.push(timezone);
+      }
+    }
+
+    return validTimezones;
+  }
+
+  /**
+   * Update URL with current timezone selection
+   */
+  private updateURL(): void {
+    const url = new URL(window.location.href);
+
+    if (this.selectedTimezones.length > 0) {
+      // Create timezone IDs and join with commas (don't double-encode)
+      const timezoneIds = this.selectedTimezones.map(tz => tz.iana).join(',');
+      url.searchParams.set('timezones', timezoneIds);
+    } else {
+      url.searchParams.delete('timezones');
+    }
+
+    // Update URL without page reload
+    window.history.replaceState({}, '', url.toString());
   }
 
   public addTimezone(timezone: TimeZone): void {
@@ -829,12 +888,14 @@ export class TimelineManager {
     const exists = this.selectedTimezones.find(tz => tz.iana === timezone.iana);
     if (!exists) {
       this.selectedTimezones.push(timezone);
+      this.updateURL();
       this.renderTimeline();
     }
   }
 
   public removeTimezone(timezone: TimeZone): void {
     this.selectedTimezones = this.selectedTimezones.filter(tz => tz.iana !== timezone.iana);
+    this.updateURL();
     this.renderTimeline();
   }
 
@@ -858,6 +919,10 @@ export class TimelineManager {
   public openDatePicker(): void {
     this.dateTimeModal.setDateTime(this.selectedDate);
     this.dateTimeModal.open();
+  }
+
+  public getSelectedTimezones(): TimeZone[] {
+    return [...this.selectedTimezones];
   }
 
   private renderTimeline(): void {
