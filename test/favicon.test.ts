@@ -103,7 +103,7 @@ describe('Favicon Implementation', () => {
     it('should contain time displays', () => {
       expect(svgContent).toContain('12:00');
       expect(svgContent).toContain('17:00');
-      expect(svgContent).toContain('01:00');
+      expect(svgContent).toContain('02:00');
     });
   });
 
