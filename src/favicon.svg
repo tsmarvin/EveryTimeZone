@@ -1,0 +1,37 @@
+<!-- Every Time Zone Favicon - Globe with timezone displays -->
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle for better visibility at small sizes -->
+  <circle cx="16" cy="16" r="15" fill="#1a1a1a" stroke="#4a90e2" stroke-width="1"/>
+  
+  <!-- Globe outline -->
+  <circle cx="16" cy="16" r="12" fill="none" stroke="#4a90e2" stroke-width="1"/>
+  
+  <!-- Timezone meridian lines -->
+  <!-- Vertical lines for timezone divisions -->
+  <line x1="16" y1="4" x2="16" y2="28" stroke="#4a90e2" stroke-width="0.5" opacity="0.7"/>
+  <line x1="8" y1="6" x2="8" y2="26" stroke="#4a90e2" stroke-width="0.5" opacity="0.5"/>
+  <line x1="24" y1="6" x2="24" y2="26" stroke="#4a90e2" stroke-width="0.5" opacity="0.5"/>
+  
+  <!-- Horizontal lines for latitude -->
+  <line x1="4" y1="16" x2="28" y2="16" stroke="#4a90e2" stroke-width="0.5" opacity="0.7"/>
+  <line x1="6" y1="10" x2="26" y2="10" stroke="#4a90e2" stroke-width="0.5" opacity="0.4"/>
+  <line x1="6" y1="22" x2="26" y2="22" stroke="#4a90e2" stroke-width="0.5" opacity="0.4"/>
+  
+  <!-- Time displays for major timezones -->
+  <!-- NYC time display (left side) -->
+  <text x="3" y="8" font-family="Arial, sans-serif" font-size="3" fill="#ffffff" font-weight="bold">NYC</text>
+  <text x="3" y="11" font-family="Arial, sans-serif" font-size="2.5" fill="#e0e0e0">12:00</text>
+  
+  <!-- London time display (top) -->
+  <text x="14" y="3" font-family="Arial, sans-serif" font-size="3" fill="#ffffff" font-weight="bold">LON</text>
+  <text x="12.5" y="6" font-family="Arial, sans-serif" font-size="2.5" fill="#e0e0e0">17:00</text>
+  
+  <!-- Tokyo time display (right side) -->
+  <text x="26" y="8" font-family="Arial, sans-serif" font-size="3" fill="#ffffff" font-weight="bold">TYO</text>
+  <text x="25" y="11" font-family="Arial, sans-serif" font-size="2.5" fill="#e0e0e0">01:00</text>
+  
+  <!-- Small dots to represent major cities -->
+  <circle cx="8" cy="14" r="0.8" fill="#ff6b6b"/>   <!-- NYC -->
+  <circle cx="16" cy="10" r="0.8" fill="#4ecdc4"/>  <!-- London -->
+  <circle cx="24" cy="18" r="0.8" fill="#45b7d1"/>  <!-- Tokyo -->
+</svg>
