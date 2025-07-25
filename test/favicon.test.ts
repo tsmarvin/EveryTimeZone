@@ -89,9 +89,15 @@ describe('Favicon Implementation', () => {
     });
 
     it('should contain timezone text', () => {
-      expect(svgContent).toContain('NYC');
-      expect(svgContent).toContain('LON');
-      expect(svgContent).toContain('TYO');
+      expect(svgContent).toContain('EST');
+      expect(svgContent).toContain('GMT');
+      expect(svgContent).toContain('JST');
+    });
+
+    it('should contain timezone offsets', () => {
+      expect(svgContent).toContain('-5');
+      expect(svgContent).toContain('+0');
+      expect(svgContent).toContain('+9');
     });
 
     it('should contain time displays', () => {
