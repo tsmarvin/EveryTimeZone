@@ -1081,12 +1081,14 @@ export class TimelineManager {
       const labelCell = document.createElement('div');
       labelCell.className = 'timeline-cell timeline-timezone-label';
       labelCell.innerHTML = `
-        <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
-        <div class="timezone-info">
-          <div class="timezone-name">${extractCityName(timezone.iana)}</div>
-          <div class="timezone-offset">${timezone.displayName} (${formatOffset(timezone.offset)})</div>
+        <div class="timezone-content">
+          <div class="timezone-info">
+            <div class="timezone-name">${extractCityName(timezone.iana)}</div>
+            <div class="timezone-offset">${timezone.displayName} (${formatOffset(timezone.offset)})</div>
+          </div>
+          <button class="remove-timezone-btn" title="Remove timezone">×</button>
         </div>
-        <button class="remove-timezone-btn" title="Remove timezone">×</button>
+        <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
       `;
 
       // Add remove button functionality

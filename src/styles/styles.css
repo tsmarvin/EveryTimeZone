@@ -593,22 +593,39 @@ p {
 }
 
 /* Drag and Drop Styles */
+.timeline-timezone-label {
+  position: relative; /* Needed for absolute positioning of drag handle */
+}
+
+.timezone-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+}
+
 .drag-handle {
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--color-text-secondary);
   font-size: var(--text-xs);
   font-weight: bold;
   cursor: grab;
   padding: var(--space-xs);
-  margin-right: var(--space-xs);
   line-height: 1;
   user-select: none;
   transition: var(--transition);
+  z-index: 10;
+  background: transparent;
+  border-radius: var(--border-radius-sm);
 }
 
 .drag-handle:hover {
   color: var(--color-text);
   background: var(--color-border);
-  border-radius: var(--border-radius);
 }
 
 .drag-handle:active {
