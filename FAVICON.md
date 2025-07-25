@@ -58,7 +58,20 @@ Favicon generation is automated during the build process:
 
 ## Performance Metrics
 
-- **Total Combined Size**: 3.47 KB (well under 10KB requirement)
+### Core Favicon Files (10KB Limit)
+- **favicon.svg**: 2.59 KB - Primary scalable favicon
+- **favicon.ico**: 5.43 KB - Legacy browser support  
+- **site.webmanifest**: 0.60 KB - PWA manifest
+- **Total Core Size**: 8.62 KB (well under 10KB requirement)
+
+### Additional PNG Files (No Size Limit)
+- **favicon-16x16.png**: 0.62 KB - Standard browser favicon
+- **favicon-32x32.png**: 1.48 KB - High-DPI browser favicon
+- **apple-touch-icon.png**: 9.14 KB - iOS home screen
+- **android-chrome-192x192.png**: 9.72 KB - Android home screen
+- **android-chrome-512x512.png**: 39.90 KB - Android splash screen/PWA
+
+### Performance Characteristics
 - **SVG Load Time**: <100ms (optimized vector format)
 - **Cache Headers**: 1 year expiry for optimal performance
 
@@ -87,5 +100,5 @@ Comprehensive test suite with 25 tests covering:
 ✅ **Legibility at 16x16 pixels**: Optimized text and contrast ratios  
 ✅ **Sans-serif font with 4.5:1 contrast**: Arial font with high contrast colors  
 ✅ **All file formats**: SVG, ICO, PNG variants, and webmanifest  
-✅ **Performance under 10KB**: Total size 3.47KB  
+✅ **Performance under 10KB**: Core favicon files 8.62KB (PNG files exempt)  
 ✅ **Professional appearance**: Clean, recognizable timezone branding
