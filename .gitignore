@@ -119,6 +119,10 @@ _site/
 *.jpeg
 *.gif
 
+# Exception: Allow favicon files
+!src/favicons/*.png
+!src/favicons/*.ico
+
 # GitVersion binary (downloaded in CI/local development)
 gitversion
 gitversion.tar.gz
