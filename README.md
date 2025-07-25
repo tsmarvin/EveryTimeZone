@@ -4,7 +4,7 @@ A static timezone visualization tool for easy sharing and collaboration. Visuali
 
 ## 🤖 AI-Generated Codebase
 
-The code in this codebase, from [v0.0.1-PrePublicSetup](https://github.com/tsmarvin/EveryTimeZone/tree/v0.0.1-PrePublicSetup) through [v1.0.0](https://github.com/tsmarvin/EveryTimeZone/tree/v1.0.0) (and onwards!), was created nearly 100% by GitHub Copilot Agent Mode. The intuitive timezone visualization, responsive site design, comprehensive test suite, automated CI/CD, and modern TypeScript architecture were all generated through AI collaboration.
+The code in this codebase, from [v0.0.1-PrePublicSetup](https://github.com/tsmarvin/EveryTimeZone/tree/v0.0.1-PrePublicSetup) through [v1.0.0](https://github.com/tsmarvin/EveryTimeZone/tree/v1.0.0) (and onwards!), was created nearly 100% by GitHub Copilot Agent Mode. The intuitive timezone visualization, responsive site design, comprehensive test suite, automated CI/CD, and modern TypeScript architecture were all generated in collaboration with AI.
 
 ### Development History
 
@@ -31,7 +31,7 @@ StandardDeviation : 341.96 seconds
 - ✅ **URL-based configuration** for easy sharing
 - ✅ **Astronomical calculations** using SunCalc library integration
 
-**Direct Human Code Contributions:**
+**Direct Human Contributions:**
 - Some merge commits and repository setup
 - Minor README updates and Copilot instruction refinements
 - Project architecture, planning and coordination, and code feedback
@@ -160,13 +160,6 @@ This project uses several tools to maintain code quality:
 - **Deployment:** GitHub Pages with automated deployment via GitHub Actions
 - **Versioning:** GitVersion with conventional commits for semantic versioning
 
-**Production Stats:**
-- **📁 2,063 source lines:** TypeScript application logic
-- **🎨 2,454 CSS lines:** Responsive design and theming system  
-- **🧪 2,238 test lines:** Comprehensive test coverage (131 tests passing)
-- **📱 Responsive:** 6 screen sizes from 375px mobile to 7680px TV displays
-- **🎭 Themeable:** 6 color themes × 2 modes = 12 appearance combinations
-
 
 ### Architecture
 
@@ -193,15 +186,14 @@ This project uses several tools to maintain code quality:
 
 The application automatically deploys to production when code is merged into the `main` branch:
 
+- **🔄 Continuous Integration:** Full test suite (lint + format + type-check + unit tests) runs on every pull request
 - **🚀 Release Pipeline:** `release.yml` GitHub Action publishes the built site as a GitHub release with automatically generated release notes from conventional commit messages
 - **🌐 Web Deployment:** `deploy.yml` GitHub Action publishes the built site to the `gh-pages` branch, automatically published via GitHub Pages
-- **📦 Build Artifacts:** Compiled TypeScript, copied assets, and injected version information
-- **🔄 Continuous Integration:** Full test suite (lint + format + type-check + unit tests) runs on every pull request
 
 #### Version Management
 
 The application uses GitVersion for semantic versioning:
-- **📝 Source Control:** package.json maintains static version `1.0.0` which is also what's in the published artifact
-- **🏷️ Runtime Version:** Dynamically generated from git tags and commits during build
+- **📝 Source Control:** package.json maintains static version `1.0.0`
+- **🏷️ Runtime Version:** Dynamically injected into the site before deployment
 - **📍 Version Display:** Injected into built HTML and displayed in footer
 - **🔀 Branch Strategy:** Main branch releases, feature branches get prerelease versions
