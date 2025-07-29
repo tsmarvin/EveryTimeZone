@@ -2,18 +2,33 @@
 
 A static timezone visualization tool for easy sharing and collaboration. Visualize timezone overlaps across the globe with daylight indicators and responsive design. All configuration is stored in the URL for easy sharing.
 
+## 🤖 AI-Generated Codebase
 
-The v0.0.1-alpha codebase was created almost entirely by copilot agentic AI.  This was all done in a private repo before being merged here for continued development.  
+The code in this codebase, from [v0.0.1-PrePublicSetup](https://github.com/tsmarvin/EveryTimeZone/tree/v0.0.1-PrePublicSetup) through [v1.0.0](https://github.com/tsmarvin/EveryTimeZone/tree/v1.0.0) (and onwards!), was created nearly 100% by GitHub Copilot Agent Mode. The intuitive timezone visualization, responsive site design, comprehensive test suite, automated CI/CD, and modern TypeScript architecture were all generated in collaboration with AI.
 
-Across 29 pull requests the copilot Agentic AI ran 144 separate times. Here are the stats:  
-```
-Count             : 144
-Average           : 538.77 Seconds
-Sum               : 77583 Seconds
-Maximum           : 1717 Seconds
-Minimum           : 64 Seconds
-StandardDeviation : 341.96 Seconds
-```
+### Development History
+
+**Development Metrics:**
+
+[![CI Status](https://github.com/tsmarvin/EveryTimeZone/workflows/CI/badge.svg)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/ci.yml)
+[![Deploy Status](https://github.com/tsmarvin/EveryTimeZone/workflows/Deploy%20to%20GitHub%20Pages/badge.svg)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/deploy.yml)
+[![Tests](https://img.shields.io/github/actions/workflow/status/tsmarvin/EveryTimeZone/ci.yml?label=tests&logo=vitest)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/ci.yml)
+[![Latest Activity](https://img.shields.io/github/last-commit/tsmarvin/EveryTimeZone?label=Latest%20Activity)](https://github.com/tsmarvin/EveryTimeZone/commits/main)
+
+**What AI Created:**
+- ✅ **Core TypeScript timezone logic** with comprehensive timezone handling
+- ✅ **Sophisticated CSS with theming system** for responsive design
+- ✅ **Comprehensive test coverage** with robust test suite
+- ✅ **Responsive design** supporting 6 screen sizes
+- ✅ **Theme system** with 6 color themes and light/dark modes
+- ✅ **Build system** with TypeScript, linting, and CI/CD
+- ✅ **URL-based configuration** for easy sharing
+- ✅ **Astronomical calculations** using SunCalc library integration
+
+**Direct Human Contributions:**
+- Some merge commits and repository setup
+- Minor README updates and Copilot instruction refinements
+- Project architecture, planning and coordination, and code feedback
 
 
 ## Features
@@ -129,10 +144,10 @@ This project uses several tools to maintain code quality:
 
 ### Technology Stack
 
-- **Frontend:** HTML, CSS (with CSS custom properties for theming), TypeScript (ES2022 modules)
+- **Frontend:** HTML, CSS (with CSS custom properties for theming), TypeScript (ES2024 modules)
 - **Timezone Logic:** Native browser Intl APIs for timezone detection and formatting
 - **Astronomical Calculations:** SunCalc library for sunrise/sunset times
-- **Build Process:** TypeScript compiler (tsc) with asset copying - no bundling
+- **Build Process:** TypeScript compiler (tsc) with asset copying - no bundling required
 - **Testing:** Vitest with jsdom for DOM environment simulation
 - **Code Quality:** ESLint + Prettier + TypeScript strict mode + Commitlint
 - **Development:** Native ES modules with HTTP server for local development
@@ -163,7 +178,15 @@ This project uses several tools to maintain code quality:
 
 #### Automatic Deployment
 
-GitHub Actions automatically handles deployment when code is merged into the `main` branch.
+The application automatically deploys to production when code is merged into the `main` branch:
 
-- The `release.yml` GitHub actions settings will publish the built site as a GitHub release on merges to main with automatically generated release notes from commit messages using conventional commit format.
-- The `deploy.yml` GitHub actions settings will publish the built site to the `gh-pages` branch which will automatically published as a site using GitHub pages.
+- **🔄 Continuous Integration:** Full test suite (lint + format + type-check + unit tests) runs on every pull request
+- **🚀 Release Pipeline:** `release.yml` GitHub Action publishes the built site as a GitHub release with automatically generated release notes from conventional commit messages
+- **🌐 Web Deployment:** `deploy.yml` GitHub Action publishes the built site to the `gh-pages` branch, automatically published via GitHub Pages
+
+#### Version Management
+
+The application uses GitVersion for semantic versioning:
+- **🏷️ Runtime Version:** Dynamically injected into the site before deployment (package.json maintains static version `1.0.0`)
+- **📍 Version Display:** Injected into built HTML and displayed in footer
+- **🔀 Branch Strategy:** Main branch releases, feature branches get prerelease versions
