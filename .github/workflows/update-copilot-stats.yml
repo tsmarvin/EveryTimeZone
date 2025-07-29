@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: read
+      contents: read
+      pages: write
+      id-token: write
     
     steps:
     - name: Checkout repository
@@ -149,6 +152,38 @@ jobs:
             updated: new Date().toISOString()
           }, null, 2));
     
+    - name: Create badge JSON
+      if: steps.copilot-stats.outputs.found == 'true'
+      run: |
+        # Create badge JSON for shields.io endpoint badge
+        cat > copilot-stats-badge.json << EOF
+        {
+          "schemaVersion": 1,
+          "label": "copilot stats",
+          "message": "${{ steps.copilot-stats.outputs.total_runs }} runs | ${{ steps.copilot-stats.outputs.success_percentage }}% success | ${{ steps.copilot-stats.outputs.total_runtime_hours }}h total",
+          "color": "blue"
+        }
+        EOF
+        
+        echo "Created badge JSON:"
+        cat copilot-stats-badge.json
+    
+    - name: Deploy badge to gh-pages
+      if: steps.copilot-stats.outputs.found == 'true'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .
+        destination_dir: .
+        keep_files: true
+        publish_branch: gh-pages
+        user_name: 'github-actions[bot]'
+        user_email: 'github-actions[bot]@users.noreply.github.com'
+        commit_message: 'Update copilot statistics badge'
+        include: |
+          copilot-stats-badge.json
+          copilot-stats.json
+    
     - name: Upload Copilot statistics
       if: steps.copilot-stats.outputs.found == 'true'
       uses: actions/upload-artifact@v4
@@ -164,9 +199,34 @@ jobs:
         echo "- Total runs: ${{ steps.copilot-stats.outputs.total_runs }}"
         echo "- Success rate: ${{ steps.copilot-stats.outputs.success_percentage }}%"
         echo "- Total runtime: ${{ steps.copilot-stats.outputs.total_runtime_hours }} hours"
-        echo "Statistics stored as workflow artifact for future reference."
+        echo "Badge updated on gh-pages branch for dynamic display."
     
-    - name: Log when no Copilot workflow found
+    - name: Create fallback badge when no Copilot workflow found
       if: steps.copilot-stats.outputs.found == 'false'
       run: |
-        echo "No Copilot workflow found. Statistics will be available once a Copilot workflow is detected."
+        # Create fallback badge JSON
+        cat > copilot-stats-badge.json << EOF
+        {
+          "schemaVersion": 1,
+          "label": "copilot stats",
+          "message": "no data yet",
+          "color": "lightgrey"
+        }
+        EOF
+        
+        echo "No Copilot workflow found. Created fallback badge."
+    
+    - name: Deploy fallback badge to gh-pages
+      if: steps.copilot-stats.outputs.found == 'false'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .
+        destination_dir: .
+        keep_files: true
+        publish_branch: gh-pages
+        user_name: 'github-actions[bot]'
+        user_email: 'github-actions[bot]@users.noreply.github.com'
+        commit_message: 'Update copilot statistics badge (no data)'
+        include: |
+          copilot-stats-badge.json
