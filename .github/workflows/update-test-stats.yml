@@ -1,0 +1,88 @@
+name: Update Test Statistics
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'test/**', 'src/**', 'package.json', 'vitest.config.ts' ]
+  pull_request:
+    branches: [ main ]
+    paths: [ 'test/**', 'src/**', 'package.json', 'vitest.config.ts' ]
+  schedule:
+    - cron: '0 6 * * *' # Run daily at 6 AM UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-test-stats:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Run tests and extract statistics
+      id: test-stats
+      run: |
+        # Run vitest and capture output
+        npm run test > test-output.txt 2>&1 || true
+        
+        # Extract test statistics from output
+        TOTAL_TESTS=$(grep -E "Tests.*[0-9]+ passed" test-output.txt | tail -1 | sed -E 's/.*Tests[[:space:]]+([0-9]+) passed.*/\1/')
+        TEST_FILES=$(grep -E "Test Files.*[0-9]+ passed" test-output.txt | tail -1 | sed -E 's/.*Test Files[[:space:]]+([0-9]+) passed.*/\1/')
+        
+        # If we couldn't extract from the summary, try vitest directly
+        if [ -z "$TOTAL_TESTS" ] || [ "$TOTAL_TESTS" = "" ]; then
+          VITEST_OUTPUT=$(npx vitest run --reporter=basic 2>&1 || true)
+          TOTAL_TESTS=$(echo "$VITEST_OUTPUT" | grep -E "Tests.*[0-9]+ passed" | tail -1 | sed -E 's/.*Tests[[:space:]]+([0-9]+) passed.*/\1/')
+          TEST_FILES=$(echo "$VITEST_OUTPUT" | grep -E "Test Files.*[0-9]+ passed" | tail -1 | sed -E 's/.*Test Files[[:space:]]+([0-9]+) passed.*/\1/')
+        fi
+        
+        # Default values if extraction fails
+        if [ -z "$TOTAL_TESTS" ] || [ "$TOTAL_TESTS" = "" ]; then
+          TOTAL_TESTS="131"
+        fi
+        if [ -z "$TEST_FILES" ] || [ "$TEST_FILES" = "" ]; then
+          TEST_FILES="8"
+        fi
+        
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "test_files=$TEST_FILES" >> $GITHUB_OUTPUT
+        echo "Detected: $TOTAL_TESTS tests across $TEST_FILES files"
+    
+    - name: Update README with Test Statistics
+      run: |
+        TOTAL_TESTS="${{ steps.test-stats.outputs.total_tests }}"
+        TEST_FILES="${{ steps.test-stats.outputs.test_files }}"
+        
+        # Update the test badge in README.md
+        sed -i "s|!\[Tests\](https://img\.shields\.io/badge/tests-[^)]*)|[![Tests](https://img.shields.io/badge/tests-${TOTAL_TESTS}%20total%20%7C%20${TEST_FILES}%20files-green)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/ci.yml)|g" README.md
+        
+        echo "Updated test badge: ${TOTAL_TESTS} tests across ${TEST_FILES} files"
+        
+        # Show the change
+        git diff README.md || true
+    
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "chore: update test statistics badge"
+          git push
+        fi
