@@ -13,7 +13,7 @@ The code in this codebase, from [v0.0.1-PrePublicSetup](https://github.com/tsmar
 [![CI Status](https://github.com/tsmarvin/EveryTimeZone/workflows/CI/badge.svg)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/ci.yml)
 [![Deploy Status](https://github.com/tsmarvin/EveryTimeZone/workflows/Deploy%20to%20GitHub%20Pages/badge.svg)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/deploy.yml)
 [![Tests](https://img.shields.io/github/actions/workflow/status/tsmarvin/EveryTimeZone/ci.yml?label=tests&logo=vitest)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/ci.yml)
-[![Last Commit](https://img.shields.io/github/last-commit/tsmarvin/EveryTimeZone)](https://github.com/tsmarvin/EveryTimeZone/commits/main)
+[![Latest Activity](https://img.shields.io/github/last-commit/tsmarvin/EveryTimeZone?label=Latest%20Activity)](https://github.com/tsmarvin/EveryTimeZone/commits/main)
 
 **What AI Created:**
 - ✅ **Core TypeScript timezone logic** with comprehensive timezone handling
