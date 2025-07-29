@@ -46,6 +46,9 @@ export interface TimelineHour {
   time12: string; // "2 PM"
   time24: string; // "14"
   isDaylight?: boolean;
+  dateLabel: string; // "Mon 29" or "Tue 30"
+  isDateTransition: boolean; // true if this hour represents a date change (midnight)
+  relativeDayOffset: number; // -1 (yesterday), 0 (today), 1 (tomorrow), etc.
 }
 
 /** Complete timeline row for a single timezone */
@@ -480,6 +483,10 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
   const currentUserHour = new Date(now.toLocaleString('en-US', { timeZone: userTz.iana }));
   currentUserHour.setMinutes(0, 0, 0);
 
+  // Get the current date in user's timezone for comparison
+  const currentUserDate = new Date(now.toLocaleString('en-US', { timeZone: userTz.iana }));
+  currentUserDate.setHours(0, 0, 0, 0);
+
   const hours: TimelineHour[] = [];
 
   // Calculate hours from -24 to +24 relative to current hour (48 hours total)
@@ -506,12 +513,29 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     // Calculate daylight status for this hour
     const isDaylight = isHourInDaylight(timezone, timeInTz);
 
+    // Calculate date label (abbreviated weekday + day number)
+    const dateLabel = timeInTz.toLocaleDateString('en-US', {
+      weekday: 'short',
+      day: 'numeric',
+    });
+
+    // Check if this hour represents a date transition (midnight)
+    const isDateTransition = timeInTz.getHours() === 0;
+
+    // Calculate relative day offset compared to user's current date
+    const hourDate = new Date(timeInTz);
+    hourDate.setHours(0, 0, 0, 0);
+    const relativeDayOffset = Math.round((hourDate.getTime() - currentUserDate.getTime()) / (24 * 60 * 60 * 1000));
+
     hours.push({
       hour: timeInTz.getHours(),
       date: timeInTz,
       time12: hour12,
       time24: hour24,
       isDaylight,
+      dateLabel,
+      isDateTransition,
+      relativeDayOffset,
     });
   }
 
@@ -687,6 +711,63 @@ function adjustTimezoneLabelWidths(): void {
 }
 
 /**
+ * Create and render the visual key/legend for the timeline
+ */
+export function createTimezoneLegend(): HTMLElement {
+  const legend = document.createElement('div');
+  legend.className = 'timezone-legend';
+  legend.innerHTML = `
+    <h3 class="legend-title">Visual Key</h3>
+    <div class="legend-grid">
+      <div class="legend-section">
+        <div class="legend-section-title">Day & Night</div>
+        <div class="legend-item">
+          <div class="legend-indicator daylight"></div>
+          <span>Daylight hours (sunrise to sunset)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-indicator night"></div>
+          <span>Night hours (sunset to sunrise)</span>
+        </div>
+      </div>
+      
+      <div class="legend-section">
+        <div class="legend-section-title">Date Coordination</div>
+        <div class="legend-item">
+          <div class="legend-indicator previous-day"></div>
+          <span>Previous day</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-indicator current-day"></div>
+          <span>Current day</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-indicator next-day"></div>
+          <span>Next day</span>
+        </div>
+      </div>
+      
+      <div class="legend-section">
+        <div class="legend-section-title">Special Indicators</div>
+        <div class="legend-item">
+          <div class="legend-indicator date-transition"></div>
+          <span>Date transition (midnight)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-indicator working-hours"></div>
+          <span>Working hours (9 AM - 5 PM)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-indicator current-hour"></div>
+          <span>Current hour</span>
+        </div>
+      </div>
+    </div>
+  `;
+  return legend;
+}
+
+/**
  * Render the timeline visualization
  */
 export function renderTimeline(): void {
@@ -706,6 +787,20 @@ export function renderTimeline(): void {
 
   // Clear container
   container.innerHTML = '';
+
+  // Add visual legend/key before timeline
+  const timelineSection = container.closest('.timeline-section');
+  if (timelineSection) {
+    // Remove existing legend if present
+    const existingLegend = timelineSection.querySelector('.timezone-legend');
+    if (existingLegend) {
+      existingLegend.remove();
+    }
+
+    // Create and insert legend before timeline container
+    const legend = createTimezoneLegend();
+    timelineSection.insertBefore(legend, container);
+  }
 
   // Create timeline rows
   timelineData.forEach(row => {
@@ -737,12 +832,34 @@ export function renderTimeline(): void {
     row.hours.forEach((hour, index) => {
       const hourCell = document.createElement('div');
       hourCell.className = 'timeline-cell timeline-hour';
+
       // Use consistent format based on setting
-      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+      const timeText = timeFormat === '12h' ? hour.time12 : hour.time24;
+
+      // Create hour content with time and date label for date transitions
+      if (hour.isDateTransition) {
+        // For midnight hours, show both time and date
+        hourCell.innerHTML = `
+          <div class="hour-time">${timeText}</div>
+          <div class="hour-date">${hour.dateLabel}</div>
+        `;
+        hourCell.classList.add('date-transition');
+      } else {
+        hourCell.textContent = timeText;
+      }
 
       // Mark current hour (index 24 since we start from -24 hours)
       if (index === 24) {
         hourCell.classList.add('current-hour');
+      }
+
+      // Add relative day classes for color coordination
+      if (hour.relativeDayOffset < 0) {
+        hourCell.classList.add('previous-day');
+      } else if (hour.relativeDayOffset > 0) {
+        hourCell.classList.add('next-day');
+      } else {
+        hourCell.classList.add('current-day');
       }
 
       // Add working hours class (9 AM to 5 PM)
@@ -760,6 +877,23 @@ export function renderTimeline(): void {
           hourCell.title = 'Night hours';
         }
       }
+
+      // Enhanced tooltip with date information
+      const dateInfo = `${hour.dateLabel} ${timeText}`;
+      const relativeDay =
+        hour.relativeDayOffset === 0
+          ? 'Today'
+          : hour.relativeDayOffset === -1
+            ? 'Yesterday'
+            : hour.relativeDayOffset === 1
+              ? 'Tomorrow'
+              : hour.relativeDayOffset < 0
+                ? `${Math.abs(hour.relativeDayOffset)} days ago`
+                : `${hour.relativeDayOffset} days from now`;
+
+      hourCell.title = `${dateInfo} (${relativeDay})${
+        hour.isDaylight !== undefined ? (hour.isDaylight ? ' - Daylight' : ' - Night') : ''
+      }`;
 
       rowElement.appendChild(hourCell);
     });
@@ -900,6 +1034,16 @@ export class TimelineManager {
 
       // Insert the button container before the timeline container
       timelineSection.insertBefore(buttonContainer, this.container);
+
+      // Remove existing legend if present
+      const existingLegend = timelineSection.querySelector('.timezone-legend');
+      if (existingLegend) {
+        existingLegend.remove();
+      }
+
+      // Create and insert legend before timeline container
+      const legend = createTimezoneLegend();
+      timelineSection.insertBefore(legend, this.container);
     }
 
     // Create timeline rows for selected timezones
@@ -954,18 +1098,68 @@ export class TimelineManager {
       timezoneHours.forEach((hour, index) => {
         const hourCell = document.createElement('div');
         hourCell.className = 'timeline-cell timeline-hour';
+
         // Use consistent format based on setting
-        hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+        const timeText = timeFormat === '12h' ? hour.time12 : hour.time24;
+
+        // Create hour content with time and date label for date transitions
+        if (hour.isDateTransition) {
+          // For midnight hours, show both time and date
+          hourCell.innerHTML = `
+            <div class="hour-time">${timeText}</div>
+            <div class="hour-date">${hour.dateLabel}</div>
+          `;
+          hourCell.classList.add('date-transition');
+        } else {
+          hourCell.textContent = timeText;
+        }
 
         // Mark current hour (index 24 since we start from -24 hours)
         if (index === 24) {
           hourCell.classList.add('current-hour');
         }
 
+        // Add relative day classes for color coordination
+        if (hour.relativeDayOffset < 0) {
+          hourCell.classList.add('previous-day');
+        } else if (hour.relativeDayOffset > 0) {
+          hourCell.classList.add('next-day');
+        } else {
+          hourCell.classList.add('current-day');
+        }
+
         // Add working hours class (9 AM to 5 PM)
         if (hour.hour >= 9 && hour.hour < 17) {
           hourCell.classList.add('working-hours');
         }
+
+        // Add daylight/night indicator
+        if (hour.isDaylight !== undefined) {
+          if (hour.isDaylight) {
+            hourCell.classList.add('daylight-hour');
+            hourCell.title = 'Daylight hours';
+          } else {
+            hourCell.classList.add('night-hour');
+            hourCell.title = 'Night hours';
+          }
+        }
+
+        // Enhanced tooltip with date information
+        const dateInfo = `${hour.dateLabel} ${timeText}`;
+        const relativeDay =
+          hour.relativeDayOffset === 0
+            ? 'Today'
+            : hour.relativeDayOffset === -1
+              ? 'Yesterday'
+              : hour.relativeDayOffset === 1
+                ? 'Tomorrow'
+                : hour.relativeDayOffset < 0
+                  ? `${Math.abs(hour.relativeDayOffset)} days ago`
+                  : `${hour.relativeDayOffset} days from now`;
+
+        hourCell.title = `${dateInfo} (${relativeDay})${
+          hour.isDaylight !== undefined ? (hour.isDaylight ? ' - Daylight' : ' - Night') : ''
+        }`;
 
         rowElement.appendChild(hourCell);
       });
