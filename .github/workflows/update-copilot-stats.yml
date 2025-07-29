@@ -10,7 +10,6 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       actions: read
     
     steps:
@@ -142,34 +141,32 @@ jobs:
           core.setOutput('min_runtime_seconds', stats.minRuntimeSeconds);
           core.setOutput('max_runtime_seconds', stats.maxRuntimeSeconds);
           core.setOutput('pr_count', stats.prCount);
+          
+          // Store as workflow artifact for potential future use
+          const fs = require('fs');
+          fs.writeFileSync('copilot-stats.json', JSON.stringify({
+            ...stats,
+            updated: new Date().toISOString()
+          }, null, 2));
     
-    - name: Update README with Copilot Statistics
+    - name: Upload Copilot statistics
+      if: steps.copilot-stats.outputs.found == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: copilot-statistics
+        path: copilot-stats.json
+        retention-days: 90
+    
+    - name: Log statistics summary
       if: steps.copilot-stats.outputs.found == 'true'
       run: |
-        # Create the dynamic badge URL
-        TOTAL_RUNS="${{ steps.copilot-stats.outputs.total_runs }}"
-        SUCCESS_PCT="${{ steps.copilot-stats.outputs.success_percentage }}"
-        RUNTIME_HOURS="${{ steps.copilot-stats.outputs.total_runtime_hours }}"
-        
-        # Update the Copilot badge in README.md
-        sed -i "s|!\[Copilot Iterations\](https://img\.shields\.io/badge/copilot.*)|[![Copilot Iterations](https://img.shields.io/badge/copilot%20iterations-${TOTAL_RUNS}%20runs%20%7C%20${SUCCESS_PCT}%25%20success%20%7C%20${RUNTIME_HOURS}h%20total-blue)](#ai-development)|g" README.md
-        
-        echo "Updated Copilot badge: ${TOTAL_RUNS} runs, ${SUCCESS_PCT}% success, ${RUNTIME_HOURS}h total"
+        echo "Copilot Statistics Summary:"
+        echo "- Total runs: ${{ steps.copilot-stats.outputs.total_runs }}"
+        echo "- Success rate: ${{ steps.copilot-stats.outputs.success_percentage }}%"
+        echo "- Total runtime: ${{ steps.copilot-stats.outputs.total_runtime_hours }} hours"
+        echo "Statistics stored as workflow artifact for future reference."
     
-    - name: Log statistics when no Copilot workflow found
+    - name: Log when no Copilot workflow found
       if: steps.copilot-stats.outputs.found == 'false'
       run: |
-        echo "No Copilot workflow found. The badge will remain static until a Copilot workflow is detected."
-    
-    - name: Commit changes
-      if: steps.copilot-stats.outputs.found == 'true'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add README.md
-        if git diff --cached --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "chore: update Copilot statistics badges"
-          git push
-        fi
+        echo "No Copilot workflow found. Statistics will be available once a Copilot workflow is detected."

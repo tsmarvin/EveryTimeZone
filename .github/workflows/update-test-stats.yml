@@ -10,7 +10,7 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      actions: write
     
     steps:
     - name: Checkout repository
@@ -28,7 +28,7 @@ jobs:
     - name: Build project
       run: npm run build
     
-    - name: Run tests and extract statistics
+    - name: Run tests and store statistics
       id: test-stats
       run: |
         # Run vitest and capture output
@@ -58,28 +58,13 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "test_files=$TEST_FILES" >> $GITHUB_OUTPUT
         echo "Detected: $TOTAL_TESTS tests across $TEST_FILES files"
+        
+        # Store statistics as workflow artifact for potential future use
+        echo "{\"total_tests\": $TOTAL_TESTS, \"test_files\": $TEST_FILES, \"updated\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > test-stats.json
     
-    - name: Update README with Test Statistics
-      run: |
-        TOTAL_TESTS="${{ steps.test-stats.outputs.total_tests }}"
-        TEST_FILES="${{ steps.test-stats.outputs.test_files }}"
-        
-        # Update the test badge in README.md
-        sed -i "s|!\[Tests\](https://img\.shields\.io/badge/tests-[^)]*)|[![Tests](https://img.shields.io/badge/tests-${TOTAL_TESTS}%20total%20%7C%20${TEST_FILES}%20files-green)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/ci.yml)|g" README.md
-        
-        echo "Updated test badge: ${TOTAL_TESTS} tests across ${TEST_FILES} files"
-        
-        # Show the change
-        git diff README.md || true
-    
-    - name: Commit changes
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add README.md
-        if git diff --cached --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "chore: update test statistics badge"
-          git push
-        fi
+    - name: Upload test statistics
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-statistics
+        path: test-stats.json
+        retention-days: 90
