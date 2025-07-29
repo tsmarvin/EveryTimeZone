@@ -1,12 +1,13 @@
 name: Update Copilot Statistics
 
 on:
-  schedule:
-    - cron: '0 0 1 * *' # Run monthly on the 1st at midnight UTC
-  workflow_dispatch: # Allow manual trigger
+  pull_request:
+    types: [closed]
+    branches: [ main ]
 
 jobs:
   update-stats:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write

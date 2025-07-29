@@ -13,7 +13,6 @@ The code in this codebase, from [v0.0.1-PrePublicSetup](https://github.com/tsmar
 [![CI Status](https://github.com/tsmarvin/EveryTimeZone/workflows/CI/badge.svg)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/ci.yml)
 [![Deploy Status](https://github.com/tsmarvin/EveryTimeZone/workflows/Deploy%20to%20GitHub%20Pages/badge.svg)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/deploy.yml)
 [![Tests](https://img.shields.io/badge/tests-131%20total%20%7C%208%20files-green)](https://github.com/tsmarvin/EveryTimeZone/actions/workflows/ci.yml)
-[![Test Coverage](https://img.shields.io/badge/coverage-comprehensive-brightgreen)](#testing)
 [![Copilot Iterations](https://img.shields.io/badge/copilot%20iterations-144%20runs%20%7C%2021.5h%20total-blue)](#ai-development)
 
 **What AI Created:**

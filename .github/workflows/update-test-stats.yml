@@ -1,18 +1,13 @@
 name: Update Test Statistics
 
 on:
-  push:
-    branches: [ main ]
-    paths: [ 'test/**', 'src/**', 'package.json', 'vitest.config.ts' ]
   pull_request:
+    types: [closed]
     branches: [ main ]
-    paths: [ 'test/**', 'src/**', 'package.json', 'vitest.config.ts' ]
-  schedule:
-    - cron: '0 6 * * *' # Run daily at 6 AM UTC
-  workflow_dispatch: # Allow manual trigger
 
 jobs:
   update-test-stats:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -43,19 +38,21 @@ jobs:
         TOTAL_TESTS=$(grep -E "Tests.*[0-9]+ passed" test-output.txt | tail -1 | sed -E 's/.*Tests[[:space:]]+([0-9]+) passed.*/\1/')
         TEST_FILES=$(grep -E "Test Files.*[0-9]+ passed" test-output.txt | tail -1 | sed -E 's/.*Test Files[[:space:]]+([0-9]+) passed.*/\1/')
         
-        # If we couldn't extract from the summary, try vitest directly
+        # Extract from vitest output if first attempt failed
         if [ -z "$TOTAL_TESTS" ] || [ "$TOTAL_TESTS" = "" ]; then
           VITEST_OUTPUT=$(npx vitest run --reporter=basic 2>&1 || true)
           TOTAL_TESTS=$(echo "$VITEST_OUTPUT" | grep -E "Tests.*[0-9]+ passed" | tail -1 | sed -E 's/.*Tests[[:space:]]+([0-9]+) passed.*/\1/')
           TEST_FILES=$(echo "$VITEST_OUTPUT" | grep -E "Test Files.*[0-9]+ passed" | tail -1 | sed -E 's/.*Test Files[[:space:]]+([0-9]+) passed.*/\1/')
         fi
         
-        # Default values if extraction fails
+        # If extraction still fails, error out instead of using defaults
         if [ -z "$TOTAL_TESTS" ] || [ "$TOTAL_TESTS" = "" ]; then
-          TOTAL_TESTS="131"
+          echo "Error: Could not extract test count from vitest output"
+          exit 1
         fi
         if [ -z "$TEST_FILES" ] || [ "$TEST_FILES" = "" ]; then
-          TEST_FILES="8"
+          echo "Error: Could not extract test file count from vitest output"
+          exit 1
         fi
         
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
