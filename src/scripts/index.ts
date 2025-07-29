@@ -1171,24 +1171,156 @@ export class TimezoneModal {
   }
 
   private handleInputChange(): void {
-    const query = this.input.value.toLowerCase();
+    const query = this.input.value.toLowerCase().trim();
 
     if (query === '') {
       this.filteredTimezones = [...this.timezones];
     } else {
-      this.filteredTimezones = this.timezones.filter(
-        tz =>
-          tz.displayName.toLowerCase().includes(query) ||
-          tz.name.toLowerCase().includes(query) ||
-          tz.iana.toLowerCase().includes(query) ||
-          tz.cityName.toLowerCase().includes(query) ||
-          tz.abbreviation.toLowerCase().includes(query),
-      );
+      this.filteredTimezones = this.searchTimezones(query);
     }
 
     // Reset to first item in filtered results
     this.selectedIndex = 0;
     this.renderWheel();
+  }
+
+  /**
+   * Advanced search function for timezones with scoring and deduplication
+   * Supports offset patterns like GMT-7, UTC+5:30, PDT-7
+   */
+  private searchTimezones(query: string): TimeZone[] {
+    const results: Array<{ timezone: TimeZone; score: number }> = [];
+    const userTimezone = getUserTimezone();
+    const userRegion = this.extractRegion(userTimezone.iana);
+
+    // Check if query is an offset pattern (GMT-7, UTC+5:30, PDT-7, etc.)
+    const offsetMatch = this.parseOffsetQuery(query);
+
+    for (const timezone of this.timezones) {
+      let score = 0;
+      let hasMatch = false;
+
+      // Handle offset search
+      if (offsetMatch !== null) {
+        if (Math.abs(timezone.offset - offsetMatch) < 0.01) {
+          // Use small epsilon for floating point comparison
+          score += 1000; // Very high priority for exact offset matches
+          hasMatch = true;
+        }
+      }
+
+      // Text-based search scoring
+      const searchTargets = [
+        { text: timezone.cityName.toLowerCase(), weight: 100 },
+        { text: timezone.displayName.toLowerCase(), weight: 80 },
+        { text: timezone.abbreviation.toLowerCase(), weight: 60 },
+        { text: timezone.name.toLowerCase(), weight: 40 },
+        { text: timezone.iana.toLowerCase(), weight: 20 },
+      ];
+
+      for (const target of searchTargets) {
+        const matchScore = this.calculateTextMatchScore(query, target.text, target.weight);
+        if (matchScore > 0) {
+          score += matchScore;
+          hasMatch = true;
+        }
+      }
+
+      // Regional preference bonus
+      if (hasMatch) {
+        const timezoneRegion = this.extractRegion(timezone.iana);
+        if (timezoneRegion === userRegion) {
+          score += 50; // Boost score for same region as user
+        }
+      }
+
+      if (hasMatch) {
+        results.push({ timezone, score });
+      }
+    }
+
+    // Sort by score (highest first) and deduplicate
+    results.sort((a, b) => b.score - a.score);
+
+    // Deduplicate based on city name, display name and offset to prevent duplicate entries
+    const seen = new Set<string>();
+    const uniqueResults: TimeZone[] = [];
+
+    for (const result of results) {
+      // Use a more comprehensive key that includes display name to distinguish different timezone types
+      const key = `${result.timezone.cityName}-${result.timezone.displayName}-${result.timezone.offset}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueResults.push(result.timezone);
+      }
+    }
+
+    return uniqueResults;
+  }
+
+  /**
+   * Calculate text match score with exact, prefix, and substring matching
+   */
+  private calculateTextMatchScore(query: string, text: string, baseWeight: number): number {
+    if (text === query) {
+      return baseWeight * 3; // Exact match gets highest score
+    }
+    if (text.startsWith(query)) {
+      return baseWeight * 2; // Prefix match gets high score
+    }
+    if (text.includes(query)) {
+      return baseWeight; // Substring match gets base score
+    }
+    return 0;
+  }
+
+  /**
+   * Parse offset query patterns like GMT-7, UTC+5:30, PDT-7, PST-8, etc.
+   */
+  private parseOffsetQuery(query: string): number | null {
+    // Pattern 1: GMT/UTC followed by offset (GMT-7, UTC+5:30, GMT+0)
+    const gmtMatch = query.match(/^(?:gmt|utc)\s*([+-]?\d{1,2}(?:[:.]\d{1,2})?)/);
+    if (gmtMatch && gmtMatch[1]) {
+      return this.parseOffsetString(gmtMatch[1]);
+    }
+
+    // Pattern 2: Timezone abbreviation with offset (PDT-7, PST-8, EST-5, etc.)
+    const abbrevMatch = query.match(/^[a-z]{2,4}\s*([+-]?\d{1,2}(?:[:.]\d{1,2})?)/);
+    if (abbrevMatch && abbrevMatch[1]) {
+      return this.parseOffsetString(abbrevMatch[1]);
+    }
+
+    // Pattern 3: Just offset ("+5:30", "-7", "+0")
+    const offsetMatch = query.match(/^([+-]?\d{1,2}(?:[:.]\d{1,2})?)$/);
+    if (offsetMatch && offsetMatch[1]) {
+      return this.parseOffsetString(offsetMatch[1]);
+    }
+
+    return null;
+  }
+
+  /**
+   * Parse offset string like "+5:30", "-7", "+0" into decimal hours
+   */
+  private parseOffsetString(offsetStr: string): number {
+    const cleanStr = offsetStr.replace(/\s/g, '');
+
+    // Handle cases like "+5:30", "-7:00", "+0"
+    const match = cleanStr.match(/^([+-]?)(\d{1,2})(?:[:.:](\d{1,2}))?$/);
+    if (!match) return 0;
+
+    const sign = match[1] === '-' ? -1 : 1;
+    const hours = parseInt(match[2] || '0', 10);
+    const minutes = parseInt(match[3] || '0', 10);
+
+    return sign * (hours + minutes / 60);
+  }
+
+  /**
+   * Extract region from IANA timezone identifier (e.g., "America" from "America/New_York")
+   */
+  private extractRegion(iana: string): string {
+    return iana.split('/')[0] || '';
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
