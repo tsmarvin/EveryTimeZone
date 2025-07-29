@@ -1,0 +1,39 @@
+{
+  "name": "Every Time Zone",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "ms-vscode.eslint",
+        "ms-vscode.live-server",
+        "ms-vscode.vscode-json"
+      ],
+      "settings": {
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "vscode.typescript-language-features",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        }
+      }
+    }
+  },
+  "postCreateCommand": "npm install",
+  "postStartCommand": "npm run build",
+  "forwardPorts": [3000, 8000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Development Server",
+      "onAutoForward": "notify"
+    },
+    "8000": {
+      "label": "Local HTTP Server",
+      "onAutoForward": "notify"
+    }
+  }
+}
