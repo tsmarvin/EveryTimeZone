@@ -19,20 +19,197 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
     
-    - name: Create Copilot Development Statistics Badge
+    - name: Analyze Copilot Workflow Statistics
+      id: copilot-stats
+      uses: actions/github-script@v7
+      with:
+        script: |
+          // Implementation based on PowerShell outline from PR comment #2238185584
+          // Fetch workflows and analyze Copilot-related activity
+          
+          console.log('Fetching workflow data from GitHub API...');
+          
+          try {
+            // Get all workflows
+            const workflows = await github.rest.actions.listRepoWorkflows({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            console.log(`Found ${workflows.data.workflows.length} workflows`);
+            
+            // Find Copilot-related workflows (by name pattern)
+            const copilotWorkflows = workflows.data.workflows.filter(w => 
+              /copilot|agent|ai/i.test(w.name)
+            );
+            
+            let workflowRuns = [];
+            
+            if (copilotWorkflows.length > 0) {
+              console.log(`Found ${copilotWorkflows.length} Copilot-related workflows`);
+              // Fetch runs from Copilot workflows
+              for (const workflow of copilotWorkflows) {
+                try {
+                  const runs = await github.rest.actions.listWorkflowRuns({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: workflow.id,
+                    per_page: 100
+                  });
+                  workflowRuns.push(...runs.data.workflow_runs);
+                } catch (error) {
+                  console.log(`Error fetching runs for workflow ${workflow.name}: ${error.message}`);
+                }
+              }
+            } else {
+              console.log('No Copilot workflows found, analyzing repository-wide workflow activity');
+              try {
+                // Fallback: analyze all workflow runs for patterns that might indicate AI/Copilot activity
+                const runs = await github.rest.actions.listWorkflowRunsForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  per_page: 100
+                });
+                
+                // Filter for runs that might be AI/Copilot related
+                workflowRuns = runs.data.workflow_runs.filter(run => 
+                  /copilot|agent|ai|automated|bot/i.test(run.name || '') ||
+                  /copilot|agent|ai|automated|bot/i.test(run.head_commit?.message || '')
+                );
+                
+                // If still no matches, use recent workflow activity as proxy
+                if (workflowRuns.length === 0) {
+                  console.log('No AI-related patterns found, using recent workflow activity');
+                  workflowRuns = runs.data.workflow_runs.slice(0, 50); // Recent 50 runs
+                }
+              } catch (error) {
+                console.log(`Error fetching repository workflow runs: ${error.message}`);
+                workflowRuns = [];
+              }
+            }
+            
+            console.log(`Analyzing ${workflowRuns.length} workflow runs`);
+            
+            if (workflowRuns.length === 0) {
+              console.log('No workflow runs found');
+              core.setOutput('found', 'false');
+              return;
+            }
+            
+            // Initialize statistics
+            let totalRuns = 0;
+            let successCount = 0;
+            let failureCount = 0;
+            let totalRuntimeSeconds = 0;
+            let minRuntimeSeconds = Number.MAX_SAFE_INTEGER;
+            let maxRuntimeSeconds = 0;
+            let prCount = 0;
+            
+            // Process each workflow run
+            for (const run of workflowRuns) {
+              totalRuns++;
+              
+              // Count successes and failures
+              if (run.conclusion === 'success') {
+                successCount++;
+              } else if (['failure', 'cancelled', 'timed_out'].includes(run.conclusion)) {
+                failureCount++;
+              }
+              
+              // Calculate runtime
+              if (run.created_at && run.updated_at) {
+                try {
+                  const createdAt = new Date(run.created_at);
+                  const updatedAt = new Date(run.updated_at);
+                  const runtimeSeconds = Math.floor((updatedAt - createdAt) / 1000);
+                  
+                  if (runtimeSeconds > 0 && runtimeSeconds < 86400) { // Sanity check: less than 24 hours
+                    totalRuntimeSeconds += runtimeSeconds;
+                    minRuntimeSeconds = Math.min(minRuntimeSeconds, runtimeSeconds);
+                    maxRuntimeSeconds = Math.max(maxRuntimeSeconds, runtimeSeconds);
+                  }
+                } catch (error) {
+                  console.log(`Error calculating runtime for run ${run.id}: ${error.message}`);
+                }
+              }
+              
+              // Count PR associations
+              if (run.pull_requests && Array.isArray(run.pull_requests)) {
+                prCount += run.pull_requests.length;
+              }
+            }
+            
+            // Calculate final statistics
+            const successPercentage = totalRuns > 0 ? Math.round((successCount / totalRuns) * 100) : 0;
+            const averageRuntime = totalRuns > 0 ? Math.round(totalRuntimeSeconds / totalRuns) : 0;
+            const totalRuntimeHours = Math.round(totalRuntimeSeconds / 3600 * 10) / 10; // Round to 1 decimal
+            
+            // Handle edge cases
+            if (minRuntimeSeconds === Number.MAX_SAFE_INTEGER) {
+              minRuntimeSeconds = 0;
+            }
+            
+            // Set outputs
+            core.setOutput('found', 'true');
+            core.setOutput('total_runs', totalRuns.toString());
+            core.setOutput('success_count', successCount.toString());
+            core.setOutput('failure_count', failureCount.toString());
+            core.setOutput('success_percentage', successPercentage.toString());
+            core.setOutput('total_runtime_seconds', totalRuntimeSeconds.toString());
+            core.setOutput('total_runtime_hours', totalRuntimeHours.toString());
+            core.setOutput('average_runtime', averageRuntime.toString());
+            core.setOutput('min_runtime_seconds', minRuntimeSeconds.toString());
+            core.setOutput('max_runtime_seconds', maxRuntimeSeconds.toString());
+            core.setOutput('pr_count', prCount.toString());
+            
+            console.log('Statistics calculated:');
+            console.log(`- Total runs: ${totalRuns}`);
+            console.log(`- Success rate: ${successPercentage}%`);
+            console.log(`- Total runtime: ${totalRuntimeHours}h`);
+            console.log(`- Average runtime: ${averageRuntime}s`);
+            console.log(`- Min/Max runtime: ${minRuntimeSeconds}s / ${maxRuntimeSeconds}s`);
+            console.log(`- PR associations: ${prCount}`);
+            
+          } catch (error) {
+            console.error('Error fetching workflow data:', error);
+            console.error('Error stack:', error.stack);
+            core.setOutput('found', 'false');
+          }
+    
+    - name: Create Dynamic Copilot Statistics Badge
+      if: steps.copilot-stats.outputs.found == 'true'
       run: |
-        # Create badge JSON with historical Copilot development statistics
-        # Based on the development history: 144 iterations, 21.5 hours total
+        TOTAL_RUNS="${{ steps.copilot-stats.outputs.total_runs }}"
+        SUCCESS_PCT="${{ steps.copilot-stats.outputs.success_percentage }}"
+        RUNTIME_HOURS="${{ steps.copilot-stats.outputs.total_runtime_hours }}"
+        
+        # Create dynamic badge with real statistics
         cat > copilot-stats-badge.json << EOF
         {
           "schemaVersion": 1,
-          "label": "copilot development",
-          "message": "144 iterations | 21.5h total | 539s avg",
+          "label": "copilot stats",
+          "message": "${TOTAL_RUNS} runs | ${SUCCESS_PCT}% success | ${RUNTIME_HOURS}h total",
           "color": "blue"
         }
         EOF
         
-        echo "Created Copilot development statistics badge"
+        echo "Created dynamic Copilot statistics badge:"
+        cat copilot-stats-badge.json
+    
+    - name: Create Fallback Badge
+      if: steps.copilot-stats.outputs.found == 'false'
+      run: |
+        # Create fallback badge when no workflow data is available
+        cat > copilot-stats-badge.json << EOF
+        {
+          "schemaVersion": 1,
+          "label": "copilot stats",
+          "message": "no data available",
+          "color": "lightgrey"
+        }
+        EOF
+        
+        echo "Created fallback badge (no data available)"
         cat copilot-stats-badge.json
     
     - name: Deploy badge to gh-pages
@@ -45,21 +222,27 @@ jobs:
         publish_branch: gh-pages
         user_name: 'github-actions[bot]'
         user_email: 'github-actions[bot]@users.noreply.github.com'
-        commit_message: 'Update copilot development statistics badge'
+        commit_message: 'Update dynamic copilot statistics badge'
         include: |
           copilot-stats-badge.json
     
-    - name: Upload Copilot statistics
+    - name: Upload statistics as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: copilot-development-statistics
+        name: copilot-statistics
         path: copilot-stats-badge.json
         retention-days: 90
     
-    - name: Log statistics summary
+    - name: Log final summary
       run: |
-        echo "Copilot Development Statistics:"
-        echo "- Historical iterations: 144"
-        echo "- Total development time: 21.5 hours"
-        echo "- Average iteration time: 539 seconds"
-        echo "Badge updated on gh-pages branch for display."
+        echo "Dynamic Copilot Statistics Implementation:"
+        if [ "${{ steps.copilot-stats.outputs.found }}" = "true" ]; then
+          echo "✅ Successfully analyzed workflow data"
+          echo "- Executions: ${{ steps.copilot-stats.outputs.total_runs }}"
+          echo "- Success rate: ${{ steps.copilot-stats.outputs.success_percentage }}%"
+          echo "- Total runtime: ${{ steps.copilot-stats.outputs.total_runtime_hours }} hours"
+          echo "- Average runtime: ${{ steps.copilot-stats.outputs.average_runtime }} seconds"
+        else
+          echo "⚠️ No workflow data found - using fallback badge"
+        fi
+        echo "Badge deployed to gh-pages for dynamic display."
