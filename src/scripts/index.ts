@@ -1342,8 +1342,15 @@ export class TimezoneModal {
     if (selectedTimezone) {
       // Format offset
       const offsetStr = formatOffset(selectedTimezone.offset);
-      // Show city name with abbreviated timezone and offset: "Tokyo (JST +09:00)"
-      this.input.value = `${selectedTimezone.cityName} (${selectedTimezone.abbreviation} ${offsetStr})`;
+
+      // Check if abbreviation already contains offset information to avoid duplication
+      const hasOffsetInAbbreviation = /[+-]\d/.test(selectedTimezone.abbreviation);
+      const displayText = hasOffsetInAbbreviation
+        ? `${selectedTimezone.cityName} (${selectedTimezone.abbreviation})`
+        : `${selectedTimezone.cityName} (${selectedTimezone.abbreviation} ${offsetStr})`;
+
+      // Show city name with abbreviated timezone and offset: "Tokyo (JST +09:00)" or "Casey (GMT+8)"
+      this.input.value = displayText;
     }
   }
 
@@ -1415,9 +1422,15 @@ export class TimezoneModal {
     // Format offset for display using the existing formatOffset function
     const offsetStr = formatOffset(timezone.offset);
 
+    // Check if abbreviation already contains offset information to avoid duplication
+    const hasOffsetInAbbreviation = /[+-]\d/.test(timezone.abbreviation);
+    const displayText = hasOffsetInAbbreviation
+      ? `${timezone.cityName} (${timezone.abbreviation})`
+      : `${timezone.cityName} (${timezone.abbreviation} ${offsetStr})`;
+
     item.innerHTML = `
       <div class="wheel-timezone-name">
-        ${timezone.cityName} (${timezone.abbreviation} ${offsetStr})
+        ${displayText}
       </div>
       <div class="wheel-timezone-display">${timezone.displayName}</div>
     `;
