@@ -480,11 +480,11 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
   const userTz = getUserTimezone();
 
   // Get current hour in user's timezone and round down
-  const currentUserHour = new Date(now.toLocaleString('en-US', { timeZone: userTz.iana }));
+  const currentUserHour = new Date(now.toLocaleString(undefined, { timeZone: userTz.iana }));
   currentUserHour.setMinutes(0, 0, 0);
 
   // Get the current date in user's timezone for comparison
-  const currentUserDate = new Date(now.toLocaleString('en-US', { timeZone: userTz.iana }));
+  const currentUserDate = new Date(now.toLocaleString(undefined, { timeZone: userTz.iana }));
   currentUserDate.setHours(0, 0, 0, 0);
 
   const hours: TimelineHour[] = [];
@@ -500,12 +500,12 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     const offsetDiff = (timezone.offset - userTz.offset) * 60 * 60 * 1000;
     const timeInTz = new Date(baseTime.getTime() + offsetDiff);
 
-    const hour12 = timeInTz.toLocaleString('en-US', {
+    const hour12 = timeInTz.toLocaleString(undefined, {
       hour: 'numeric',
       hour12: true,
     });
 
-    const hour24 = timeInTz.toLocaleString('en-US', {
+    const hour24 = timeInTz.toLocaleString(undefined, {
       hour: '2-digit',
       hour12: false,
     });
@@ -514,7 +514,7 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     const isDaylight = isHourInDaylight(timezone, timeInTz);
 
     // Calculate date label (abbreviated weekday + day number)
-    const dateLabel = timeInTz.toLocaleDateString('en-US', {
+    const dateLabel = timeInTz.toLocaleDateString(undefined, {
       weekday: 'short',
       day: 'numeric',
     });
@@ -1724,9 +1724,9 @@ function isHourInDaylight(timezone: TimeZone, hourDate: Date): boolean {
     const sunTimes = SunCalc.getTimes(hourDate, latitude, longitude);
 
     // Convert to local time in the timezone
-    const sunriseLocal = new Date(sunTimes.sunrise.toLocaleString('en-US', { timeZone: timezone.iana }));
-    const sunsetLocal = new Date(sunTimes.sunset.toLocaleString('en-US', { timeZone: timezone.iana }));
-    const hourLocal = new Date(hourDate.toLocaleString('en-US', { timeZone: timezone.iana }));
+    const sunriseLocal = new Date(sunTimes.sunrise.toLocaleString(undefined, { timeZone: timezone.iana }));
+    const sunsetLocal = new Date(sunTimes.sunset.toLocaleString(undefined, { timeZone: timezone.iana }));
+    const hourLocal = new Date(hourDate.toLocaleString(undefined, { timeZone: timezone.iana }));
 
     // Check if the hour is between sunrise and sunset
     return hourLocal >= sunriseLocal && hourLocal <= sunsetLocal;
