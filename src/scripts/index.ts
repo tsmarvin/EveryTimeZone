@@ -1156,7 +1156,7 @@ export class TimezoneModal {
 
     // Event listeners
     this.input.addEventListener('input', () => this.handleInputChange());
-    this.selectButton.addEventListener('click', () => this.handleSelect());
+    this.selectButton.addEventListener('click', () => this.selectTimezone());
     this.cancelButton.addEventListener('click', () => this.close());
     this.closeButton.addEventListener('click', () => this.close());
     this.overlay.addEventListener('click', e => this.handleOverlayClick(e));
@@ -1171,24 +1171,142 @@ export class TimezoneModal {
   }
 
   private handleInputChange(): void {
-    const query = this.input.value.toLowerCase();
+    const query = this.input.value.toLowerCase().trim();
 
     if (query === '') {
       this.filteredTimezones = [...this.timezones];
     } else {
-      this.filteredTimezones = this.timezones.filter(
-        tz =>
-          tz.displayName.toLowerCase().includes(query) ||
-          tz.name.toLowerCase().includes(query) ||
-          tz.iana.toLowerCase().includes(query) ||
-          tz.cityName.toLowerCase().includes(query) ||
-          tz.abbreviation.toLowerCase().includes(query),
-      );
+      this.filteredTimezones = this.searchTimezones(query);
     }
 
     // Reset to first item in filtered results
     this.selectedIndex = 0;
     this.renderWheel();
+  }
+
+  /**
+   * Advanced search function for timezones with scoring and relevance
+   * Supports offset patterns like GMT-7, UTC+5:30, PDT-7
+   */
+  private searchTimezones(query: string): TimeZone[] {
+    const results: Array<{ timezone: TimeZone; score: number }> = [];
+    const userTimezone = getUserTimezone();
+    const userRegion = this.extractRegion(userTimezone.iana);
+
+    // Check if query is an offset pattern (GMT-7, UTC+5:30, PDT-7, etc.)
+    const offsetMatch = this.parseOffsetQuery(query);
+
+    for (const timezone of this.timezones) {
+      let score = 0;
+
+      // Handle offset search
+      if (offsetMatch !== null) {
+        if (Math.abs(timezone.offset - offsetMatch) < 0.01) {
+          // Use small epsilon for floating point comparison
+          score += 1000; // Very high priority for exact offset matches
+        }
+      }
+
+      // Text-based search scoring
+      const searchTargets = [
+        { text: timezone.cityName.toLowerCase(), weight: 100 },
+        { text: timezone.displayName.toLowerCase(), weight: 80 },
+        { text: timezone.abbreviation.toLowerCase(), weight: 60 },
+        { text: timezone.name.toLowerCase(), weight: 40 },
+        { text: timezone.iana.toLowerCase(), weight: 20 },
+      ];
+
+      let hasMatch = false;
+      for (const target of searchTargets) {
+        const matchScore = this.calculateTextMatchScore(query, target.text, target.weight);
+        if (matchScore > 0) {
+          score += matchScore;
+          hasMatch = true;
+        }
+      }
+
+      // Regional preference bonus
+      if (hasMatch || offsetMatch !== null) {
+        const timezoneRegion = this.extractRegion(timezone.iana);
+        if (timezoneRegion === userRegion) {
+          score += 50; // Boost score for same region as user
+        }
+      }
+
+      if (hasMatch || (offsetMatch !== null && score > 0)) {
+        results.push({ timezone, score });
+      }
+    }
+
+    // Sort by score (highest first)
+    results.sort((a, b) => b.score - a.score);
+
+    return results.map(result => result.timezone);
+  }
+
+  /**
+   * Calculate text match score with exact, prefix, and substring matching
+   */
+  private calculateTextMatchScore(query: string, text: string, baseWeight: number): number {
+    if (text === query) {
+      return baseWeight * 3; // Exact match gets highest score
+    }
+    if (text.startsWith(query)) {
+      return baseWeight * 2; // Prefix match gets high score
+    }
+    if (text.includes(query)) {
+      return baseWeight; // Substring match gets base score
+    }
+    return 0;
+  }
+
+  /**
+   * Parse offset query patterns like GMT-7, UTC+5:30, PDT-7, PST-8, etc.
+   */
+  private parseOffsetQuery(query: string): number | null {
+    // Pattern 1: GMT/UTC followed by offset (GMT-7, UTC+5:30, GMT+0)
+    const gmtMatch = query.match(/^(?:gmt|utc)\s*([+-]?\d{1,2}(?:[:.]\d{1,2})?)/);
+    if (gmtMatch && gmtMatch[1]) {
+      return this.parseOffsetString(gmtMatch[1]);
+    }
+
+    // Pattern 2: Timezone abbreviation with offset (PDT-7, PST-8, EST-5, etc.)
+    const abbrevMatch = query.match(/^[a-z]{2,4}\s*([+-]?\d{1,2}(?:[:.]\d{1,2})?)/);
+    if (abbrevMatch && abbrevMatch[1]) {
+      return this.parseOffsetString(abbrevMatch[1]);
+    }
+
+    // Pattern 3: Just offset ("+5:30", "-7", "+0")
+    const offsetMatch = query.match(/^([+-]?\d{1,2}(?:[:.]\d{1,2})?)$/);
+    if (offsetMatch && offsetMatch[1]) {
+      return this.parseOffsetString(offsetMatch[1]);
+    }
+
+    return null;
+  }
+
+  /**
+   * Parse offset string like "+5:30", "-7", "+0" into decimal hours
+   */
+  private parseOffsetString(offsetStr: string): number {
+    const cleanStr = offsetStr.replace(/\s/g, '');
+
+    // Handle cases like "+5:30", "-7:00", "+0"
+    const match = cleanStr.match(/^([+-]?)(\d{1,2})(?:[:.:](\d{1,2}))?$/);
+    if (!match) return 0;
+
+    const sign = match[1] === '-' ? -1 : 1;
+    const hours = parseInt(match[2] || '0', 10);
+    const minutes = parseInt(match[3] || '0', 10);
+
+    return sign * (hours + minutes / 60);
+  }
+
+  /**
+   * Extract region from IANA timezone identifier (e.g., "America" from "America/New_York")
+   */
+  private extractRegion(iana: string): string {
+    return iana.split('/')[0] || '';
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
@@ -1200,7 +1318,7 @@ export class TimezoneModal {
       this.navigateDown();
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      this.handleSelect();
+      this.selectTimezone();
     } else if (e.key === 'Escape') {
       e.preventDefault();
       this.close();
@@ -1224,8 +1342,15 @@ export class TimezoneModal {
     if (selectedTimezone) {
       // Format offset
       const offsetStr = formatOffset(selectedTimezone.offset);
-      // Show city name with abbreviated timezone and offset: "Tokyo (JST +09:00)"
-      this.input.value = `${selectedTimezone.cityName} (${selectedTimezone.abbreviation} ${offsetStr})`;
+
+      // Check if abbreviation already contains offset information to avoid duplication
+      const hasOffsetInAbbreviation = /[+-]\d/.test(selectedTimezone.abbreviation);
+      const displayText = hasOffsetInAbbreviation
+        ? `${selectedTimezone.cityName} (${selectedTimezone.abbreviation})`
+        : `${selectedTimezone.cityName} (${selectedTimezone.abbreviation} ${offsetStr})`;
+
+      // Show city name with abbreviated timezone and offset: "Tokyo (JST +09:00)" or "Casey (GMT+8)"
+      this.input.value = displayText;
     }
   }
 
@@ -1241,63 +1366,99 @@ export class TimezoneModal {
     }
 
     // Show 5 items: 2 above, current (center), 2 below
-    const itemsToShow = 5;
-    const centerIndex = Math.floor(itemsToShow / 2); // Index 2 (0-based)
+    const itemsToShow = Math.min(5, this.filteredTimezones.length);
+    const centerIndex = Math.floor(itemsToShow / 2); // Index 2 (0-based) for 5 items
 
-    for (let i = 0; i < itemsToShow; i++) {
-      const timezoneIndex =
-        (this.selectedIndex - centerIndex + i + this.filteredTimezones.length) % this.filteredTimezones.length;
-      const timezone = this.filteredTimezones[timezoneIndex];
+    // If we have fewer timezones than display slots, don't duplicate them
+    if (this.filteredTimezones.length <= itemsToShow) {
+      // Render each timezone only once
+      for (let i = 0; i < this.filteredTimezones.length; i++) {
+        const timezone = this.filteredTimezones[i];
+        if (!timezone) continue;
 
-      if (!timezone) continue;
-
-      const item = document.createElement('div');
-      item.className = 'wheel-timezone-item';
-
-      // Add position classes
-      if (i === centerIndex) {
-        item.classList.add('center');
-      } else if (i === centerIndex - 1 || i === centerIndex + 1) {
-        item.classList.add('adjacent');
-      } else {
-        item.classList.add('distant');
+        const isCenter = i === this.selectedIndex;
+        const isAdjacent = Math.abs(i - this.selectedIndex) === 1;
+        this.renderTimezoneItem(timezone, isCenter, isAdjacent, i, this.selectedIndex);
       }
+    } else {
+      // Original circular rendering for when we have many timezones
+      for (let i = 0; i < itemsToShow; i++) {
+        const timezoneIndex =
+          (this.selectedIndex - centerIndex + i + this.filteredTimezones.length) % this.filteredTimezones.length;
+        const timezone = this.filteredTimezones[timezoneIndex];
 
-      // Add current user timezone class
-      if (timezone.iana === this.currentUserTimezone) {
-        item.classList.add('current');
+        if (!timezone) continue;
+
+        const isCenter = i === centerIndex;
+        this.renderTimezoneItem(timezone, isCenter, i === centerIndex - 1 || i === centerIndex + 1, i, centerIndex);
       }
-
-      // Format offset for display using the existing formatOffset function
-      const offsetStr = formatOffset(timezone.offset);
-
-      item.innerHTML = `
-        <div class="wheel-timezone-name">${timezone.cityName} (${timezone.abbreviation} ${offsetStr})</div>
-        <div class="wheel-timezone-display">${timezone.displayName}</div>
-      `;
-
-      // Click handler to select this timezone
-      item.addEventListener('click', () => {
-        if (i !== centerIndex) {
-          // Navigate to this timezone
-          const steps = i - centerIndex;
-          if (steps > 0) {
-            for (let j = 0; j < steps; j++) {
-              this.navigateDown();
-            }
-          } else {
-            for (let j = 0; j < Math.abs(steps); j++) {
-              this.navigateUp();
-            }
-          }
-        }
-      });
-
-      this.wheel.appendChild(item);
     }
   }
 
-  private handleSelect(): void {
+  private renderTimezoneItem(
+    timezone: TimeZone,
+    isCenter: boolean,
+    isAdjacent: boolean,
+    position: number,
+    centerIndex: number,
+  ): void {
+    const item = document.createElement('div');
+    item.className = 'wheel-timezone-item';
+
+    // Add position classes
+    if (isCenter) {
+      item.classList.add('center');
+    } else if (isAdjacent) {
+      item.classList.add('adjacent');
+    } else {
+      item.classList.add('distant');
+    }
+
+    // Add current user timezone class if it matches
+    if (timezone.iana === this.currentUserTimezone) {
+      item.classList.add('current');
+    }
+
+    // Format offset for display using the existing formatOffset function
+    const offsetStr = formatOffset(timezone.offset);
+
+    // Check if abbreviation already contains offset information to avoid duplication
+    const hasOffsetInAbbreviation = /[+-]\d/.test(timezone.abbreviation);
+    const displayText = hasOffsetInAbbreviation
+      ? `${timezone.cityName} (${timezone.abbreviation})`
+      : `${timezone.cityName} (${timezone.abbreviation} ${offsetStr})`;
+
+    item.innerHTML = `
+      <div class="wheel-timezone-name">
+        ${displayText}
+      </div>
+      <div class="wheel-timezone-display">${timezone.displayName}</div>
+    `;
+
+    // Click handler
+    item.addEventListener('click', () => {
+      if (!isCenter) {
+        // Navigate to this timezone
+        const steps = position - centerIndex;
+        if (steps > 0) {
+          for (let j = 0; j < steps; j++) {
+            this.navigateDown();
+          }
+        } else {
+          for (let j = 0; j < Math.abs(steps); j++) {
+            this.navigateUp();
+          }
+        }
+      } else {
+        // Center item was clicked - select this timezone
+        this.selectTimezone();
+      }
+    });
+
+    this.wheel.appendChild(item);
+  }
+
+  private selectTimezone(): void {
     const selectedTimezone = this.filteredTimezones[this.selectedIndex];
     if (selectedTimezone) {
       console.log('Selected timezone:', selectedTimezone);
