@@ -1122,21 +1122,24 @@ export function groupTimezonesByLocation(timezones: TimeZone[]): GroupedTimezone
   // Group timezones by the final processed data that represents the same location
   // Use cityName + displayName + offset as the grouping key since this represents the actual location
   const groups = new Map<string, TimeZone[]>();
-  
+
   for (const timezone of timezones) {
     // Create a location key based on the actual display characteristics
     // This will group timezones that look identical to the user
     const locationKey = `${timezone.cityName.toLowerCase()}-${timezone.displayName}-${timezone.offset}`;
-    
+
     if (!groups.has(locationKey)) {
       groups.set(locationKey, []);
     }
-    groups.get(locationKey)!.push(timezone);
+    const group = groups.get(locationKey);
+    if (group) {
+      group.push(timezone);
+    }
   }
 
   // Convert groups to GroupedTimezone objects
   const groupedTimezones: GroupedTimezone[] = [];
-  
+
   for (const [locationKey, variants] of groups.entries()) {
     // Choose the primary timezone - prefer standard IANA identifiers over aliases
     const sortedVariants = [...variants].sort((a, b) => {
@@ -1146,21 +1149,21 @@ export function groupTimezonesByLocation(timezones: TimeZone[]): GroupedTimezone
       if (aHasSlash !== bHasSlash) {
         return bHasSlash - aHasSlash;
       }
-      
+
       // Prefer shorter IANA identifiers (often canonical)
       if (a.iana.length !== b.iana.length) {
         return a.iana.length - b.iana.length;
       }
-      
+
       // Alphabetical as final tiebreaker
       return a.iana.localeCompare(b.iana);
     });
 
     const primary = sortedVariants[0];
-    
+
     // Skip groups with no variants (shouldn't happen, but safety check)
     if (!primary) continue;
-    
+
     groupedTimezones.push({
       primary,
       variants: sortedVariants,
@@ -1214,8 +1217,8 @@ export class TimezoneModal {
 
   private init(): void {
     // Set default timezone to user's current timezone - find the group containing it
-    const userGroupIndex = this.groupedTimezones.findIndex(group => 
-      group.variants.some(tz => tz.iana === this.currentUserTimezone)
+    const userGroupIndex = this.groupedTimezones.findIndex(group =>
+      group.variants.some(tz => tz.iana === this.currentUserTimezone),
     );
     if (userGroupIndex !== -1) {
       this.selectedIndex = userGroupIndex;
@@ -1451,7 +1454,7 @@ export class TimezoneModal {
 
       const isCenter = i === centerIndex;
       this.renderGroupItem(group, isCenter, i === centerIndex - 1 || i === centerIndex + 1, i, centerIndex);
-      
+
       // If group is expanded and this is the center item, render the variants
       if (group.isExpanded && isCenter) {
         this.renderExpandedVariants(group);
@@ -1459,7 +1462,13 @@ export class TimezoneModal {
     }
   }
 
-  private renderGroupItem(group: GroupedTimezone, isCenter: boolean, isAdjacent: boolean, position: number, centerIndex: number): void {
+  private renderGroupItem(
+    group: GroupedTimezone,
+    isCenter: boolean,
+    isAdjacent: boolean,
+    position: number,
+    centerIndex: number,
+  ): void {
     const item = document.createElement('div');
     item.className = 'wheel-timezone-item';
 
@@ -1483,9 +1492,7 @@ export class TimezoneModal {
 
     // Show expand indicator if there are multiple variants
     const hasMultipleVariants = group.variants.length > 1;
-    const expandIcon = hasMultipleVariants 
-      ? (group.isExpanded ? '▼' : '▶') 
-      : '';
+    const expandIcon = hasMultipleVariants ? (group.isExpanded ? '▼' : '▶') : '';
 
     item.innerHTML = `
       <div class="wheel-timezone-name">
@@ -1524,11 +1531,9 @@ export class TimezoneModal {
     for (let i = 1; i < group.variants.length; i++) {
       const variant = group.variants[i];
       if (!variant) continue; // Safety check
-      
+
       const item = document.createElement('div');
       item.className = 'wheel-timezone-item variant-item';
-
-      const offsetStr = formatOffset(variant.offset);
 
       item.innerHTML = `
         <div class="wheel-timezone-name variant-name">
