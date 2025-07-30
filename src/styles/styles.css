@@ -836,6 +836,42 @@ p {
   width: 100%;
 }
 
+/* Expandable timezone variant styles */
+.variant-count {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-left: var(--space-xs);
+  opacity: 0.7;
+}
+
+.wheel-timezone-item.variant-item {
+  background: var(--color-surface);
+  margin-top: 2px;
+  margin-left: var(--space-md);
+  transform: scale(0.9);
+  opacity: 0.8;
+  border-left: 2px solid var(--color-primary);
+  min-width: 260px;
+}
+
+.wheel-timezone-item.variant-item:hover {
+  background: var(--color-surface-variant);
+  opacity: 1;
+  transform: scale(0.95);
+}
+
+.variant-name {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  font-family: monospace;
+}
+
+.variant-display {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
 .modal-footer {
   padding: var(--space-xs);
   border-top: 1px solid var(--color-border);
