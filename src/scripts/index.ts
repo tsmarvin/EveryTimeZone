@@ -711,60 +711,92 @@ function adjustTimezoneLabelWidths(): void {
 }
 
 /**
- * Create and render the visual key/legend for the timeline
+ * Create and render the visual key/legend for the timeline as a dismissible footer
  */
 export function createTimezoneLegend(): HTMLElement {
-  const legend = document.createElement('div');
-  legend.className = 'timezone-legend';
-  legend.innerHTML = `
-    <h3 class="legend-title">Visual Key</h3>
-    <div class="legend-grid">
-      <div class="legend-section">
-        <div class="legend-section-title">Day & Night</div>
-        <div class="legend-item">
-          <div class="legend-indicator daylight"></div>
-          <span>Daylight hours (sunrise to sunset)</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-indicator night"></div>
-          <span>Night hours (sunset to sunrise)</span>
-        </div>
-      </div>
-      
-      <div class="legend-section">
-        <div class="legend-section-title">Date Coordination</div>
-        <div class="legend-item">
-          <div class="legend-indicator previous-day"></div>
-          <span>Previous day</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-indicator current-day"></div>
-          <span>Current day</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-indicator next-day"></div>
-          <span>Next day</span>
-        </div>
-      </div>
-      
-      <div class="legend-section">
-        <div class="legend-section-title">Special Indicators</div>
-        <div class="legend-item">
-          <div class="legend-indicator date-transition"></div>
-          <span>Date transition (midnight)</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-indicator working-hours"></div>
-          <span>Working hours (9 AM - 5 PM)</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-indicator current-hour"></div>
-          <span>Current hour</span>
+  const legendContainer = document.createElement('div');
+  legendContainer.className = 'timezone-legend-container';
+  
+  legendContainer.innerHTML = `
+    <div class="legend-toggle">
+      <button class="legend-toggle-btn" type="button" aria-label="Toggle visual guide">
+        <span class="legend-toggle-text">Visual Guide</span>
+        <span class="legend-toggle-icon">▲</span>
+      </button>
+    </div>
+    <div class="timezone-legend collapsed">
+      <div class="legend-content">
+        <div class="legend-grid">
+          <div class="legend-section">
+            <div class="legend-section-title">Day & Night</div>
+            <div class="legend-item">
+              <div class="legend-indicator daylight"></div>
+              <span>Daylight hours (sunrise to sunset)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-indicator night"></div>
+              <span>Night hours (sunset to sunrise)</span>
+            </div>
+          </div>
+          
+          <div class="legend-section">
+            <div class="legend-section-title">Date Coordination</div>
+            <div class="legend-item">
+              <div class="legend-indicator previous-day"></div>
+              <span>Previous day</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-indicator current-day"></div>
+              <span>Current day</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-indicator next-day"></div>
+              <span>Next day</span>
+            </div>
+          </div>
+          
+          <div class="legend-section">
+            <div class="legend-section-title">Special Indicators</div>
+            <div class="legend-item">
+              <div class="legend-indicator date-transition"></div>
+              <span>Date transition (midnight)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-indicator working-hours"></div>
+              <span>Working hours (9 AM - 5 PM)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-indicator current-hour"></div>
+              <span>Current hour</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   `;
-  return legend;
+
+  // Add toggle functionality
+  const toggleBtn = legendContainer.querySelector('.legend-toggle-btn') as HTMLButtonElement;
+  const legend = legendContainer.querySelector('.timezone-legend') as HTMLElement;
+  const toggleIcon = legendContainer.querySelector('.legend-toggle-icon') as HTMLElement;
+
+  if (toggleBtn && legend && toggleIcon) {
+    toggleBtn.addEventListener('click', () => {
+      const isCollapsed = legend.classList.contains('collapsed');
+      
+      if (isCollapsed) {
+        legend.classList.remove('collapsed');
+        toggleIcon.textContent = '▼';
+        toggleBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        legend.classList.add('collapsed');
+        toggleIcon.textContent = '▲';
+        toggleBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  return legendContainer;
 }
 
 /**
@@ -797,9 +829,9 @@ export function renderTimeline(): void {
       existingLegend.remove();
     }
 
-    // Create and insert legend before timeline container
+    // Create and insert legend after timeline container
     const legend = createTimezoneLegend();
-    timelineSection.insertBefore(legend, container);
+    timelineSection.appendChild(legend);
   }
 
   // Create timeline rows
@@ -1041,9 +1073,9 @@ export class TimelineManager {
         existingLegend.remove();
       }
 
-      // Create and insert legend before timeline container
+      // Create and insert legend after timeline container
       const legend = createTimezoneLegend();
-      timelineSection.insertBefore(legend, this.container);
+      this.container.parentElement?.appendChild(legend);
     }
 
     // Create timeline rows for selected timezones
