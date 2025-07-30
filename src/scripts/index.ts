@@ -824,7 +824,7 @@ export function renderTimeline(): void {
   const timelineSection = container.closest('.timeline-section');
   if (timelineSection) {
     // Remove existing legend if present
-    const existingLegend = timelineSection.querySelector('.timezone-legend');
+    const existingLegend = timelineSection.querySelector('.timezone-legend-container');
     if (existingLegend) {
       existingLegend.remove();
     }
@@ -1068,7 +1068,7 @@ export class TimelineManager {
       timelineSection.insertBefore(buttonContainer, this.container);
 
       // Remove existing legend if present
-      const existingLegend = timelineSection.querySelector('.timezone-legend');
+      const existingLegend = timelineSection.querySelector('.timezone-legend-container');
       if (existingLegend) {
         existingLegend.remove();
       }
