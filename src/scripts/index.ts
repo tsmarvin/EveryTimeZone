@@ -1442,22 +1442,41 @@ export class TimezoneModal {
     }
 
     // Show 5 items: 2 above, current (center), 2 below
-    const itemsToShow = 5;
-    const centerIndex = Math.floor(itemsToShow / 2); // Index 2 (0-based)
+    const itemsToShow = Math.min(5, this.filteredGroups.length);
+    const centerIndex = Math.floor(itemsToShow / 2); // Index 2 (0-based) for 5 items
 
-    for (let i = 0; i < itemsToShow; i++) {
-      const groupIndex =
-        (this.selectedIndex - centerIndex + i + this.filteredGroups.length) % this.filteredGroups.length;
-      const group = this.filteredGroups[groupIndex];
+    // If we have fewer groups than display slots, don't duplicate them
+    if (this.filteredGroups.length <= itemsToShow) {
+      // Render each group only once
+      for (let i = 0; i < this.filteredGroups.length; i++) {
+        const group = this.filteredGroups[i];
+        if (!group) continue;
+        
+        const isCenter = i === this.selectedIndex;
+        const isAdjacent = Math.abs(i - this.selectedIndex) === 1;
+        this.renderGroupItem(group, isCenter, isAdjacent, i, this.selectedIndex);
 
-      if (!group) continue;
+        // If group is expanded and this is the center item, render the variants
+        if (group.isExpanded && isCenter) {
+          this.renderExpandedVariants(group);
+        }
+      }
+    } else {
+      // Original circular rendering for when we have many groups
+      for (let i = 0; i < itemsToShow; i++) {
+        const groupIndex =
+          (this.selectedIndex - centerIndex + i + this.filteredGroups.length) % this.filteredGroups.length;
+        const group = this.filteredGroups[groupIndex];
 
-      const isCenter = i === centerIndex;
-      this.renderGroupItem(group, isCenter, i === centerIndex - 1 || i === centerIndex + 1, i, centerIndex);
+        if (!group) continue;
 
-      // If group is expanded and this is the center item, render the variants
-      if (group.isExpanded && isCenter) {
-        this.renderExpandedVariants(group);
+        const isCenter = i === centerIndex;
+        this.renderGroupItem(group, isCenter, i === centerIndex - 1 || i === centerIndex + 1, i, centerIndex);
+
+        // If group is expanded and this is the center item, render the variants
+        if (group.isExpanded && isCenter) {
+          this.renderExpandedVariants(group);
+        }
       }
     }
   }
