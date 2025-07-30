@@ -743,7 +743,7 @@ p {
 }
 
 .timezone-legend:not(.collapsed) {
-  max-height: 500px; /* Adjust based on content */
+  max-height: 200px; /* Compact footer to not overwhelm interface */
   opacity: 1;
 }
 
