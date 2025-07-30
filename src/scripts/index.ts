@@ -1451,7 +1451,7 @@ export class TimezoneModal {
       for (let i = 0; i < this.filteredGroups.length; i++) {
         const group = this.filteredGroups[i];
         if (!group) continue;
-        
+
         const isCenter = i === this.selectedIndex;
         const isAdjacent = Math.abs(i - this.selectedIndex) === 1;
         this.renderGroupItem(group, isCenter, isAdjacent, i, this.selectedIndex);
