@@ -24,74 +24,91 @@ jobs:
       uses: actions/github-script@v7
       with:
         script: |
-          // Analyze Copilot SWE workflow activity with proper filtering and pagination
-          // Focus on AI-generated development work, not CI/release/infrastructure workflows
+          // Track Copilot SWE (Software Engineering) workflow activity specifically
+          // Focus on the actual development workflows that handle Copilot-generated code
           
           console.log('Fetching Copilot SWE workflow data from GitHub API...');
           
           try {
+            // Strategy: Target the CI workflow specifically since that's where Copilot development work gets tested
+            // The "Update Copilot Statistics" workflow itself is not the development work we want to track
+            
+            // Get all workflows to find the CI/development workflow
+            const workflows = await github.rest.actions.listRepoWorkflows({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            
+            console.log(`Found ${workflows.data.workflows.length} workflows`);
+            
+            // Find the primary development workflow (CI) that processes Copilot work
+            // Exclude stats and deployment workflows to focus on actual development activity
+            const developmentWorkflows = workflows.data.workflows.filter(w => {
+              const name = (w.name || '').toLowerCase();
+              return name.includes('ci') || 
+                     name.includes('test') || 
+                     name.includes('build') ||
+                     (!name.includes('deploy') && !name.includes('release') && !name.includes('stats'));
+            });
+            
+            console.log(`Found ${developmentWorkflows.length} development workflows:`, 
+                       developmentWorkflows.map(w => w.name));
+            
             let workflowRuns = [];
-            let page = 1;
-            let hasMore = true;
-            let totalFetched = 0;
             
-            // Strategy: Fetch all workflow runs with pagination, then filter for Copilot-related activity
-            // This approach ensures we capture all relevant runs while being efficient about what we analyze
-            
-            while (hasMore && page <= 50) { // Safety limit: 50 pages (5000 runs max)
-              console.log(`Fetching page ${page} of workflow runs...`);
-              
-              try {
-                const runs = await github.rest.actions.listWorkflowRunsForRepo({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  per_page: 100,
-                  page: page
-                });
+            if (developmentWorkflows.length > 0) {
+              // Fetch runs from development workflows with pagination
+              for (const workflow of developmentWorkflows) {
+                console.log(`Fetching runs for workflow: ${workflow.name}`);
                 
-                totalFetched += runs.data.workflow_runs.length;
+                let page = 1;
+                let hasMore = true;
                 
-                // Filter for Copilot/AI-related workflow runs on this page
-                const copilotRuns = runs.data.workflow_runs.filter(run => {
-                  // Check workflow name for Copilot indicators
-                  const workflowNameMatch = /copilot|agent|ai/i.test(run.name || '');
-                  
-                  // Check commit message for Copilot/AI indicators
-                  const commitMessage = run.head_commit?.message || '';
-                  const commitMatch = /copilot|agent|ai|fix:|feat:|refactor:|docs:|style:|perf:|test:/i.test(commitMessage);
-                  
-                  // Check if the run is from a branch that suggests Copilot work
-                  const branchName = run.head_branch || '';
-                  const branchMatch = /copilot|agent|ai|feature|fix|refactor/i.test(branchName);
-                  
-                  // Check if this is a pull request related run (most Copilot work goes through PRs)
-                  const isPullRequest = run.pull_requests && run.pull_requests.length > 0;
-                  
-                  // For Copilot SWE work, we want:
-                  // 1. Runs explicitly named as copilot/agent/ai workflows
-                  // 2. Runs with conventional commit patterns (indicating structured development)
-                  // 3. Runs from development branches (not main branch CI)
-                  // 4. Pull request associated runs (Copilot typically works via PRs)
-                  
-                  return workflowNameMatch || 
-                         (commitMatch && (branchMatch || isPullRequest || run.head_branch !== 'main'));
-                });
-                
-                workflowRuns.push(...copilotRuns);
-                console.log(`Page ${page}: Found ${copilotRuns.length} Copilot-related runs out of ${runs.data.workflow_runs.length} total runs`);
-                
-                // Check if we have more pages
-                hasMore = runs.data.workflow_runs.length === 100;
-                page++;
-                
-              } catch (error) {
-                console.log(`Error fetching page ${page}: ${error.message}`);
-                hasMore = false;
+                while (hasMore && page <= 10) { // Reasonable limit for CI workflows
+                  try {
+                    const runs = await github.rest.actions.listWorkflowRuns({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      workflow_id: workflow.id,
+                      per_page: 100,
+                      page: page
+                    });
+                    
+                    // Filter for Copilot-related runs based on commit patterns and branch patterns
+                    const copilotRuns = runs.data.workflow_runs.filter(run => {
+                      const commitMessage = run.head_commit?.message || '';
+                      const branchName = run.head_branch || '';
+                      const actor = run.actor?.login || '';
+                      
+                      // Identify Copilot SWE work by:
+                      // 1. Conventional commit patterns (feat:, fix:, etc.) - structured development
+                      // 2. Copilot/agent branches 
+                      // 3. Copilot bot actor
+                      // 4. PR-based development (most Copilot work goes through PRs)
+                      const isConventionalCommit = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?:/i.test(commitMessage);
+                      const isCopilotBranch = /copilot|agent|ai/i.test(branchName);
+                      const isCopilotActor = /copilot|agent|bot/i.test(actor);
+                      const isPRRun = run.pull_requests && run.pull_requests.length > 0;
+                      
+                      // For a copilot-generated codebase, focus on structured development patterns
+                      return isConventionalCommit || isCopilotBranch || isCopilotActor || isPRRun;
+                    });
+                    
+                    workflowRuns.push(...copilotRuns);
+                    console.log(`Page ${page}: Found ${copilotRuns.length} Copilot-related runs out of ${runs.data.workflow_runs.length} total runs`);
+                    
+                    hasMore = runs.data.workflow_runs.length === 100;
+                    page++;
+                    
+                  } catch (error) {
+                    console.log(`Error fetching runs for workflow ${workflow.name}, page ${page}: ${error.message}`);
+                    hasMore = false;
+                  }
+                }
               }
+            } else {
+              console.log('No development workflows found');
             }
-            
-            console.log(`Total workflow runs fetched: ${totalFetched}`);
-            console.log(`Copilot-related runs identified: ${workflowRuns.length}`);
             
             console.log(`Analyzing ${workflowRuns.length} workflow runs`);
             
@@ -168,7 +185,7 @@ jobs:
             core.setOutput('pr_count', prCount.toString());
             
             console.log('Copilot SWE Statistics calculated:');
-            console.log(`- Total Copilot-related workflow runs: ${totalRuns}`);
+            console.log(`- Total Copilot development runs: ${totalRuns}`);
             console.log(`- Success rate: ${successPercentage}%`);
             console.log(`- Total runtime: ${totalRuntimeHours}h`);
             console.log(`- Average runtime: ${averageRuntime}s`);
@@ -227,7 +244,7 @@ jobs:
         publish_branch: gh-pages
         user_name: 'github-actions[bot]'
         user_email: 'github-actions[bot]@users.noreply.github.com'
-        commit_message: 'Update dynamic copilot statistics badge'
+        commit_message: 'Update Copilot SWE development statistics badge'
         include: |
           copilot-stats-badge.json
     
@@ -242,12 +259,12 @@ jobs:
       run: |
         echo "Copilot SWE Statistics Implementation:"
         if [ "${{ steps.copilot-stats.outputs.found }}" = "true" ]; then
-          echo "✅ Successfully analyzed Copilot workflow data"
-          echo "- Copilot-related workflow runs: ${{ steps.copilot-stats.outputs.total_runs }}"
+          echo "✅ Successfully analyzed Copilot development workflow data"
+          echo "- Copilot development runs: ${{ steps.copilot-stats.outputs.total_runs }}"
           echo "- Success rate: ${{ steps.copilot-stats.outputs.success_percentage }}%"
           echo "- Total runtime: ${{ steps.copilot-stats.outputs.total_runtime_hours }} hours"
           echo "- Average runtime: ${{ steps.copilot-stats.outputs.average_runtime }} seconds"
         else
-          echo "⚠️ No Copilot workflow data found - using fallback badge"
+          echo "⚠️ No Copilot development workflow data found - using fallback badge"
         fi
         echo "Badge deployed to gh-pages for dynamic display."
