@@ -6,6 +6,7 @@
  */
 
 import * as SunCalc from 'suncalc';
+import { Temporal } from '@js-temporal/polyfill';
 import { SettingsPanel } from './settings.js';
 
 // Type definitions for timezone and timeline data structures
@@ -56,13 +57,16 @@ export interface TimelineRow {
 }
 
 /**
- * Get user's current timezone using Intl API
+ * Get user's current timezone using Temporal API
  * @returns TimeZone object with user's timezone details
  */
 export function getUserTimezone(): TimeZone {
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Get user's timezone ID using Temporal (polyfill ensures availability)
+  const userTimezone = Temporal.Now.timeZoneId();
+
   const now = new Date();
 
+  // Use Intl for offset calculation (proven compatibility)
   const formatter = new Intl.DateTimeFormat('en', {
     timeZone: userTimezone,
     timeZoneName: 'longOffset',
@@ -80,7 +84,7 @@ export function getUserTimezone(): TimeZone {
     offset = sign * (hours + minutes / 60);
   }
 
-  // Get display name
+  // Get display name using Intl
   const displayFormatter = new Intl.DateTimeFormat('en', {
     timeZone: userTimezone,
     timeZoneName: 'long',
@@ -1036,14 +1040,15 @@ interface WindowWithTimeline extends Window {
  * @returns Array of timezone objects ordered from user's timezone around the globe
  */
 export function getAllTimezonesOrdered(): TimeZone[] {
-  // Get user's current timezone
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Get user's timezone using Temporal (polyfill ensures availability)
+  const userTimezone = Temporal.Now.timeZoneId();
+
   const now = new Date();
 
-  // Get all supported timezones
+  // Get all supported timezones (comprehensive list)
   const allTimezones = Intl.supportedValuesOf('timeZone');
 
-  // Create timezone objects with current offsets
+  // Create timezone objects with current offsets using Intl (proven compatibility)
   const timezoneData = allTimezones.map(iana => {
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: iana,
@@ -1124,6 +1129,7 @@ export class TimezoneModal {
   private selectedIndex = 0;
   private currentUserTimezone: string;
   private onTimezoneSelectedCallback: ((timezone: TimeZone) => void) | undefined;
+  private userSearchQuery = ''; // Store user's search query separately
 
   constructor(onTimezoneSelected?: (timezone: TimeZone) => void) {
     this.modal = document.getElementById('timezone-modal') as HTMLElement;
@@ -1136,7 +1142,8 @@ export class TimezoneModal {
     this.upButton = document.getElementById('wheel-up') as HTMLElement;
     this.downButton = document.getElementById('wheel-down') as HTMLElement;
 
-    this.currentUserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // Get user's timezone using Temporal (polyfill ensures availability)
+    this.currentUserTimezone = Temporal.Now.timeZoneId();
     this.timezones = getAllTimezonesOrdered();
     this.filteredTimezones = [...this.timezones];
     this.onTimezoneSelectedCallback = onTimezoneSelected;
@@ -1151,8 +1158,9 @@ export class TimezoneModal {
       this.selectedIndex = userTimezoneIndex;
     }
 
-    // Set input value
-    this.updateInputValue();
+    // Keep input clear on initial load to show placeholder
+    this.input.value = '';
+    this.userSearchQuery = '';
 
     // Event listeners
     this.input.addEventListener('input', () => this.handleInputChange());
@@ -1171,12 +1179,13 @@ export class TimezoneModal {
   }
 
   private handleInputChange(): void {
-    const query = this.input.value.toLowerCase().trim();
+    // Store the user's search query
+    this.userSearchQuery = this.input.value.toLowerCase().trim();
 
-    if (query === '') {
+    if (this.userSearchQuery === '') {
       this.filteredTimezones = [...this.timezones];
     } else {
-      this.filteredTimezones = this.searchTimezones(query);
+      this.filteredTimezones = this.searchTimezones(this.userSearchQuery);
     }
 
     // Reset to first item in filtered results
@@ -1327,13 +1336,11 @@ export class TimezoneModal {
 
   private navigateUp(): void {
     this.selectedIndex = (this.selectedIndex - 1 + this.filteredTimezones.length) % this.filteredTimezones.length;
-    this.updateInputValue();
     this.renderWheel();
   }
 
   private navigateDown(): void {
     this.selectedIndex = (this.selectedIndex + 1) % this.filteredTimezones.length;
-    this.updateInputValue();
     this.renderWheel();
   }
 
@@ -1479,6 +1486,14 @@ export class TimezoneModal {
     this.overlay.classList.add('active');
     this.modal.focus();
     document.body.style.overflow = 'hidden';
+
+    // Preserve existing search query in the input
+    this.input.value = this.userSearchQuery;
+
+    // Focus the input after modal is shown
+    setTimeout(() => {
+      this.input.focus();
+    }, 100);
   }
 
   public close(): void {
