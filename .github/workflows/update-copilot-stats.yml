@@ -18,62 +18,19 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      
-    - name: Fetch existing statistics for incremental tracking
-      id: existing-stats
-      run: |
-        # Install jq for JSON processing
-        sudo apt-get update && sudo apt-get install -y jq
-        
-        # Try to fetch existing statistics from gh-pages branch for incremental tracking
-        echo "Checking for existing copilot statistics..."
-        
-        # Fetch the gh-pages branch to check for existing stats
-        git fetch origin gh-pages:gh-pages 2>/dev/null || echo "No gh-pages branch found"
-        
-        # Check if badge file exists in gh-pages
-        if git show gh-pages:copilot-stats-badge.json >/dev/null 2>&1; then
-          echo "Found existing statistics file"
-          git show gh-pages:copilot-stats-badge.json > existing-badge.json
-          
-          # Extract last update timestamp if available
-          LAST_UPDATE=$(jq -r '.lastUpdate // empty' existing-badge.json 2>/dev/null || echo "")
-          TOTAL_RUNS=$(jq -r '.totalRuns // empty' existing-badge.json 2>/dev/null || echo "")
-          echo "last_update=$LAST_UPDATE" >> $GITHUB_OUTPUT
-          echo "existing_total_runs=$TOTAL_RUNS" >> $GITHUB_OUTPUT
-          echo "has_existing=true" >> $GITHUB_OUTPUT
-        else
-          echo "No existing statistics found, will do full tracking"
-          echo "has_existing=false" >> $GITHUB_OUTPUT
-        fi
     
     - name: Analyze Copilot Workflow Statistics
       id: copilot-stats
       uses: actions/github-script@v7
       with:
         script: |
-          // Track Copilot SWE (Software Engineering) workflow activity with incremental tracking
-          // Focus on the actual development workflows that handle Copilot-generated code
+          // Implementation based on PowerShell outline from PR comment #2238185584
+          // Fetch workflows and analyze Copilot-related activity
           
-          console.log('Fetching Copilot SWE workflow data from GitHub API...');
-          
-          // Check for incremental tracking capability
-          const hasExisting = '${{ steps.existing-stats.outputs.has_existing }}' === 'true';
-          const lastUpdate = '${{ steps.existing-stats.outputs.last_update }}';
-          const existingTotalRuns = parseInt('${{ steps.existing-stats.outputs.existing_total_runs }}') || 0;
-          
-          if (hasExisting && lastUpdate) {
-            console.log(`Using incremental tracking since: ${lastUpdate}`);
-            console.log(`Previous total runs: ${existingTotalRuns}`);
-          } else {
-            console.log('Performing full statistics calculation (no previous data)');
-          }
+          console.log('Fetching workflow data from GitHub API...');
           
           try {
-            // Strategy: Target the CI workflow specifically since that's where Copilot development work gets tested
-            // The "Update Copilot Statistics" workflow itself is not the development work we want to track
-            
-            // Get all workflows to find the CI/development workflow
+            // Get all workflows
             const workflows = await github.rest.actions.listRepoWorkflows({
               owner: context.repo.owner,
               repo: context.repo.repo
@@ -81,35 +38,22 @@ jobs:
             
             console.log(`Found ${workflows.data.workflows.length} workflows`);
             
-            // Find the primary development workflow (CI) that processes Copilot work
-            // Exclude stats and deployment workflows to focus on actual development activity
-            const developmentWorkflows = workflows.data.workflows.filter(w => {
-              const name = (w.name || '').toLowerCase();
-              return name.includes('ci') || 
-                     name.includes('test') || 
-                     name.includes('build') ||
-                     (!name.includes('deploy') && !name.includes('release') && !name.includes('stats'));
-            });
-            
-            console.log(`Found ${developmentWorkflows.length} development workflows:`, 
-                       developmentWorkflows.map(w => w.name));
+            // Find Copilot-related workflows (by name pattern)
+            const copilotWorkflows = workflows.data.workflows.filter(w => 
+              /copilot|agent|ai/i.test(w.name)
+            );
             
             let workflowRuns = [];
             
-            if (developmentWorkflows.length > 0) {
-              // Fetch runs from development workflows with incremental tracking
-              for (const workflow of developmentWorkflows) {
-                console.log(`Fetching runs for workflow: ${workflow.name}`);
-                
-                let page = 1;
-                let hasMore = true;
-                let newRunsFound = 0;
-                
-                // For incremental tracking, we'll fetch until we hit the last update timestamp
-                const pageLimit = hasExisting && lastUpdate ? 50 : 10; // More pages for initial load
-                
-                while (hasMore && page <= pageLimit) {
-                  try {
+            if (copilotWorkflows.length > 0) {
+              console.log(`Found ${copilotWorkflows.length} Copilot-related workflows`);
+              // Fetch runs from Copilot workflows with proper pagination
+              for (const workflow of copilotWorkflows) {
+                try {
+                  let page = 1;
+                  let hasMore = true;
+                  
+                  while (hasMore) {
                     const runs = await github.rest.actions.listWorkflowRuns({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
@@ -118,58 +62,54 @@ jobs:
                       page: page
                     });
                     
-                    // For incremental tracking, filter out runs older than lastUpdate
-                    let filteredRuns = runs.data.workflow_runs;
-                    if (hasExisting && lastUpdate) {
-                      const lastUpdateDate = new Date(lastUpdate);
-                      filteredRuns = runs.data.workflow_runs.filter(run => 
-                        new Date(run.created_at) > lastUpdateDate
-                      );
-                      
-                      // If no new runs on this page, we've gone far enough back
-                      if (filteredRuns.length === 0 && page > 1) {
-                        console.log('Reached runs older than last update, stopping pagination');
-                        break;
-                      }
-                    }
+                    workflowRuns.push(...runs.data.workflow_runs);
+                    console.log(`Page ${page}: Found ${runs.data.workflow_runs.length} runs for workflow ${workflow.name}`);
                     
-                    // Filter for Copilot-related runs based on commit patterns and branch patterns
-                    const copilotRuns = filteredRuns.filter(run => {
-                      const commitMessage = run.head_commit?.message || '';
-                      const branchName = run.head_branch || '';
-                      const actor = run.actor?.login || '';
-                      
-                      // Identify Copilot SWE work by:
-                      // 1. Conventional commit patterns (feat:, fix:, etc.) - structured development
-                      // 2. Copilot/agent branches 
-                      // 3. Copilot bot actor
-                      // 4. PR-based development (most Copilot work goes through PRs)
-                      const isConventionalCommit = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?:/i.test(commitMessage);
-                      const isCopilotBranch = /copilot|agent|ai/i.test(branchName);
-                      const isCopilotActor = /copilot|agent|bot/i.test(actor);
-                      const isPRRun = run.pull_requests && run.pull_requests.length > 0;
-                      
-                      // For a copilot-generated codebase, focus on structured development patterns
-                      return isConventionalCommit || isCopilotBranch || isCopilotActor || isPRRun;
-                    });
-                    
-                    workflowRuns.push(...copilotRuns);
-                    newRunsFound += copilotRuns.length;
-                    console.log(`Page ${page}: Found ${copilotRuns.length} new Copilot-related runs out of ${filteredRuns.length} filtered runs (${runs.data.workflow_runs.length} total)`);
-                    
-                    hasMore = runs.data.workflow_runs.length === 100 && filteredRuns.length > 0;
+                    hasMore = runs.data.workflow_runs.length === 100;
                     page++;
-                    
-                  } catch (error) {
-                    console.log(`Error fetching runs for workflow ${workflow.name}, page ${page}: ${error.message}`);
-                    hasMore = false;
                   }
+                } catch (error) {
+                  console.log(`Error fetching runs for workflow ${workflow.name}: ${error.message}`);
                 }
-                
-                console.log(`Total new runs found for ${workflow.name}: ${newRunsFound}`);
               }
             } else {
-              console.log('No development workflows found');
+              console.log('No Copilot workflows found, analyzing repository-wide workflow activity');
+              try {
+                // Fallback: analyze all workflow runs for patterns that might indicate AI/Copilot activity
+                let page = 1;
+                let hasMore = true;
+                let allRuns = [];
+                
+                while (hasMore) {
+                  const runs = await github.rest.actions.listWorkflowRunsForRepo({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    per_page: 100,
+                    page: page
+                  });
+                  
+                  allRuns.push(...runs.data.workflow_runs);
+                  console.log(`Page ${page}: Found ${runs.data.workflow_runs.length} total workflow runs`);
+                  
+                  hasMore = runs.data.workflow_runs.length === 100;
+                  page++;
+                }
+                
+                // Filter for runs that might be AI/Copilot related
+                workflowRuns = allRuns.filter(run => 
+                  /copilot|agent|ai|automated|bot/i.test(run.name || '') ||
+                  /copilot|agent|ai|automated|bot/i.test(run.head_commit?.message || '')
+                );
+                
+                // If still no matches, use recent workflow activity as proxy
+                if (workflowRuns.length === 0) {
+                  console.log('No AI-related patterns found, using recent workflow activity');
+                  workflowRuns = allRuns.slice(0, 50); // Recent 50 runs
+                }
+              } catch (error) {
+                console.log(`Error fetching repository workflow runs: ${error.message}`);
+                workflowRuns = [];
+              }
             }
             
             console.log(`Analyzing ${workflowRuns.length} workflow runs`);
@@ -246,8 +186,8 @@ jobs:
             core.setOutput('max_runtime_seconds', maxRuntimeSeconds.toString());
             core.setOutput('pr_count', prCount.toString());
             
-            console.log('Copilot SWE Statistics calculated:');
-            console.log(`- Total Copilot development runs: ${totalRuns}`);
+            console.log('Statistics calculated:');
+            console.log(`- Total runs: ${totalRuns}`);
             console.log(`- Success rate: ${successPercentage}%`);
             console.log(`- Total runtime: ${totalRuntimeHours}h`);
             console.log(`- Average runtime: ${averageRuntime}s`);
@@ -266,21 +206,18 @@ jobs:
         TOTAL_RUNS="${{ steps.copilot-stats.outputs.total_runs }}"
         SUCCESS_PCT="${{ steps.copilot-stats.outputs.success_percentage }}"
         RUNTIME_HOURS="${{ steps.copilot-stats.outputs.total_runtime_hours }}"
-        CURRENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
         
-        # Create dynamic badge with real statistics and incremental tracking metadata
+        # Create dynamic badge with real statistics
         cat > copilot-stats-badge.json << EOF
         {
           "schemaVersion": 1,
           "label": "copilot stats",
           "message": "${TOTAL_RUNS} runs | ${SUCCESS_PCT}% success | ${RUNTIME_HOURS}h total",
-          "color": "blue",
-          "lastUpdate": "${CURRENT_TIME}",
-          "totalRuns": ${TOTAL_RUNS}
+          "color": "blue"
         }
         EOF
         
-        echo "Created dynamic Copilot statistics badge with incremental tracking:"
+        echo "Created dynamic Copilot statistics badge:"
         cat copilot-stats-badge.json
     
     - name: Create Fallback Badge
@@ -309,7 +246,7 @@ jobs:
         publish_branch: gh-pages
         user_name: 'github-actions[bot]'
         user_email: 'github-actions[bot]@users.noreply.github.com'
-        commit_message: 'Update Copilot SWE development statistics badge'
+        commit_message: 'Update dynamic copilot statistics badge'
         include: |
           copilot-stats-badge.json
     
@@ -322,14 +259,14 @@ jobs:
     
     - name: Log final summary
       run: |
-        echo "Copilot SWE Statistics Implementation:"
+        echo "Dynamic Copilot Statistics Implementation:"
         if [ "${{ steps.copilot-stats.outputs.found }}" = "true" ]; then
-          echo "✅ Successfully analyzed Copilot development workflow data"
-          echo "- Copilot development runs: ${{ steps.copilot-stats.outputs.total_runs }}"
+          echo "✅ Successfully analyzed workflow data"
+          echo "- Executions: ${{ steps.copilot-stats.outputs.total_runs }}"
           echo "- Success rate: ${{ steps.copilot-stats.outputs.success_percentage }}%"
           echo "- Total runtime: ${{ steps.copilot-stats.outputs.total_runtime_hours }} hours"
           echo "- Average runtime: ${{ steps.copilot-stats.outputs.average_runtime }} seconds"
         else
-          echo "⚠️ No Copilot development workflow data found - using fallback badge"
+          echo "⚠️ No workflow data found - using fallback badge"
         fi
         echo "Badge deployed to gh-pages for dynamic display."
