@@ -490,18 +490,8 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     // Calculate the time in the target timezone
     const hourOffset = startOffset + i;
     const baseTime = new Date(currentUserHour.getTime() + hourOffset * 60 * 60 * 1000);
-
-    let timeInTz: Date;
-
-    // Handle special case for UTC-12 (manual timezone)
-    if (timezone.iana === 'UTC-12') {
-      const offsetDiff = (-12 - userTz.offset) * 60 * 60 * 1000;
-      timeInTz = new Date(baseTime.getTime() + offsetDiff);
-    } else {
-      // Use browser's timezone calculation for standard timezones
-      const offsetDiff = (timezone.offset - userTz.offset) * 60 * 60 * 1000;
-      timeInTz = new Date(baseTime.getTime() + offsetDiff);
-    }
+    const offsetDiff = (timezone.offset - userTz.offset) * 60 * 60 * 1000;
+    const timeInTz = new Date(baseTime.getTime() + offsetDiff);
 
     const hour12 = timeInTz.toLocaleString('en-US', {
       hour: 'numeric',
@@ -1089,18 +1079,6 @@ export function getAllTimezonesOrdered(): TimeZone[] {
     };
   });
 
-  // Add manual UTC-12 timezone since it's not in the browser's supported list
-  // but users may want to reference it for completeness
-  const utcMinus12: TimeZone = {
-    name: 'UTC-12',
-    offset: -12,
-    displayName: 'Coordinated Universal Time-12',
-    iana: 'UTC-12', // Custom identifier
-    cityName: 'UTC-12',
-    abbreviation: 'UTC-12',
-  };
-  timezoneData.push(utcMinus12);
-
   // Get user's timezone offset
   const userTimezoneData = timezoneData.find(tz => tz.iana === userTimezone);
   const userOffset = userTimezoneData?.offset || 0;
@@ -1146,7 +1124,6 @@ export class TimezoneModal {
   private selectedIndex = 0;
   private currentUserTimezone: string;
   private onTimezoneSelectedCallback: ((timezone: TimeZone) => void) | undefined;
-  private userSearchQuery = ''; // Store user's search query separately
 
   constructor(onTimezoneSelected?: (timezone: TimeZone) => void) {
     this.modal = document.getElementById('timezone-modal') as HTMLElement;
@@ -1174,9 +1151,8 @@ export class TimezoneModal {
       this.selectedIndex = userTimezoneIndex;
     }
 
-    // Keep input clear on initial load to show placeholder
-    this.input.value = '';
-    this.userSearchQuery = '';
+    // Set input value
+    this.updateInputValue();
 
     // Event listeners
     this.input.addEventListener('input', () => this.handleInputChange());
@@ -1195,13 +1171,12 @@ export class TimezoneModal {
   }
 
   private handleInputChange(): void {
-    // Store the user's search query
-    this.userSearchQuery = this.input.value.toLowerCase().trim();
+    const query = this.input.value.toLowerCase().trim();
 
-    if (this.userSearchQuery === '') {
+    if (query === '') {
       this.filteredTimezones = [...this.timezones];
     } else {
-      this.filteredTimezones = this.searchTimezones(this.userSearchQuery);
+      this.filteredTimezones = this.searchTimezones(query);
     }
 
     // Reset to first item in filtered results
@@ -1352,12 +1327,31 @@ export class TimezoneModal {
 
   private navigateUp(): void {
     this.selectedIndex = (this.selectedIndex - 1 + this.filteredTimezones.length) % this.filteredTimezones.length;
+    this.updateInputValue();
     this.renderWheel();
   }
 
   private navigateDown(): void {
     this.selectedIndex = (this.selectedIndex + 1) % this.filteredTimezones.length;
+    this.updateInputValue();
     this.renderWheel();
+  }
+
+  private updateInputValue(): void {
+    const selectedTimezone = this.filteredTimezones[this.selectedIndex];
+    if (selectedTimezone) {
+      // Format offset
+      const offsetStr = formatOffset(selectedTimezone.offset);
+
+      // Check if abbreviation already contains offset information to avoid duplication
+      const hasOffsetInAbbreviation = /[+-]\d/.test(selectedTimezone.abbreviation);
+      const displayText = hasOffsetInAbbreviation
+        ? `${selectedTimezone.cityName} (${selectedTimezone.abbreviation})`
+        : `${selectedTimezone.cityName} (${selectedTimezone.abbreviation} ${offsetStr})`;
+
+      // Show city name with abbreviated timezone and offset: "Tokyo (JST +09:00)" or "Casey (GMT+8)"
+      this.input.value = displayText;
+    }
   }
 
   private renderWheel(): void {
@@ -1485,14 +1479,6 @@ export class TimezoneModal {
     this.overlay.classList.add('active');
     this.modal.focus();
     document.body.style.overflow = 'hidden';
-
-    // Preserve existing search query in the input
-    this.input.value = this.userSearchQuery;
-
-    // Focus the input after modal is shown
-    setTimeout(() => {
-      this.input.focus();
-    }, 100);
   }
 
   public close(): void {
