@@ -6,6 +6,7 @@
  */
 
 import * as SunCalc from 'suncalc';
+import { Temporal } from '@js-temporal/polyfill';
 import { SettingsPanel } from './settings.js';
 
 // Type definitions for timezone and timeline data structures
@@ -56,13 +57,27 @@ export interface TimelineRow {
 }
 
 /**
- * Get user's current timezone using Intl API
+ * Get user's current timezone using Temporal API
+ * @returns TimeZone object with user's timezone details
+ */
+/**
+ * Get user's current timezone using Temporal API with Intl fallback
  * @returns TimeZone object with user's timezone details
  */
 export function getUserTimezone(): TimeZone {
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  let userTimezone: string;
+
+  try {
+    // Try to get user's timezone ID using Temporal (more comprehensive detection)
+    userTimezone = Temporal.Now.timeZoneId();
+  } catch {
+    // Fallback to Intl API for compatibility
+    userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  }
+
   const now = new Date();
 
+  // Use Intl for offset calculation (proven compatibility)
   const formatter = new Intl.DateTimeFormat('en', {
     timeZone: userTimezone,
     timeZoneName: 'longOffset',
@@ -80,7 +95,7 @@ export function getUserTimezone(): TimeZone {
     offset = sign * (hours + minutes / 60);
   }
 
-  // Get display name
+  // Get display name using Intl
   const displayFormatter = new Intl.DateTimeFormat('en', {
     timeZone: userTimezone,
     timeZoneName: 'long',
@@ -1036,14 +1051,22 @@ interface WindowWithTimeline extends Window {
  * @returns Array of timezone objects ordered from user's timezone around the globe
  */
 export function getAllTimezonesOrdered(): TimeZone[] {
-  // Get user's current timezone
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  let userTimezone: string;
+
+  try {
+    // Try to get user's timezone using Temporal (better detection)
+    userTimezone = Temporal.Now.timeZoneId();
+  } catch {
+    // Fallback to Intl API for compatibility
+    userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  }
+
   const now = new Date();
 
-  // Get all supported timezones
+  // Get all supported timezones (comprehensive list)
   const allTimezones = Intl.supportedValuesOf('timeZone');
 
-  // Create timezone objects with current offsets
+  // Create timezone objects with current offsets using Intl (proven compatibility)
   const timezoneData = allTimezones.map(iana => {
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: iana,
@@ -1137,7 +1160,11 @@ export class TimezoneModal {
     this.upButton = document.getElementById('wheel-up') as HTMLElement;
     this.downButton = document.getElementById('wheel-down') as HTMLElement;
 
-    this.currentUserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    try {
+      this.currentUserTimezone = Temporal.Now.timeZoneId();
+    } catch {
+      this.currentUserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    }
     this.timezones = getAllTimezonesOrdered();
     this.filteredTimezones = [...this.timezones];
     this.onTimezoneSelectedCallback = onTimezoneSelected;
