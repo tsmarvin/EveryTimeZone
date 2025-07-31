@@ -60,20 +60,9 @@ export interface TimelineRow {
  * Get user's current timezone using Temporal API
  * @returns TimeZone object with user's timezone details
  */
-/**
- * Get user's current timezone using Temporal API with Intl fallback
- * @returns TimeZone object with user's timezone details
- */
 export function getUserTimezone(): TimeZone {
-  let userTimezone: string;
-
-  try {
-    // Try to get user's timezone ID using Temporal (more comprehensive detection)
-    userTimezone = Temporal.Now.timeZoneId();
-  } catch {
-    // Fallback to Intl API for compatibility
-    userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  }
+  // Get user's timezone ID using Temporal (polyfill ensures availability)
+  const userTimezone = Temporal.Now.timeZoneId();
 
   const now = new Date();
 
@@ -1051,15 +1040,8 @@ interface WindowWithTimeline extends Window {
  * @returns Array of timezone objects ordered from user's timezone around the globe
  */
 export function getAllTimezonesOrdered(): TimeZone[] {
-  let userTimezone: string;
-
-  try {
-    // Try to get user's timezone using Temporal (better detection)
-    userTimezone = Temporal.Now.timeZoneId();
-  } catch {
-    // Fallback to Intl API for compatibility
-    userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  }
+  // Get user's timezone using Temporal (polyfill ensures availability)
+  const userTimezone = Temporal.Now.timeZoneId();
 
   const now = new Date();
 
@@ -1160,11 +1142,8 @@ export class TimezoneModal {
     this.upButton = document.getElementById('wheel-up') as HTMLElement;
     this.downButton = document.getElementById('wheel-down') as HTMLElement;
 
-    try {
-      this.currentUserTimezone = Temporal.Now.timeZoneId();
-    } catch {
-      this.currentUserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    }
+    // Get user's timezone using Temporal (polyfill ensures availability)
+    this.currentUserTimezone = Temporal.Now.timeZoneId();
     this.timezones = getAllTimezonesOrdered();
     this.filteredTimezones = [...this.timezones];
     this.onTimezoneSelectedCallback = onTimezoneSelected;
