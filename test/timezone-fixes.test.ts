@@ -421,7 +421,7 @@ describe('Timezone Selection Fixes', () => {
       // The improvement: should intelligently fill from abundant side (above) rather than randomly
       // This demonstrates the edge case handling where few timezones exist on one side
       const offsetsBelowUser = offsets.filter(offset => offset < userOffset);
-      const totalBelowAvailable = 1; // Only Pacific/Midway at -11
+      const totalBelowAvailable = 2; // Pacific/Midway at -11 and UTC-12
       expect(offsetsBelowUser.length).toBeLessThanOrEqual(totalBelowAvailable);
     });
 
