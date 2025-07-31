@@ -99,7 +99,8 @@ describe('Timezone Name Display', () => {
     timezones.forEach(tz => {
       expect(tz.abbreviation).toBeTruthy();
       expect(tz.abbreviation.length).toBeGreaterThan(0);
-      expect(tz.abbreviation.length).toBeLessThanOrEqual(5);
+      // Allow for UTC-12 which has 6 characters
+      expect(tz.abbreviation.length).toBeLessThanOrEqual(6);
     });
   });
 
