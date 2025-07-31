@@ -38,54 +38,42 @@ jobs:
             
             console.log(`Found ${workflows.data.workflows.length} workflows`);
             
-            // Find Copilot-related workflows (by name pattern)
+            // Find the specific "copilot" workflow
             const copilotWorkflows = workflows.data.workflows.filter(w => 
-              /copilot|agent|ai/i.test(w.name)
+              w.name.toLowerCase() === 'copilot'
             );
             
             let workflowRuns = [];
             
             if (copilotWorkflows.length > 0) {
-              console.log(`Found ${copilotWorkflows.length} Copilot-related workflows`);
-              // Fetch runs from Copilot workflows
+              console.log(`Found ${copilotWorkflows.length} "copilot" workflows`);
+              // Fetch runs from the copilot workflow with proper pagination
               for (const workflow of copilotWorkflows) {
                 try {
-                  const runs = await github.rest.actions.listWorkflowRuns({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    workflow_id: workflow.id,
-                    per_page: 100
-                  });
-                  workflowRuns.push(...runs.data.workflow_runs);
+                  let page = 1;
+                  let hasMore = true;
+                  
+                  while (hasMore) {
+                    const runs = await github.rest.actions.listWorkflowRuns({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      workflow_id: workflow.id,
+                      per_page: 100,
+                      page: page
+                    });
+                    
+                    workflowRuns.push(...runs.data.workflow_runs);
+                    console.log(`Page ${page}: Found ${runs.data.workflow_runs.length} runs for workflow ${workflow.name}`);
+                    
+                    hasMore = runs.data.workflow_runs.length === 100;
+                    page++;
+                  }
                 } catch (error) {
                   console.log(`Error fetching runs for workflow ${workflow.name}: ${error.message}`);
                 }
               }
             } else {
-              console.log('No Copilot workflows found, analyzing repository-wide workflow activity');
-              try {
-                // Fallback: analyze all workflow runs for patterns that might indicate AI/Copilot activity
-                const runs = await github.rest.actions.listWorkflowRunsForRepo({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  per_page: 100
-                });
-                
-                // Filter for runs that might be AI/Copilot related
-                workflowRuns = runs.data.workflow_runs.filter(run => 
-                  /copilot|agent|ai|automated|bot/i.test(run.name || '') ||
-                  /copilot|agent|ai|automated|bot/i.test(run.head_commit?.message || '')
-                );
-                
-                // If still no matches, use recent workflow activity as proxy
-                if (workflowRuns.length === 0) {
-                  console.log('No AI-related patterns found, using recent workflow activity');
-                  workflowRuns = runs.data.workflow_runs.slice(0, 50); // Recent 50 runs
-                }
-              } catch (error) {
-                console.log(`Error fetching repository workflow runs: ${error.message}`);
-                workflowRuns = [];
-              }
+              console.log('No "copilot" workflow found');
             }
             
             console.log(`Analyzing ${workflowRuns.length} workflow runs`);
