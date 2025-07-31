@@ -181,6 +181,12 @@
 
     <!-- Temporal Polyfill -->
     <script src="scripts/temporal/index.umd.js"></script>
+    <script>
+      // Make Temporal available globally (polyfill loads into temporal namespace)
+      if (typeof temporal !== 'undefined' && temporal.Temporal) {
+        window.Temporal = temporal.Temporal;
+      }
+    </script>
 
     <!-- Module Import Map -->
     <script type="importmap">
