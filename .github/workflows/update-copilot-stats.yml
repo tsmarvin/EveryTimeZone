@@ -18,16 +18,56 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      
+    - name: Fetch existing statistics for incremental tracking
+      id: existing-stats
+      run: |
+        # Install jq for JSON processing
+        sudo apt-get update && sudo apt-get install -y jq
+        
+        # Try to fetch existing statistics from gh-pages branch for incremental tracking
+        echo "Checking for existing copilot statistics..."
+        
+        # Fetch the gh-pages branch to check for existing stats
+        git fetch origin gh-pages:gh-pages 2>/dev/null || echo "No gh-pages branch found"
+        
+        # Check if badge file exists in gh-pages
+        if git show gh-pages:copilot-stats-badge.json >/dev/null 2>&1; then
+          echo "Found existing statistics file"
+          git show gh-pages:copilot-stats-badge.json > existing-badge.json
+          
+          # Extract last update timestamp if available
+          LAST_UPDATE=$(jq -r '.lastUpdate // empty' existing-badge.json 2>/dev/null || echo "")
+          TOTAL_RUNS=$(jq -r '.totalRuns // empty' existing-badge.json 2>/dev/null || echo "")
+          echo "last_update=$LAST_UPDATE" >> $GITHUB_OUTPUT
+          echo "existing_total_runs=$TOTAL_RUNS" >> $GITHUB_OUTPUT
+          echo "has_existing=true" >> $GITHUB_OUTPUT
+        else
+          echo "No existing statistics found, will do full tracking"
+          echo "has_existing=false" >> $GITHUB_OUTPUT
+        fi
     
     - name: Analyze Copilot Workflow Statistics
       id: copilot-stats
       uses: actions/github-script@v7
       with:
         script: |
-          // Track Copilot SWE (Software Engineering) workflow activity specifically
+          // Track Copilot SWE (Software Engineering) workflow activity with incremental tracking
           // Focus on the actual development workflows that handle Copilot-generated code
           
           console.log('Fetching Copilot SWE workflow data from GitHub API...');
+          
+          // Check for incremental tracking capability
+          const hasExisting = '${{ steps.existing-stats.outputs.has_existing }}' === 'true';
+          const lastUpdate = '${{ steps.existing-stats.outputs.last_update }}';
+          const existingTotalRuns = parseInt('${{ steps.existing-stats.outputs.existing_total_runs }}') || 0;
+          
+          if (hasExisting && lastUpdate) {
+            console.log(`Using incremental tracking since: ${lastUpdate}`);
+            console.log(`Previous total runs: ${existingTotalRuns}`);
+          } else {
+            console.log('Performing full statistics calculation (no previous data)');
+          }
           
           try {
             // Strategy: Target the CI workflow specifically since that's where Copilot development work gets tested
@@ -57,14 +97,18 @@ jobs:
             let workflowRuns = [];
             
             if (developmentWorkflows.length > 0) {
-              // Fetch runs from development workflows with pagination
+              // Fetch runs from development workflows with incremental tracking
               for (const workflow of developmentWorkflows) {
                 console.log(`Fetching runs for workflow: ${workflow.name}`);
                 
                 let page = 1;
                 let hasMore = true;
+                let newRunsFound = 0;
                 
-                while (hasMore && page <= 10) { // Reasonable limit for CI workflows
+                // For incremental tracking, we'll fetch until we hit the last update timestamp
+                const pageLimit = hasExisting && lastUpdate ? 50 : 10; // More pages for initial load
+                
+                while (hasMore && page <= pageLimit) {
                   try {
                     const runs = await github.rest.actions.listWorkflowRuns({
                       owner: context.repo.owner,
@@ -74,8 +118,23 @@ jobs:
                       page: page
                     });
                     
+                    // For incremental tracking, filter out runs older than lastUpdate
+                    let filteredRuns = runs.data.workflow_runs;
+                    if (hasExisting && lastUpdate) {
+                      const lastUpdateDate = new Date(lastUpdate);
+                      filteredRuns = runs.data.workflow_runs.filter(run => 
+                        new Date(run.created_at) > lastUpdateDate
+                      );
+                      
+                      // If no new runs on this page, we've gone far enough back
+                      if (filteredRuns.length === 0 && page > 1) {
+                        console.log('Reached runs older than last update, stopping pagination');
+                        break;
+                      }
+                    }
+                    
                     // Filter for Copilot-related runs based on commit patterns and branch patterns
-                    const copilotRuns = runs.data.workflow_runs.filter(run => {
+                    const copilotRuns = filteredRuns.filter(run => {
                       const commitMessage = run.head_commit?.message || '';
                       const branchName = run.head_branch || '';
                       const actor = run.actor?.login || '';
@@ -95,9 +154,10 @@ jobs:
                     });
                     
                     workflowRuns.push(...copilotRuns);
-                    console.log(`Page ${page}: Found ${copilotRuns.length} Copilot-related runs out of ${runs.data.workflow_runs.length} total runs`);
+                    newRunsFound += copilotRuns.length;
+                    console.log(`Page ${page}: Found ${copilotRuns.length} new Copilot-related runs out of ${filteredRuns.length} filtered runs (${runs.data.workflow_runs.length} total)`);
                     
-                    hasMore = runs.data.workflow_runs.length === 100;
+                    hasMore = runs.data.workflow_runs.length === 100 && filteredRuns.length > 0;
                     page++;
                     
                   } catch (error) {
@@ -105,6 +165,8 @@ jobs:
                     hasMore = false;
                   }
                 }
+                
+                console.log(`Total new runs found for ${workflow.name}: ${newRunsFound}`);
               }
             } else {
               console.log('No development workflows found');
@@ -204,18 +266,21 @@ jobs:
         TOTAL_RUNS="${{ steps.copilot-stats.outputs.total_runs }}"
         SUCCESS_PCT="${{ steps.copilot-stats.outputs.success_percentage }}"
         RUNTIME_HOURS="${{ steps.copilot-stats.outputs.total_runtime_hours }}"
+        CURRENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
         
-        # Create dynamic badge with real statistics
+        # Create dynamic badge with real statistics and incremental tracking metadata
         cat > copilot-stats-badge.json << EOF
         {
           "schemaVersion": 1,
           "label": "copilot stats",
           "message": "${TOTAL_RUNS} runs | ${SUCCESS_PCT}% success | ${RUNTIME_HOURS}h total",
-          "color": "blue"
+          "color": "blue",
+          "lastUpdate": "${CURRENT_TIME}",
+          "totalRuns": ${TOTAL_RUNS}
         }
         EOF
         
-        echo "Created dynamic Copilot statistics badge:"
+        echo "Created dynamic Copilot statistics badge with incremental tracking:"
         cat copilot-stats-badge.json
     
     - name: Create Fallback Badge
