@@ -5,6 +5,7 @@
 import { beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { Temporal } from '@js-temporal/polyfill';
 
 /**
  * Load the actual HTML from the site for testing
@@ -59,6 +60,9 @@ const matchMediaMock = vi.fn().mockImplementation((query) => ({
 // Setup global mocks IMMEDIATELY before any modules are imported
 vi.stubGlobal('localStorage', localStorageMock);
 vi.stubGlobal('matchMedia', matchMediaMock);
+
+// Setup Temporal polyfill globally for tests
+vi.stubGlobal('Temporal', Temporal);
 
 // Mock timers to control timeout behavior in tests
 vi.useFakeTimers();

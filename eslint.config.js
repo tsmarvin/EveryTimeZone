@@ -33,6 +33,8 @@ export default [
         process: 'readonly',
         global: 'readonly',
         Buffer: 'readonly',
+        // Temporal API (loaded via polyfill)
+        Temporal: 'readonly',
       },
     },
     plugins: {
