@@ -1124,6 +1124,7 @@ export class TimezoneModal {
   private selectedIndex = 0;
   private currentUserTimezone: string;
   private onTimezoneSelectedCallback: ((timezone: TimeZone) => void) | undefined;
+  private userSearchQuery = ''; // Store user's search query separately
 
   constructor(onTimezoneSelected?: (timezone: TimeZone) => void) {
     this.modal = document.getElementById('timezone-modal') as HTMLElement;
@@ -1151,8 +1152,9 @@ export class TimezoneModal {
       this.selectedIndex = userTimezoneIndex;
     }
 
-    // Set input value
-    this.updateInputValue();
+    // Keep input clear on initial load to show placeholder
+    this.input.value = '';
+    this.userSearchQuery = '';
 
     // Event listeners
     this.input.addEventListener('input', () => this.handleInputChange());
@@ -1171,12 +1173,13 @@ export class TimezoneModal {
   }
 
   private handleInputChange(): void {
-    const query = this.input.value.toLowerCase().trim();
+    // Store the user's search query
+    this.userSearchQuery = this.input.value.toLowerCase().trim();
 
-    if (query === '') {
+    if (this.userSearchQuery === '') {
       this.filteredTimezones = [...this.timezones];
     } else {
-      this.filteredTimezones = this.searchTimezones(query);
+      this.filteredTimezones = this.searchTimezones(this.userSearchQuery);
     }
 
     // Reset to first item in filtered results
@@ -1327,13 +1330,11 @@ export class TimezoneModal {
 
   private navigateUp(): void {
     this.selectedIndex = (this.selectedIndex - 1 + this.filteredTimezones.length) % this.filteredTimezones.length;
-    this.updateInputValue();
     this.renderWheel();
   }
 
   private navigateDown(): void {
     this.selectedIndex = (this.selectedIndex + 1) % this.filteredTimezones.length;
-    this.updateInputValue();
     this.renderWheel();
   }
 
@@ -1479,6 +1480,14 @@ export class TimezoneModal {
     this.overlay.classList.add('active');
     this.modal.focus();
     document.body.style.overflow = 'hidden';
+
+    // Preserve existing search query in the input
+    this.input.value = this.userSearchQuery;
+
+    // Focus the input after modal is shown
+    setTimeout(() => {
+      this.input.focus();
+    }, 100);
   }
 
   public close(): void {
