@@ -179,6 +179,54 @@
     <!-- Background overlay -->
     <div id="settings-overlay" class="settings-overlay"></div>
 
+    <!-- Timeline Visual Legend -->
+    <div id="timeline-legend" class="timeline-legend hidden">
+      <div class="legend-header">
+        <h3 class="legend-title">Timeline Key</h3>
+        <button class="legend-close" type="button" aria-label="Hide legend">×</button>
+      </div>
+      
+      <div class="legend-section">
+        <h4 class="legend-section-title">Day/Night Cycle</h4>
+        <div class="legend-item">
+          <div class="legend-color daylight"></div>
+          <span>Daylight Hours (sunrise to sunset)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color night"></div>
+          <span>Night Hours (sunset to sunrise)</span>
+        </div>
+      </div>
+
+      <div class="legend-section">
+        <h4 class="legend-section-title">Date Groups</h4>
+        <div class="legend-item">
+          <div class="legend-color date-past"></div>
+          <span>Yesterday (past dates)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color date-today"></div>
+          <span>Today (current date)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color date-future"></div>
+          <span>Tomorrow (future dates)</span>
+        </div>
+      </div>
+
+      <div class="legend-section">
+        <h4 class="legend-section-title">Special Indicators</h4>
+        <div class="legend-item">
+          <div class="legend-color current-hour"></div>
+          <span>Current Hour</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color working-hours"></div>
+          <span>Working Hours (9 AM - 5 PM)</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Temporal Polyfill -->
     <script src="scripts/temporal/index.umd.js"></script>
     <script>

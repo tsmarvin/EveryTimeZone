@@ -603,6 +603,155 @@ p {
   border-top: 8px solid var(--color-accent);
 }
 
+/* Date indicators and groups for multi-date visualization */
+.time-display {
+  font-weight: inherit;
+  line-height: 1.1;
+}
+
+.date-indicator {
+  font-size: var(--text-xs);
+  opacity: 0.8;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+/* Date group color coordination - for up to 3 different dates */
+.timeline-hour.date-group-0 {
+  border-left: 3px solid var(--date-group-0-color, #ef4444); /* Yesterday/Past - Red */
+}
+
+.timeline-hour.date-group-1 {
+  border-left: 3px solid var(--date-group-1-color, #3b82f6); /* Today - Blue */
+}
+
+.timeline-hour.date-group-2 {
+  border-left: 3px solid var(--date-group-2-color, #10b981); /* Tomorrow/Future - Green */
+}
+
+/* Date group colors - defined in theme variables */
+:root {
+  --date-group-0-color: #ef4444; /* Red for past dates */
+  --date-group-1-color: #3b82f6; /* Blue for current date */
+  --date-group-2-color: #10b981; /* Green for future dates */
+}
+
+/* Visual Legend/Key */
+.timeline-legend {
+  position: fixed;
+  bottom: var(--space-lg);
+  right: var(--space-lg);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--space-md);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+  z-index: 100;
+  transition: var(--transition);
+}
+
+.timeline-legend.hidden {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+.legend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.legend-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.legend-close {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: var(--text-lg);
+  line-height: 1;
+  padding: 2px;
+  border-radius: 2px;
+  transition: var(--transition);
+}
+
+.legend-close:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.legend-section {
+  margin-bottom: var(--space-sm);
+}
+
+.legend-section-title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+  font-size: var(--text-sm);
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--border-radius-sm);
+  margin-right: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.legend-color.daylight {
+  background: linear-gradient(135deg, var(--golden-yellow), var(--golden-amber));
+}
+
+.legend-color.night {
+  background: linear-gradient(135deg, var(--slate-dark), var(--slate-darkest));
+}
+
+.legend-color.working-hours {
+  background-color: rgba(74, 139, 107, 0.2);
+  border: 1px solid rgba(74, 139, 107, 0.5);
+}
+
+.legend-color.current-hour {
+  background: linear-gradient(135deg, var(--color-accent), rgba(220, 38, 38, 0.8));
+}
+
+.legend-color.date-past {
+  background: var(--date-group-0-color);
+}
+
+.legend-color.date-today {
+  background: var(--date-group-1-color);
+}
+
+.legend-color.date-future {
+  background: var(--date-group-2-color);
+}
+
+/* Light theme adjustments for legend */
+.light-theme .legend-color.night {
+  background: linear-gradient(135deg, var(--gray-750), var(--gray-850));
+}
+
+.light-theme .legend-color.daylight {
+  background: linear-gradient(135deg, var(--cream-pale), var(--cream-light));
+}
+
 /* Timezone Selection Modal */
 .modal-overlay {
   position: fixed;

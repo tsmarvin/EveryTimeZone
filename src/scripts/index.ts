@@ -742,13 +742,32 @@ export function renderTimeline(): void {
     row.hours.forEach((hour, index) => {
       const hourCell = document.createElement('div');
       hourCell.className = 'timeline-cell timeline-hour';
-      // Use consistent format based on setting
-      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+      
+      // Create the main time display
+      const timeText = timeFormat === '12h' ? hour.time12 : hour.time24;
+      
+      // Add date indicator for better clarity across timezones
+      const dateKey = hour.date.toDateString();
+      const dateGroup = getDateGroup(hour.date, timelineData);
+      
+      // Build the content with date information if useful
+      if (shouldShowDateIndicator(timelineData, index)) {
+        const dateShort = hour.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        hourCell.innerHTML = `
+          <div class="time-display">${timeText}</div>
+          <div class="date-indicator">${dateShort}</div>
+        `;
+      } else {
+        hourCell.textContent = timeText;
+      }
 
       // Mark current hour (index 24 since we start from -24 hours)
       if (index === 24) {
         hourCell.classList.add('current-hour');
       }
+
+      // Add date group class for visual coordination
+      hourCell.classList.add(`date-group-${dateGroup}`);
 
       // Add working hours class (9 AM to 5 PM)
       if (hour.hour >= 9 && hour.hour < 17) {
@@ -759,10 +778,10 @@ export function renderTimeline(): void {
       if (hour.isDaylight !== undefined) {
         if (hour.isDaylight) {
           hourCell.classList.add('daylight-hour');
-          hourCell.title = 'Daylight hours';
+          hourCell.title = `Daylight hours - ${dateKey}`;
         } else {
           hourCell.classList.add('night-hour');
-          hourCell.title = 'Night hours';
+          hourCell.title = `Night hours - ${dateKey}`;
         }
       }
 
@@ -1010,6 +1029,9 @@ export function initializeTimeline(): void {
     // Initialize timeline manager
     timelineManager = new TimelineManager();
 
+    // Initialize legend management
+    initializeLegend();
+
     // Re-render on window resize
     let resizeTimeout: number;
     window.addEventListener('resize', () => {
@@ -1026,6 +1048,48 @@ export function initializeTimeline(): void {
     // Fallback to original timeline rendering
     renderTimeline();
   }
+}
+
+/**
+ * Initialize the timeline legend functionality
+ */
+function initializeLegend(): void {
+  const legend = document.getElementById('timeline-legend');
+  const closeButton = legend?.querySelector('.legend-close');
+  
+  if (!legend || !closeButton) {
+    console.warn('Timeline legend elements not found');
+    return;
+  }
+
+  // Show legend after a brief delay to let users notice it
+  setTimeout(() => {
+    legend.classList.remove('hidden');
+  }, 2000);
+
+  // Close button functionality
+  closeButton.addEventListener('click', () => {
+    legend.classList.add('hidden');
+    // Store preference to not show legend again in this session
+    sessionStorage.setItem('legend-dismissed', 'true');
+  });
+
+  // Check if legend was previously dismissed in this session
+  if (sessionStorage.getItem('legend-dismissed') === 'true') {
+    legend.classList.add('hidden');
+  }
+
+  // Auto-hide legend after 15 seconds if user doesn't interact
+  const autoHideTimeout = setTimeout(() => {
+    if (!legend.classList.contains('hidden')) {
+      legend.classList.add('hidden');
+    }
+  }, 15000);
+
+  // Cancel auto-hide if user hovers over legend
+  legend.addEventListener('mouseenter', () => {
+    clearTimeout(autoHideTimeout);
+  });
 }
 
 // Make initializeTimeline available globally
@@ -1685,7 +1749,62 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'Africa/Cairo': { latitude: 30.0444, longitude: 31.2357, city: 'Cairo' },
   'Africa/Lagos': { latitude: 6.5244, longitude: 3.3792, city: 'Lagos' },
   'Africa/Johannesburg': { latitude: -26.2041, longitude: 28.0473, city: 'Johannesburg' },
+
+  // Additional timezone coordinates for edge cases and exotic timezones
+  'Pacific/Niue': { latitude: -19.0544, longitude: -169.8672, city: 'Alofi' },
+  'Pacific/Marquesas': { latitude: -9.7667, longitude: -139.0667, city: 'Taiohae' },
+  'America/Boa_Vista': { latitude: 2.8197, longitude: -60.6733, city: 'Boa Vista' },
+  'America/St_Johns': { latitude: 47.5615, longitude: -52.7126, city: 'St. Johns' },
+  'UTC': { latitude: 51.4769, longitude: -0.0005, city: 'Greenwich' }, // Greenwich Mean Time
+  'Asia/Dhaka': { latitude: 23.8103, longitude: 90.4125, city: 'Dhaka' },
+  'Asia/Dili': { latitude: -8.5567, longitude: 125.5603, city: 'Dili' },
+  'Australia/Lord_Howe': { latitude: -31.5546, longitude: 159.0808, city: 'Lord Howe Island' },
+  'Pacific/Chatham': { latitude: -43.9538, longitude: -176.5581, city: 'Waitangi' },
+  'Pacific/Kiritimati': { latitude: 1.9833, longitude: -157.4833, city: 'London' }, // Christmas Island
 };
+
+/**
+ * Get the date group (0, 1, 2) for a given date relative to the base date
+ * This allows us to color-coordinate up to 3 different dates across timezones
+ * @param date The date to categorize
+ * @param timelineData All timeline data to determine base date
+ * @returns 0, 1, or 2 representing the date group
+ */
+function getDateGroup(date: Date, timelineData: TimelineRow[]): number {
+  // Find the base date (from the user's timezone current hour)
+  const userRow = timelineData.find(row => row.isUserTimezone);
+  if (!userRow) return 0;
+  
+  const userCurrentHour = userRow.hours[24]; // Current hour is at index 24
+  if (!userCurrentHour) return 0; // Safety check
+  
+  const baseDate = new Date(userCurrentHour.date.getFullYear(), userCurrentHour.date.getMonth(), userCurrentHour.date.getDate());
+  
+  // Calculate date difference in days
+  const givenDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayDiff = Math.floor((givenDate.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // Map to date groups: -1+ days ago = 0, today = 1, +1+ days ahead = 2
+  if (dayDiff < 0) return 0;
+  if (dayDiff === 0) return 1;
+  return 2;
+}
+
+/**
+ * Determine if date indicators should be shown for a specific hour column
+ * Show date indicators when there are multiple dates visible across timezones
+ * @param timelineData All timeline data
+ * @param hourIndex The hour column index
+ * @returns true if date indicators should be shown
+ */
+function shouldShowDateIndicator(timelineData: TimelineRow[], hourIndex: number): boolean {
+  // Get all dates for this hour column across all timezones
+  const datesInColumn = timelineData.map(row => row.hours[hourIndex]?.date.toDateString()).filter(Boolean);
+  const uniqueDates = new Set(datesInColumn);
+  
+  // Show date indicators if there are multiple different dates in this column
+  return uniqueDates.size > 1;
+}
 
 /**
  * Calculate if a specific hour in a timezone is during daylight using SunCalc
