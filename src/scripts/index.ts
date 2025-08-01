@@ -742,14 +742,14 @@ export function renderTimeline(): void {
     row.hours.forEach((hour, index) => {
       const hourCell = document.createElement('div');
       hourCell.className = 'timeline-cell timeline-hour';
-      
+
       // Create the main time display
       const timeText = timeFormat === '12h' ? hour.time12 : hour.time24;
-      
+
       // Add date indicator for better clarity across timezones
       const dateKey = hour.date.toDateString();
       const dateGroup = getDateGroup(hour.date, timelineData);
-      
+
       // Build the content with date information if useful
       if (shouldShowDateIndicator(timelineData, index)) {
         const dateShort = hour.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -1056,7 +1056,7 @@ export function initializeTimeline(): void {
 function initializeLegend(): void {
   const legend = document.getElementById('timeline-legend');
   const closeButton = legend?.querySelector('.legend-close');
-  
+
   if (!legend || !closeButton) {
     console.warn('Timeline legend elements not found');
     return;
@@ -1755,7 +1755,7 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'Pacific/Marquesas': { latitude: -9.7667, longitude: -139.0667, city: 'Taiohae' },
   'America/Boa_Vista': { latitude: 2.8197, longitude: -60.6733, city: 'Boa Vista' },
   'America/St_Johns': { latitude: 47.5615, longitude: -52.7126, city: 'St. Johns' },
-  'UTC': { latitude: 51.4769, longitude: -0.0005, city: 'Greenwich' }, // Greenwich Mean Time
+  UTC: { latitude: 51.4769, longitude: -0.0005, city: 'Greenwich' }, // Greenwich Mean Time
   'Asia/Dhaka': { latitude: 23.8103, longitude: 90.4125, city: 'Dhaka' },
   'Asia/Dili': { latitude: -8.5567, longitude: 125.5603, city: 'Dili' },
   'Australia/Lord_Howe': { latitude: -31.5546, longitude: 159.0808, city: 'Lord Howe Island' },
@@ -1774,16 +1774,20 @@ function getDateGroup(date: Date, timelineData: TimelineRow[]): number {
   // Find the base date (from the user's timezone current hour)
   const userRow = timelineData.find(row => row.isUserTimezone);
   if (!userRow) return 0;
-  
+
   const userCurrentHour = userRow.hours[24]; // Current hour is at index 24
   if (!userCurrentHour) return 0; // Safety check
-  
-  const baseDate = new Date(userCurrentHour.date.getFullYear(), userCurrentHour.date.getMonth(), userCurrentHour.date.getDate());
-  
+
+  const baseDate = new Date(
+    userCurrentHour.date.getFullYear(),
+    userCurrentHour.date.getMonth(),
+    userCurrentHour.date.getDate(),
+  );
+
   // Calculate date difference in days
   const givenDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const dayDiff = Math.floor((givenDate.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
-  
+
   // Map to date groups: -1+ days ago = 0, today = 1, +1+ days ahead = 2
   if (dayDiff < 0) return 0;
   if (dayDiff === 0) return 1;
@@ -1801,7 +1805,7 @@ function shouldShowDateIndicator(timelineData: TimelineRow[], hourIndex: number)
   // Get all dates for this hour column across all timezones
   const datesInColumn = timelineData.map(row => row.hours[hourIndex]?.date.toDateString()).filter(Boolean);
   const uniqueDates = new Set(datesInColumn);
-  
+
   // Show date indicators if there are multiple different dates in this column
   return uniqueDates.size > 1;
 }
