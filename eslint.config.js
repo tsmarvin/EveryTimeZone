@@ -25,6 +25,7 @@ export default [
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
         localStorage: 'readonly',
+        sessionStorage: 'readonly',
         // Node.js globals
         require: 'readonly',
         module: 'readonly',

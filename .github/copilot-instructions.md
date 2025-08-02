@@ -124,7 +124,6 @@ refactor: extract timezone utils to separate module
    - **IMMEDIATELY use `reply_to_comment` function to post the screenshot IMAGE** 
      -  Post the actual image in markdown format: `![Description](EXACT_URL_FROM_PLAYWRIGHT_RESPONSE)`
      -  **NEVER construct URLs manually** - use ONLY the exact URL returned by the playwright screenshot tool
-     -  **VERIFY the URL format looks like working examples before posting:** `https://private-user-images.githubusercontent.com/[userid]/[imageid]-[hash].jpeg?jwt=...`
    - **Analyze the screenshot** to verify it matches expected layout.
      - State what you see in the image for the logs. Compare that against what you expected to see.
    - **Do NOT take another screenshot until the previous one is posted via reply_to_comment**
@@ -174,7 +173,7 @@ think
 - Analyzing before posting via reply_to_comment  
 - Any delay between screenshot and reply_to_comment
 - **MANUALLY CONSTRUCTING ANY URLs** - must extract exact URL from playwright tool response
-- **USING URLs that don't match working format** - verify URL format before posting
+- **USING URLs that don't match working format**
 - Any other actions between screenshot and reply_to_comment
 
 ## WHAT WORKS vs WHAT DOESN'T WORK
@@ -193,7 +192,6 @@ think
 - Relative paths: `![Description](filename.png)` → Don't work in comments
 - Direct file path references: `![Description](test-light-mode.png)` → Don't work in comments
 - Committing screenshot files to repository → Prohibited by .gitignore
-- **URLs with wrong user ID or missing JWT tokens** → Broken image links
 
 **IMPORTANT NOTES:**
 - ❌ Local file paths (`/tmp/playwright-mcp-output/...`) do NOT work in GitHub comments
@@ -203,5 +201,5 @@ think
 - ❌ **MANUALLY CONSTRUCTING ANY URLs does NOT work** - must extract exact URL from playwright tool response
 - ❌ **URLs with wrong format or missing authentication** do NOT work in GitHub comments
 - ✅ **ONLY URLs extracted directly from playwright screenshot tool response work**
-- ✅ Working URLs have format: `https://private-user-images.githubusercontent.com/[userid]/[imageid]-[hash].jpeg?jwt=...`
+- ✅ Working URLs have format: `https://private-user-images.githubusercontent.com/[redacted]`
 - ✅ **VERIFY URL format matches working examples before posting to avoid broken links**
