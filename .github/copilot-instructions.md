@@ -162,13 +162,13 @@ think
 
 **MANDATORY WORKFLOW SEQUENCE:**
 1. `playwright-mcp-server-browser_take_screenshot`
-2. **IMMEDIATELY** `reply_to_comment` to upload  the screenshot IMAGE
+2. **IMMEDIATELY** `reply_to_comment` to upload the screenshot IMAGE
 3. **ONLY THEN** `think` to analyze
 4. **REPEAT** for next screenshot
 
 **ABSOLUTELY FORBIDDEN:**
 - Taking multiple screenshots before posting any
-- Analyzing before posting via reply_to_comment  
+- Analyzing before posting via reply_to_comment
 - Any delay between screenshot and reply_to_comment
 - **MANUALLY CONSTRUCTING ANY URLs during screenshot upload**
 - **USING URLs that don't match working format**
@@ -184,7 +184,8 @@ think
 
 **❌ WHAT DOESN'T WORK:**
 - Local file paths: `![Description](/tmp/playwright-mcp-output/{timestamp}/filename.png)` → Broken image links
-- Manually constructed GitHub URLs: `![Description](https://github.com/user-attachments/assets/{hash})` → Broken image links
+- Local file paths using url addressing: `![Description](file:///tmp/playwright-mcp-output/{timestamp}/filename.png)`
+- Manually constructed GitHub URLs: `![Description](https://github.com/user-attachments/[redacted])` → Broken image links
 - Manually constructed GitHub URLs following the correct format: `![Description](https://private-user-images.githubusercontent.com/[redacted])` → Broken image links
 - Repository pull URLs: `![Description](https://github.com/tsmarvin/EveryTimeZone/pull/{filename})` → Broken image links
 - Relative paths: `![Description](filename.png)` → Don't work in comments
@@ -193,6 +194,7 @@ think
 
 **IMPORTANT NOTES:**
 - ❌ Local file paths (`/tmp/playwright-mcp-output/...`) do NOT work in GitHub comments
+- ❌ URL formatted file paths (`file:///tmp/playwright-mcp-output/...`) do NOT work in GitHub comments
 - ❌ Committing screenshot files to repository is prohibited by .gitignore and project policy
 - ❌ Manually constructing `https://github.com/user-attachments/...` URLs does NOT work
 - ❌ Repository pull URLs (`https://github.com/tsmarvin/EveryTimeZone/pull/...`) do NOT work  
