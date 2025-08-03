@@ -872,6 +872,91 @@ p {
   opacity: 0.6;
 }
 
+/* Custom Timezone Styles */
+.add-custom-timezone {
+  background: var(--color-secondary) !important;
+  color: white !important;
+  border: 2px dashed var(--color-secondary) !important;
+}
+
+.add-custom-timezone:hover {
+  background: var(--color-secondary-hover) !important;
+  transform: scale(1.05) !important;
+}
+
+.add-custom-icon {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  margin-right: var(--space-xs);
+}
+
+.custom-timezone-form {
+  background: var(--color-surface);
+  border-radius: var(--border-radius);
+  padding: var(--space-md);
+  margin: var(--space-sm);
+  border: 1px solid var(--color-border);
+  min-width: 320px;
+}
+
+.custom-form-header {
+  text-align: center;
+  margin-bottom: var(--space-md);
+}
+
+.custom-form-header h3 {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.custom-form-header p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-family: monospace;
+}
+
+.custom-form-body {
+  margin-bottom: var(--space-md);
+}
+
+.custom-form-label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.custom-form-input {
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  transition: var(--transition);
+}
+
+.custom-form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-alpha);
+}
+
+.custom-form-footer {
+  display: flex;
+  gap: var(--space-xs);
+  justify-content: flex-end;
+}
+
+.custom-form-footer .button {
+  min-width: 80px;
+}
+
 .modal-footer {
   padding: var(--space-xs);
   border-top: 1px solid var(--color-border);

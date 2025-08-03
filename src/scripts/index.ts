@@ -732,7 +732,7 @@ export function renderTimeline(): void {
     labelCell.className = 'timeline-cell timeline-timezone-label';
     labelCell.innerHTML = `
       <div class="timezone-info">
-        <div class="timezone-name">${extractCityName(row.timezone.iana)}</div>
+        <div class="timezone-name">${row.timezone.cityName}</div>
         <div class="timezone-offset">${row.timezone.displayName} (${formatOffset(row.timezone.offset)})</div>
       </div>
     `;
@@ -826,7 +826,31 @@ export class TimelineManager {
     // Get properly centered timezones with user timezone in the middle
     this.selectedTimezones = getTimezonesForTimeline(numRows);
 
+    // Load and add any custom timezones from localStorage
+    this.loadCustomTimezones();
+
     this.renderTimeline();
+  }
+
+  /**
+   * Load custom timezones from localStorage and add them to the timeline
+   */
+  private loadCustomTimezones(): void {
+    try {
+      const stored = localStorage.getItem('customTimezones');
+      if (stored) {
+        const customTimezones: TimeZone[] = JSON.parse(stored);
+        for (const customTz of customTimezones) {
+          // Check if it's not already in the timeline
+          const exists = this.selectedTimezones.find(tz => tz.iana === customTz.iana);
+          if (!exists) {
+            this.selectedTimezones.push(customTz);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load custom timezones from localStorage:', error);
+    }
   }
 
   public addTimezone(timezone: TimeZone): void {
@@ -942,7 +966,7 @@ export class TimelineManager {
       labelCell.className = 'timeline-cell timeline-timezone-label';
       labelCell.innerHTML = `
         <div class="timezone-info">
-          <div class="timezone-name">${extractCityName(timezone.iana)}</div>
+          <div class="timezone-name">${timezone.cityName}</div>
           <div class="timezone-offset">${timezone.displayName} (${formatOffset(timezone.offset)})</div>
         </div>
         <button class="remove-timezone-btn" title="Remove timezone">×</button>
@@ -1145,7 +1169,9 @@ export class TimezoneModal {
 
     // Get user's timezone using Temporal (polyfill ensures availability)
     this.currentUserTimezone = Temporal.Now.timeZoneId();
-    this.timezones = getAllTimezonesOrdered();
+
+    // Get all timezones and add custom ones
+    this.timezones = this.getAllTimezonesWithCustom();
     this.filteredTimezones = [...this.timezones];
     this.onTimezoneSelectedCallback = onTimezoneSelected;
 
@@ -1319,6 +1345,181 @@ export class TimezoneModal {
     return iana.split('/')[0] || '';
   }
 
+  /**
+   * Check if an offset is valid (within reasonable timezone range)
+   */
+  private isValidOffset(offset: number): boolean {
+    // Valid UTC offsets range from -12 to +14 hours
+    return offset >= -12 && offset <= 14;
+  }
+
+  /**
+   * Render the "Add Custom Timezone" option when search matches a valid offset
+   */
+  private renderAddCustomTimezoneOption(offset: number): void {
+    const addCustomItem = document.createElement('div');
+    addCustomItem.className = 'wheel-timezone-item center add-custom-timezone';
+
+    const offsetStr = formatOffset(offset);
+    addCustomItem.innerHTML = `
+      <div class="wheel-timezone-name">
+        <span class="add-custom-icon">+</span>
+        Add Custom Timezone
+      </div>
+      <div class="wheel-timezone-display">UTC${offsetStr}</div>
+    `;
+
+    // Click handler to show custom timezone form
+    addCustomItem.addEventListener('click', () => this.showCustomTimezoneForm(offset));
+
+    this.wheel.appendChild(addCustomItem);
+  }
+
+  /**
+   * Show the custom timezone input form
+   */
+  private showCustomTimezoneForm(offset: number): void {
+    // Expand modal and show input fields
+    this.wheel.innerHTML = '';
+
+    const formContainer = document.createElement('div');
+    formContainer.className = 'custom-timezone-form';
+
+    const offsetStr = formatOffset(offset);
+    formContainer.innerHTML = `
+      <div class="custom-form-header">
+        <h3>Add Custom Timezone</h3>
+        <p>UTC${offsetStr}</p>
+      </div>
+      <div class="custom-form-body">
+        <label for="custom-timezone-name" class="custom-form-label">
+          Custom Name:
+        </label>
+        <input 
+          type="text" 
+          id="custom-timezone-name" 
+          class="custom-form-input" 
+          placeholder="Enter a name for this timezone"
+          maxlength="50"
+        />
+      </div>
+      <div class="custom-form-footer">
+        <button type="button" class="button secondary custom-form-cancel">Cancel</button>
+        <button type="button" class="button custom-form-add">Add Timezone</button>
+      </div>
+    `;
+
+    this.wheel.appendChild(formContainer);
+
+    // Set up event handlers
+    const nameInput = formContainer.querySelector('#custom-timezone-name') as HTMLInputElement;
+    const cancelButton = formContainer.querySelector('.custom-form-cancel') as HTMLButtonElement;
+    const addButton = formContainer.querySelector('.custom-form-add') as HTMLButtonElement;
+
+    // Focus the input
+    setTimeout(() => nameInput.focus(), 100);
+
+    // Cancel handler - return to search
+    cancelButton.addEventListener('click', () => {
+      this.handleInputChange(); // Re-render wheel with current search
+    });
+
+    // Add handler
+    addButton.addEventListener('click', () => {
+      const customName = nameInput.value.trim();
+      if (customName) {
+        this.addCustomTimezone(offset, customName);
+      }
+    });
+
+    // Enter key handler for input
+    nameInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const customName = nameInput.value.trim();
+        if (customName) {
+          this.addCustomTimezone(offset, customName);
+        }
+      } else if (e.key === 'Escape') {
+        this.handleInputChange(); // Return to search
+      }
+    });
+  }
+
+  /**
+   * Create and add a custom timezone
+   */
+  private addCustomTimezone(offset: number, name: string): void {
+    // Create custom timezone object
+    const customTimezone: TimeZone = {
+      name: name,
+      offset: offset,
+      displayName: `${name} (UTC${formatOffset(offset)})`,
+      iana: `Custom/UTC${formatOffset(offset).replace(':', '')}`, // e.g., "Custom/UTC-12", "Custom/UTC+5:30" -> "Custom/UTC+530"
+      cityName: name,
+      abbreviation: `UTC${formatOffset(offset)}`,
+    };
+
+    // Save to localStorage
+    this.saveCustomTimezone(customTimezone);
+
+    // Add to timeline
+    if (this.onTimezoneSelectedCallback) {
+      this.onTimezoneSelectedCallback(customTimezone);
+    }
+
+    // Close modal
+    this.close();
+  }
+
+  /**
+   * Save custom timezone to localStorage
+   */
+  private saveCustomTimezone(timezone: TimeZone): void {
+    const customTimezones = this.getCustomTimezones();
+
+    // Check if timezone with same offset already exists
+    const existingIndex = customTimezones.findIndex(tz => tz.offset === timezone.offset);
+    if (existingIndex !== -1) {
+      // Update existing
+      customTimezones[existingIndex] = timezone;
+    } else {
+      // Add new
+      customTimezones.push(timezone);
+    }
+
+    localStorage.setItem('customTimezones', JSON.stringify(customTimezones));
+  }
+
+  /**
+   * Get all timezones including custom ones from localStorage
+   */
+  private getAllTimezonesWithCustom(): TimeZone[] {
+    const standardTimezones = getAllTimezonesOrdered();
+    const customTimezones = this.getCustomTimezones();
+
+    // Combine and sort by offset, then by name
+    const allTimezones = [...standardTimezones, ...customTimezones];
+
+    return allTimezones.sort((a, b) => {
+      if (a.offset !== b.offset) {
+        return a.offset - b.offset;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  /**
+   * Get custom timezones from localStorage
+   */
+  private getCustomTimezones(): TimeZone[] {
+    try {
+      const stored = localStorage.getItem('customTimezones');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  }
+
   private handleKeyDown(e: KeyboardEvent): void {
     if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
       e.preventDefault();
@@ -1366,10 +1567,19 @@ export class TimezoneModal {
     this.wheel.innerHTML = '';
 
     if (this.filteredTimezones.length === 0) {
-      const noResults = document.createElement('div');
-      noResults.className = 'wheel-timezone-item center';
-      noResults.innerHTML = '<div class="wheel-timezone-name">No timezones found</div>';
-      this.wheel.appendChild(noResults);
+      // Check if the search query is a valid offset pattern
+      const offsetMatch = this.parseOffsetQuery(this.userSearchQuery);
+
+      if (offsetMatch !== null && this.isValidOffset(offsetMatch)) {
+        // Show add custom timezone option
+        this.renderAddCustomTimezoneOption(offsetMatch);
+      } else {
+        // Show no results message
+        const noResults = document.createElement('div');
+        noResults.className = 'wheel-timezone-item center';
+        noResults.innerHTML = '<div class="wheel-timezone-name">No timezones found</div>';
+        this.wheel.appendChild(noResults);
+      }
       return;
     }
 
@@ -1697,12 +1907,19 @@ function isHourInDaylight(timezone: TimeZone, hourDate: Date): boolean {
   // Only calculate for timezones we have coordinates for
   const coordinates = TIMEZONE_COORDINATES[timezone.iana];
   if (!coordinates) {
-    return false; // Default to night for unmapped timezones
+    return false; // Default to night for unmapped timezones (including custom ones)
   }
 
   const { latitude, longitude } = coordinates;
 
   try {
+    // For custom timezones, we can't use timezone.iana for locale conversion
+    // Check if this is a custom timezone
+    if (timezone.iana.startsWith('Custom/')) {
+      // Use simple daylight calculation for custom timezones
+      return simpleIsDaylight(latitude, hourDate);
+    }
+
     // Get sun times for the date at the coordinates
     const sunTimes = SunCalc.getTimes(hourDate, latitude, longitude);
 
