@@ -30,6 +30,8 @@ export interface TimeZone {
   cityName: string; // Extracted city name for display and search
   abbreviation: string; // Timezone abbreviation (e.g., "EDT", "JST")
   daylight?: DaylightData;
+  isCustom?: boolean; // Flag to indicate custom timezone
+  coordinates?: { latitude: number; longitude: number }; // Optional coordinates for custom timezones
 }
 
 /**
@@ -346,7 +348,19 @@ export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
  * @param iana IANA timezone identifier (e.g., "America/New_York")
  * @returns Formatted city name (e.g., "New York")
  */
-function extractCityName(iana: string): string {
+function extractCityName(iana: string, timezone?: TimeZone): string {
+  // Handle custom timezones: if timezone object is provided and has cityName, use it
+  if (timezone?.isCustom && timezone.cityName) {
+    return timezone.cityName;
+  }
+
+  // Handle custom timezone IANA identifiers even without timezone object
+  if (iana.startsWith('custom-')) {
+    // For custom timezones without timezone object, extract offset and create basic name
+    const offset = iana.replace('custom-', '');
+    return `Custom UTC${parseFloat(offset) >= 0 ? '+' : ''}${offset}`;
+  }
+
   // Extract the city part from IANA identifier (everything after the last slash)
   const parts = iana.split('/');
   const cityPart = parts[parts.length - 1];
@@ -732,7 +746,7 @@ export function renderTimeline(): void {
     labelCell.className = 'timeline-cell timeline-timezone-label';
     labelCell.innerHTML = `
       <div class="timezone-info">
-        <div class="timezone-name">${extractCityName(row.timezone.iana)}</div>
+        <div class="timezone-name">${extractCityName(row.timezone.iana, row.timezone)}</div>
         <div class="timezone-offset">${row.timezone.displayName} (${formatOffset(row.timezone.offset)})</div>
       </div>
     `;
@@ -825,6 +839,16 @@ export class TimelineManager {
 
     // Get properly centered timezones with user timezone in the middle
     this.selectedTimezones = getTimezonesForTimeline(numRows);
+
+    // Also load any saved custom timezones that were previously added to timeline
+    const customTimezones = CustomTimezoneManager.getCustomTimezones();
+    for (const customTz of customTimezones) {
+      // Only add if not already included
+      const exists = this.selectedTimezones.find(tz => tz.iana === customTz.iana);
+      if (!exists) {
+        this.selectedTimezones.push(customTz);
+      }
+    }
 
     this.renderTimeline();
   }
@@ -942,7 +966,7 @@ export class TimelineManager {
       labelCell.className = 'timeline-cell timeline-timezone-label';
       labelCell.innerHTML = `
         <div class="timezone-info">
-          <div class="timezone-name">${extractCityName(timezone.iana)}</div>
+          <div class="timezone-name">${extractCityName(timezone.iana, timezone)}</div>
           <div class="timezone-offset">${timezone.displayName} (${formatOffset(timezone.offset)})</div>
         </div>
         <button class="remove-timezone-btn" title="Remove timezone">×</button>
@@ -1113,6 +1137,124 @@ export function getAllTimezonesOrdered(): TimeZone[] {
 }
 
 /**
+ * Cache of valid timezone offsets from existing IANA timezones
+ */
+let validOffsetsCache: Set<number> | null = null;
+
+/**
+ * Get all valid timezone offsets from existing IANA timezones using the existing temporal-based method
+ */
+function getValidOffsets(): Set<number> {
+  if (validOffsetsCache) {
+    return validOffsetsCache;
+  }
+
+  // Use the existing getAllTimezonesOrdered function which uses temporal methods
+  const allTimezones = getAllTimezonesOrdered();
+  const offsets = new Set<number>();
+
+  allTimezones.forEach(timezone => {
+    offsets.add(timezone.offset);
+  });
+
+  validOffsetsCache = offsets;
+  return offsets;
+}
+
+/**
+ * Check if an offset is valid based on existing timezone data or reasonable bounds
+ */
+function isValidOffset(offset: number): boolean {
+  const validOffsets = getValidOffsets();
+
+  // Allow offsets that exist in IANA data
+  if (validOffsets.has(offset)) {
+    return true;
+  }
+
+  // Also allow reasonable custom offsets within expanded bounds
+  // Extended to cover potential military time zones and extreme cases
+  return offset >= -12 && offset <= 14 && Number.isFinite(offset);
+}
+
+/**
+ * Parse offset query string and return offset number if valid
+ */
+function parseOffsetQuery(query: string): number | null {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  // Match patterns like "utc-12", "gmt+5", "-12", "+5.5", etc.
+  const patterns = [/^(?:utc|gmt)([+-]?\d+(?:\.\d+)?)$/, /^([+-]\d+(?:\.\d+)?)$/, /^([+-]?\d+(?:\.\d+)?)$/];
+
+  for (const pattern of patterns) {
+    const match = normalizedQuery.match(pattern);
+    if (match && match[1]) {
+      const offset = parseFloat(match[1]);
+      if (isValidOffset(offset)) {
+        return offset;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Custom timezone storage and management
+ */
+class CustomTimezoneManager {
+  private static readonly STORAGE_KEY = 'customTimezones';
+
+  static getCustomTimezones(): TimeZone[] {
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (stored) {
+        const customData = JSON.parse(stored);
+        return customData.map((data: TimeZone) => ({
+          ...data,
+          isCustom: true,
+          iana: `custom-${data.offset}`, // Ensure unique IANA-like identifier
+        }));
+      }
+    } catch (error) {
+      console.warn('Failed to load custom timezones from localStorage:', error);
+    }
+    return [];
+  }
+
+  static saveCustomTimezone(timezone: TimeZone): void {
+    try {
+      const customTimezones = this.getCustomTimezones();
+      // Remove any existing custom timezone with the same offset and name
+      const filtered = customTimezones.filter(
+        tz => !(tz.offset === timezone.offset && tz.cityName === timezone.cityName),
+      );
+      filtered.push({
+        ...timezone,
+        isCustom: true,
+        iana: `custom-${timezone.offset}`,
+      });
+
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
+    } catch (error) {
+      console.warn('Failed to save custom timezone to localStorage:', error);
+    }
+  }
+
+  static removeCustomTimezone(timezone: TimeZone): void {
+    try {
+      const customTimezones = this.getCustomTimezones();
+      const filtered = customTimezones.filter(
+        tz => !(tz.offset === timezone.offset && tz.cityName === timezone.cityName),
+      );
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
+    } catch (error) {
+      console.warn('Failed to remove custom timezone from localStorage:', error);
+    }
+  }
+}
+
+/**
  * Timezone Selection Modal with search and wheel navigation
  */
 export class TimezoneModal {
@@ -1145,7 +1287,12 @@ export class TimezoneModal {
 
     // Get user's timezone using Temporal (polyfill ensures availability)
     this.currentUserTimezone = Temporal.Now.timeZoneId();
-    this.timezones = getAllTimezonesOrdered();
+
+    // Combine standard and custom timezones
+    const standardTimezones = getAllTimezonesOrdered();
+    const customTimezones = CustomTimezoneManager.getCustomTimezones();
+    this.timezones = [...standardTimezones, ...customTimezones];
+
     this.filteredTimezones = [...this.timezones];
     this.onTimezoneSelectedCallback = onTimezoneSelected;
 
@@ -1187,6 +1334,14 @@ export class TimezoneModal {
       this.filteredTimezones = [...this.timezones];
     } else {
       this.filteredTimezones = this.searchTimezones(this.userSearchQuery);
+
+      // Check if query is a valid offset pattern with no matches
+      const offsetMatch = parseOffsetQuery(this.userSearchQuery);
+      if (offsetMatch !== null && this.filteredTimezones.length === 0) {
+        // Show custom timezone creation option
+        this.showCustomTimezoneOption(offsetMatch);
+        return;
+      }
     }
 
     // Reset to first item in filtered results
@@ -1502,6 +1657,146 @@ export class TimezoneModal {
     document.body.style.overflow = '';
   }
 
+  /**
+   * Show custom timezone creation option when offset query has no matches
+   */
+  private showCustomTimezoneOption(offset: number): void {
+    const addCustomItem = document.createElement('div');
+    addCustomItem.className = 'timezone-option add-custom-timezone';
+    addCustomItem.innerHTML = `
+      <div class="custom-timezone-button">
+        <span class="add-icon">+</span>
+        <div class="add-text">
+          <div class="primary-text">Add Custom Timezone</div>
+          <div class="offset-text">UTC${offset >= 0 ? '+' : ''}${offset}</div>
+        </div>
+      </div>
+    `;
+
+    addCustomItem.addEventListener('click', () => this.showCustomTimezoneForm(offset));
+
+    // Clear wheel and add the custom option
+    this.wheel.innerHTML = '';
+    this.wheel.appendChild(addCustomItem);
+
+    // Add "selected" class for consistency
+    addCustomItem.classList.add('selected');
+  }
+
+  /**
+   * Show expanded form for creating custom timezone
+   */
+  private showCustomTimezoneForm(offset: number): void {
+    const formContainer = document.createElement('div');
+    formContainer.className = 'custom-timezone-form';
+    formContainer.innerHTML = `
+      <div class="form-header">
+        <h3>Add Custom Timezone</h3>
+        <div class="offset-display">UTC${offset >= 0 ? '+' : ''}${offset}</div>
+      </div>
+      <div class="form-fields">
+        <div class="field-group">
+          <label for="custom-name">Custom Name:</label>
+          <input type="text" id="custom-name" placeholder="Enter a name for this timezone" />
+        </div>
+        <div class="field-group">
+          <label for="custom-latitude">Latitude (optional):</label>
+          <input type="number" id="custom-latitude" placeholder="e.g., 40.7128" min="-90" max="90" step="0.0001" />
+        </div>
+        <div class="field-group">
+          <label for="custom-longitude">Longitude (optional):</label>
+          <input type="number" id="custom-longitude" placeholder="e.g., -74.0060" min="-180" max="180" step="0.0001" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancel-custom">Cancel</button>
+        <button type="button" id="add-custom">Add Timezone</button>
+      </div>
+    `;
+
+    // Replace wheel content with form
+    this.wheel.innerHTML = '';
+    this.wheel.appendChild(formContainer);
+
+    // Set up form handlers
+    const nameInput = formContainer.querySelector('#custom-name') as HTMLInputElement;
+    const latInput = formContainer.querySelector('#custom-latitude') as HTMLInputElement;
+    const lngInput = formContainer.querySelector('#custom-longitude') as HTMLInputElement;
+    const cancelBtn = formContainer.querySelector('#cancel-custom') as HTMLButtonElement;
+    const addBtn = formContainer.querySelector('#add-custom') as HTMLButtonElement;
+
+    // Focus name input
+    nameInput.focus();
+
+    cancelBtn.addEventListener('click', () => {
+      // Go back to showing add custom option
+      this.showCustomTimezoneOption(offset);
+    });
+
+    addBtn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      if (!name) {
+        nameInput.focus();
+        return;
+      }
+
+      // Parse coordinates if provided
+      let coordinates: { latitude: number; longitude: number } | undefined;
+      const lat = parseFloat(latInput.value);
+      const lng = parseFloat(lngInput.value);
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        coordinates = { latitude: lat, longitude: lng };
+      }
+
+      this.createCustomTimezone(offset, name, coordinates);
+    });
+
+    // Allow Enter to submit
+    nameInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        addBtn.click();
+      }
+    });
+  }
+
+  /**
+   * Create and save custom timezone
+   */
+  private createCustomTimezone(
+    offset: number,
+    name: string,
+    coordinates?: { latitude: number; longitude: number },
+  ): void {
+    const customTimezone: TimeZone = {
+      name: `${name} (UTC${offset >= 0 ? '+' : ''}${offset})`,
+      offset,
+      displayName: `${name} Standard Time`,
+      iana: `custom-${offset}`,
+      cityName: name,
+      abbreviation: `UTC${offset >= 0 ? '+' : ''}${offset}`,
+      isCustom: true,
+      ...(coordinates ? { coordinates } : {}),
+    };
+
+    // Save to localStorage
+    CustomTimezoneManager.saveCustomTimezone(customTimezone);
+
+    // Add to current timezones list
+    this.timezones.push(customTimezone);
+
+    // Select the new timezone
+    this.filteredTimezones = [customTimezone];
+    this.selectedIndex = 0;
+    this.renderWheel();
+
+    // Auto-select and close modal
+    if (this.onTimezoneSelectedCallback) {
+      this.onTimezoneSelectedCallback(customTimezone);
+    }
+    this.close();
+  }
+
   public getSelectedTimezone(): TimeZone | null {
     return this.filteredTimezones[this.selectedIndex] || null;
   }
@@ -1694,10 +1989,11 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
  * @returns true if hour is during daylight, false if night or no coordinates available
  */
 function isHourInDaylight(timezone: TimeZone, hourDate: Date): boolean {
-  // Only calculate for timezones we have coordinates for
-  const coordinates = TIMEZONE_COORDINATES[timezone.iana];
+  // Check for coordinates in custom timezones first, then fall back to TIMEZONE_COORDINATES
+  let coordinates = timezone.coordinates || TIMEZONE_COORDINATES[timezone.iana];
+
   if (!coordinates) {
-    return false; // Default to night for unmapped timezones
+    return false; // Default to night for unmapped timezones (including custom ones without coordinates)
   }
 
   const { latitude, longitude } = coordinates;
