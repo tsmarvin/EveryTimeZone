@@ -178,7 +178,7 @@ think
 
 **✅ WHAT WORKS:**
 - Taking screenshots using Playwright after starting local HTTP server
-- URLs in format: `https://private-user-images.githubusercontent.com/[redacted]` or `https://github.com/user-attachments/[redacted]`
+- URLs in format: `https://private-user-images.githubusercontent.com/[redacted]`
 - These URLs work in GitHub comments and display images when uploaded correctly.
   - Do not construct URLs in these formats under any circumstances.
 
