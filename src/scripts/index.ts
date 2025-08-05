@@ -1090,16 +1090,16 @@ export class TimelineManager {
           }
         } else if (hour.isSunsetHour && hour.sunsetTime) {
           hourCell.classList.add('sunset-hour', 'night-hour');
-          hourCell.title = `🌅 Sunset: ${hour.sunsetTime}`;
+          hourCell.title = `🔅 Sunset: ${hour.sunsetTime}`;
           hourCell.setAttribute('data-sunset-time', hour.sunsetTime);
           // Replace content with sunset icon and time
           if (hour.isDateTransition && hour.dateString) {
             hourCell.innerHTML = `
               <div class="date-display">${hour.dateString}</div>
-              <div class="time-display">🌅 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
+              <div class="time-display">🔅 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
             `;
           } else {
-            hourCell.innerHTML = `🌅 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
+            hourCell.innerHTML = `🔅 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
           }
         } else {
           // Regular hour content (no sunrise/sunset transition)
@@ -2134,7 +2134,7 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'America/Boa_Vista': { latitude: 2.8197, longitude: -60.6733, city: 'Boa Vista' },
   'America/Noronha': { latitude: -3.8536, longitude: -32.4297, city: 'Fernando de Noronha' },
   'Atlantic/Cape_Verde': { latitude: 14.9215, longitude: -23.5087, city: 'Cape Verde' },
-  'Asia/Katmandu': { latitude: 27.7172, longitude: 85.3240, city: 'Kathmandu' },
+  'Asia/Katmandu': { latitude: 27.7172, longitude: 85.324, city: 'Kathmandu' },
   'Asia/Dhaka': { latitude: 23.8103, longitude: 90.4125, city: 'Dhaka' },
   'Antarctica/Casey': { latitude: -66.2818, longitude: 110.5276, city: 'Casey Station' },
   'Pacific/Kiritimati': { latitude: 1.8721, longitude: -157.4278, city: 'Kiritimati' },

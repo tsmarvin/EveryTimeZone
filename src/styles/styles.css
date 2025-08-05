@@ -601,7 +601,7 @@ p {
 }
 
 .timeline-hour.sunset-hour::after {
-  content: '🌅';
+  content: '🔅';
   position: absolute;
   top: 2px;
   left: 2px;
@@ -720,7 +720,7 @@ p {
 }
 
 .timeline-hour.current-hour.sunset-hour::after {
-  content: '🌅';
+  content: '🔅';
   position: absolute;
   top: 2px;
   left: 2px;
