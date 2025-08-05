@@ -1,4 +1,3 @@
-
 # Copilot Agent Instructions for EveryTimeZone
 
 **MANDATORY STARTUP PROTOCOL - CRITICAL REQUIREMENT:**
