@@ -2637,13 +2637,15 @@ p {
 /* Sunset Warmth theme daylight/night overrides */
 .theme-sunset-warmth .timeline-hour.daylight-hour {
   background: linear-gradient(135deg, #ffab00, #ff6b35);
-  color: #3e2723;
+  color: #000000;
+  font-weight: 600;
   box-shadow: inset 0 0 0 1px rgba(255, 171, 0, 0.5);
 }
 
 .theme-sunset-warmth .timeline-hour.night-hour {
   background: linear-gradient(135deg, #3e2723, #2a1810);
-  color: #ffcc02;
+  color: #ffffff;
+  font-weight: 500;
   box-shadow: inset 0 0 0 1px rgba(62, 39, 35, 0.7);
 }
 
@@ -2682,13 +2684,15 @@ p {
 /* Sunset Warmth theme light mode daylight/night overrides */
 .theme-sunset-warmth.light-theme .timeline-hour.daylight-hour {
   background: linear-gradient(135deg, #fff8e1, #ffe0b2);
-  color: #bf360c;
+  color: #8b4513;
+  font-weight: 600;
   box-shadow: inset 0 0 0 1px rgba(255, 107, 53, 0.3);
 }
 
 .theme-sunset-warmth.light-theme .timeline-hour.night-hour {
   background: linear-gradient(135deg, #5d4037, #3e2723);
-  color: #ffcc02;
+  color: #ffffff;
+  font-weight: 500;
   box-shadow: inset 0 0 0 1px rgba(93, 64, 55, 0.5);
 }
 
