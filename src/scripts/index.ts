@@ -50,6 +50,8 @@ export interface TimelineHour {
   time12: string; // "2 PM"
   time24: string; // "14"
   isDaylight?: boolean;
+  isDateTransition?: boolean; // true when this hour represents midnight (start of new day)
+  dateString?: string | undefined; // formatted date string for display (e.g., "Aug 6")
 }
 
 /** Complete timeline row for a single timezone */
@@ -489,7 +491,7 @@ function formatOffset(offset: number): string {
  * @param numHours Number of hours to display in the timeline
  * @param timezone Target timezone to calculate hours for
  * @param baseDate Date to center the timeline on (defaults to current date)
- * @returns Array of timeline hours with daylight information
+ * @returns Array of timeline hours with daylight information and date transitions
  */
 export function generateTimelineHours(numHours: number, timezone: TimeZone, baseDate?: Date): TimelineHour[] {
   const now = baseDate || new Date();
@@ -525,12 +527,27 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     // Calculate daylight status for this hour
     const isDaylight = isHourInDaylight(timezone, timeInTz);
 
+    // Check if this hour represents a date transition (midnight = start of new day)
+    const isDateTransition = timeInTz.getHours() === 0;
+
+    // Generate date string for display if this is a date transition
+    let dateString: string | undefined;
+    if (isDateTransition) {
+      // Format date as "Aug 6" or "12/31" depending on preference
+      dateString = timeInTz.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+    }
+
     hours.push({
       hour: timeInTz.getHours(),
       date: timeInTz,
       time12: hour12,
       time24: hour24,
       isDaylight,
+      isDateTransition,
+      dateString,
     });
   }
 
@@ -756,8 +773,19 @@ export function renderTimeline(): void {
     row.hours.forEach((hour, index) => {
       const hourCell = document.createElement('div');
       hourCell.className = 'timeline-cell timeline-hour';
-      // Use consistent format based on setting
-      hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+
+      // Add date transition class and display date if this is midnight
+      if (hour.isDateTransition && hour.dateString) {
+        hourCell.classList.add('date-transition');
+        // Create a container for both date and time
+        hourCell.innerHTML = `
+          <div class="date-display">${hour.dateString}</div>
+          <div class="time-display">${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
+        `;
+      } else {
+        // Use consistent format based on setting for regular hours
+        hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+      }
 
       // Mark current hour (index 24 since we start from -24 hours)
       if (index === 24) {
@@ -983,8 +1011,19 @@ export class TimelineManager {
       timezoneHours.forEach((hour, index) => {
         const hourCell = document.createElement('div');
         hourCell.className = 'timeline-cell timeline-hour';
-        // Use consistent format based on setting
-        hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+
+        // Add date transition class and display date if this is midnight
+        if (hour.isDateTransition && hour.dateString) {
+          hourCell.classList.add('date-transition');
+          // Create a container for both date and time
+          hourCell.innerHTML = `
+            <div class="date-display">${hour.dateString}</div>
+            <div class="time-display">${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
+          `;
+        } else {
+          // Use consistent format based on setting for regular hours
+          hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+        }
 
         // Mark current hour (index 24 since we start from -24 hours)
         if (index === 24) {
