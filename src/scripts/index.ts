@@ -2129,6 +2129,15 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'Australia/Eucla': { latitude: -31.6833, longitude: 128.8833, city: 'Eucla' },
   'Pacific/Dili': { latitude: -8.5569, longitude: 125.5603, city: 'Dili' },
   'Australia/Lord_Howe': { latitude: -31.5556, longitude: 159.0833, city: 'Lord Howe Island' },
+  'Pacific/Niue': { latitude: -19.0544, longitude: -169.8672, city: 'Niue' },
+  'America/Eirunepe': { latitude: -6.6608, longitude: -69.8739, city: 'Eirunepe' },
+  'America/Boa_Vista': { latitude: 2.8197, longitude: -60.6733, city: 'Boa Vista' },
+  'America/Noronha': { latitude: -3.8536, longitude: -32.4297, city: 'Fernando de Noronha' },
+  'Atlantic/Cape_Verde': { latitude: 14.9215, longitude: -23.5087, city: 'Cape Verde' },
+  'Asia/Katmandu': { latitude: 27.7172, longitude: 85.3240, city: 'Kathmandu' },
+  'Asia/Dhaka': { latitude: 23.8103, longitude: 90.4125, city: 'Dhaka' },
+  'Antarctica/Casey': { latitude: -66.2818, longitude: 110.5276, city: 'Casey Station' },
+  'Pacific/Kiritimati': { latitude: 1.8721, longitude: -157.4278, city: 'Kiritimati' },
 };
 
 /**
