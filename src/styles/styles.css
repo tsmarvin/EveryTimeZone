@@ -551,30 +551,54 @@ p {
 
 /* Daylight and Night Indicators */
 .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, var(--golden-yellow), var(--golden-amber));
-  color: var(--brown-dark);
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #78350f;
   font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.4);
+  border-radius: 4px;
+  position: relative;
+}
+
+.timeline-hour.daylight-hour::before {
+  content: '☀️';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .timeline-hour.night-hour {
-  background: linear-gradient(135deg, var(--slate-dark), var(--slate-darkest));
-  color: var(--gray-blue);
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #94a3b8;
   font-weight: 500;
-  box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.6);
+  border-radius: 4px;
+  position: relative;
+}
+
+.timeline-hour.night-hour::before {
+  content: '🌙';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 /* Light theme adjustments for daylight/night indicators */
 .light-theme .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, var(--cream-pale), var(--cream-light));
-  color: var(--brown-medium);
-  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.2);
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.3);
 }
 
 .light-theme .timeline-hour.night-hour {
-  background: linear-gradient(135deg, var(--gray-750), var(--gray-850));
-  color: var(--gray-warm);
-  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.3);
+  background: linear-gradient(135deg, #374151, #1f2937);
+  color: #d1d5db;
+  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.4);
 }
 
 /* Current hour styling with higher specificity to override daylight/night indicators */
@@ -1981,6 +2005,19 @@ p {
   --color-button-shimmer: rgba(153, 153, 153, 0.4);
 }
 
+/* Default theme daylight/night overrides */
+.theme-default .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #78350f;
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.4);
+}
+
+.theme-default .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #374151, #1f2937);
+  color: #9ca3af;
+  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.6);
+}
+
 .theme-default.light-theme {
   --color-bg: var(--white);
   --color-background: var(--white);
@@ -2011,6 +2048,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Default theme light mode daylight/night overrides */
+.theme-default.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.3);
+}
+
+.theme-default.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #374151, #1f2937);
+  color: #d1d5db;
+  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.4);
 }
 
 /* Forest Harmony Theme */
@@ -2070,6 +2120,19 @@ p {
   --color-button-shimmer: rgba(132, 204, 22, 0.4);
 }
 
+/* Forest Harmony theme daylight/night overrides */
+.theme-forest-harmony .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #84cc16, #22c55e);
+  color: #14532d;
+  box-shadow: inset 0 0 0 1px rgba(132, 204, 22, 0.5);
+}
+
+.theme-forest-harmony .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #1a2e1a, #0a1a0a);
+  color: #86efac;
+  box-shadow: inset 0 0 0 1px rgba(26, 46, 26, 0.7);
+}
+
 .theme-forest-harmony.light-theme {
   --color-bg: var(--forest-light-bg);
   --color-background: var(--forest-light-bg);
@@ -2100,6 +2163,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Forest Harmony theme light mode daylight/night overrides */
+.theme-forest-harmony.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #14532d;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.3);
+}
+
+.theme-forest-harmony.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #1f2937, #111827);
+  color: #86efac;
+  box-shadow: inset 0 0 0 1px rgba(31, 41, 55, 0.5);
 }
 
 /* Neon Cyber Theme */
@@ -2159,6 +2235,19 @@ p {
   --color-button-shimmer: rgba(189, 0, 255, 0.4);
 }
 
+/* Neon Cyber theme daylight/night overrides */
+.theme-neon-cyber .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: #1a0b2e;
+  box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.5);
+}
+
+.theme-neon-cyber .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #1a0b2e, #0f051a);
+  color: #c4b5fd;
+  box-shadow: inset 0 0 0 1px rgba(26, 11, 46, 0.7);
+}
+
 .theme-neon-cyber.light-theme {
   --color-bg: var(--cyber-light-bg);
   --color-background: var(--cyber-light-bg);
@@ -2189,6 +2278,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Neon Cyber theme light mode daylight/night overrides */
+.theme-neon-cyber.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  color: #5b21b6;
+  box-shadow: inset 0 0 0 1px rgba(147, 51, 234, 0.3);
+}
+
+.theme-neon-cyber.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #374151, #111827);
+  color: #c4b5fd;
+  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.5);
 }
 
 /* Ocean Breeze Theme */
@@ -2248,6 +2350,19 @@ p {
   --color-button-shimmer: rgba(20, 184, 166, 0.4);
 }
 
+/* Ocean Breeze theme daylight/night overrides */
+.theme-ocean-breeze .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #06b6d4, #14b8a6);
+  color: #083344;
+  box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.5);
+}
+
+.theme-ocean-breeze .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #0a1a2a, #051923);
+  color: #67e8f9;
+  box-shadow: inset 0 0 0 1px rgba(10, 26, 42, 0.7);
+}
+
 .theme-ocean-breeze.light-theme {
   --color-bg: var(--ocean-light-bg);
   --color-background: var(--ocean-light-bg);
@@ -2278,6 +2393,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Ocean Breeze theme light mode daylight/night overrides */
+.theme-ocean-breeze.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #cffafe, #a5f3fc);
+  color: #0c4a6e;
+  box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.3);
+}
+
+.theme-ocean-breeze.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #67e8f9;
+  box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.5);
 }
 
 /* Original Theme */
@@ -2337,6 +2465,19 @@ p {
   --color-button-shimmer: rgba(138, 184, 163, 0.4);
 }
 
+/* Original theme daylight/night overrides */
+.theme-original .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #8ab8a3, #7c9fb8);
+  color: #2a3a4a;
+  box-shadow: inset 0 0 0 1px rgba(138, 184, 163, 0.5);
+}
+
+.theme-original .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #3a4a5a, #2a3a4a);
+  color: #b4c6d3;
+  box-shadow: inset 0 0 0 1px rgba(58, 74, 90, 0.7);
+}
+
 .theme-original.light-theme {
   --color-bg: var(--original-light-bg);
   --color-background: var(--original-light-bg);
@@ -2367,6 +2508,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Original theme light mode daylight/night overrides */
+.theme-original.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #e6f0ea, #d9e9e3);
+  color: #2a3a4a;
+  box-shadow: inset 0 0 0 1px rgba(138, 184, 163, 0.3);
+}
+
+.theme-original.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #374151, #1f2937);
+  color: #b4c6d3;
+  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.4);
 }
 
 /* Sunset Warmth Theme */
@@ -2426,6 +2580,19 @@ p {
   --color-button-shimmer: rgba(255, 171, 0, 0.4);
 }
 
+/* Sunset Warmth theme daylight/night overrides */
+.theme-sunset-warmth .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #ffab00, #ff6b35);
+  color: #3e2723;
+  box-shadow: inset 0 0 0 1px rgba(255, 171, 0, 0.5);
+}
+
+.theme-sunset-warmth .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #3e2723, #2a1810);
+  color: #ffcc02;
+  box-shadow: inset 0 0 0 1px rgba(62, 39, 35, 0.7);
+}
+
 .theme-sunset-warmth.light-theme {
   --color-bg: var(--sunset-light-bg);
   --color-background: var(--sunset-light-bg);
@@ -2456,6 +2623,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Sunset Warmth theme light mode daylight/night overrides */
+.theme-sunset-warmth.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, #fff8e1, #ffe0b2);
+  color: #bf360c;
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 53, 0.3);
+}
+
+.theme-sunset-warmth.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, #5d4037, #3e2723);
+  color: #ffcc02;
+  box-shadow: inset 0 0 0 1px rgba(93, 64, 55, 0.5);
 }
 
 /* Default root colors for fallback */
