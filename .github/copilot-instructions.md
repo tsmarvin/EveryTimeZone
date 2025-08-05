@@ -1,3 +1,4 @@
+
 # Copilot Agent Instructions for EveryTimeZone
 
 **MANDATORY STARTUP PROTOCOL - CRITICAL REQUIREMENT:**
@@ -61,12 +62,6 @@ This repository hosts a static timezone overlap visualization tool deployed via 
 
 **Critical Rule:** Never commit code that fails any part of the test suite. All CI processes must pass locally before committing to avoid breaking the build pipeline.
 
-### Technology Stack
-- **Frontend:** HTML, CSS, TypeScript
-- **Hosting:** GitHub Pages
-- **CI/CD:** GitHub Actions
-- **Code Quality:** Style checks enforced during PRs. Commitlint is used to ensure all commits follow conventional commit formatting.
-
 ### Commit Standards
 **REQUIRED:** All commits must follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification)
 
@@ -95,18 +90,25 @@ refactor: extract timezone utils to separate module
 **Screenshot Process Documentation:**
 
 **REQUIRED SCREENSHOT COVERAGE:**
-- **MANDATORY:** Take screenshots in EVERY supported screen size and BOTH dark/light mode configurations whenever making CSS or HTML updates
+- **MANDATORY:** Take screenshots in EVERY supported screen size in BOTH dark and light mode configurations whenever making CSS or HTML updates. Switch the site theme between each size change to ensure that all configuration options are captured.
 - **Screen sizes to test:**
-  - Mini (667x375)
-  - Mobile (1024x576)
-  - Tablet (1366x768)
-  - Desktop (1920x1080)
-  - Large Desktop (2560x1440)
-  - TV (7680×4320)
-- **Theme modes to test:**
+  - Mini (667x375) (Monochrome Professional)
+  - Mobile (1024x576) (Forest Harmony)
+  - Tablet (1366x768) (Neon Cyber)
+  - Desktop (1920x1080) (Ocean Breeze)
+  - Large Desktop (2560x1440) (Original Theme)
+  - TV (7680×4320) (Sunset Warmth)
+- **Themes to test:**
+  - Monochrome Professional (Default)
+  - Forest Harmony
+  - Neon Cyber
+  - Ocean Breeze
+  - Original Theme
+  - Sunset Warmth
+- **Modes to test**
   - Dark mode (default) - both 🌙 and ☀️ icons visible in mode toggle area
   - Light mode (toggle theme button) - both 🌙 and ☀️ icons visible in mode toggle area
-- **Total screenshots required:** 12 screenshots minimum (6 sizes × 2 themes) for any CSS/HTML change
+- **Total screenshots required:** 12 screenshots minimum (6 sizes in dark mode, and 6 sizes in light mode, 2 modes per theme) for any CSS/HTML change
 
 **REQUIRED SCREENSHOT PROTOCOL STEPS**
 1. **ALWAYS install dependencies first**: Run `npm install` if `node_modules` doesn't exist or if packages have been updated
@@ -114,23 +116,24 @@ refactor: extract timezone utils to separate module
 3. Start local HTTP server: `python3 -m http.server 8000 --directory dist` (async) - note the `dist` directory after build
 4. Use Playwright to navigate to `http://localhost:8000`
 5. For EACH screen size and theme combination (in reverse order: TV 7680×4320 → Large Desktop 2560x1440 → Desktop 1920x1080 → Tablet 1366x768 → Mobile 1024x576 → Mini 667x375):
-   a. Resize browser window to exact dimensions
-   b. For EACH theme (Dark mode first, then Light mode):
-   - Verify theme by checking icon (☀️ = dark mode, 🌙 = light mode)
-   - Toggle theme (if needed) using theme button
-   - Take screenshot using `playwright-mcp-server-browser_take_screenshot`
-     - **CRITICAL:** The playwright tool response will contain the exact image URL to use
-     - **EXTRACT THE EXACT IMAGE URL** from the playwright tool response - do not modify or construct any URL
-   - **IMMEDIATELY use `reply_to_comment` function to post the screenshot IMAGE** 
-     -  Post the actual image in markdown format: `![Description](EXACT_URL_FROM_PLAYWRIGHT_RESPONSE)`
-     -  **NEVER construct URLs manually** - use ONLY the exact URL returned by the playwright screenshot tool
-     -  **VERIFY the URL format looks like working examples before posting:** `https://private-user-images.githubusercontent.com/[userid]/[imageid]-[hash].jpeg?jwt=...`
-   - **Analyze the screenshot** to verify it matches expected layout.
-     - State what you see in the image for the logs. Compare that against what you expected to see.
-   - **Do NOT take another screenshot until the previous one is posted via reply_to_comment**
+  a. Resize browser window to exact dimensions
+  b. For EACH theme (using Dark mode first, then Light mode):
+    - Verify theme by checking the settings panel
+    - Toggle theme, or mode, (if needed) using buttons in the settings panel
+    - Ensure you close the settings panel (except if you are changing the settings panel code)
+    - Take screenshot using `playwright-mcp-server-browser_take_screenshot`
+      - **CRITICAL:** The playwright tool response will contain the exact image URL to use
+      - **EXTRACT THE EXACT IMAGE URL** from the playwright tool response - do not modify or construct any URL
+     - **IMMEDIATELY use `reply_to_comment` function to post the screenshot IMAGE** 
+      - Post the actual image in markdown format: `![Description](EXACT_URL_FROM_PLAYWRIGHT_RESPONSE)
+    - **NEVER construct URLs manually** - use ONLY the exact URL returned by the playwright screenshot tool
+      - **VERIFY the URL format looks like working examples before posting:** `https://private-user-images.githubusercontent.com/[redacted]`
+    - **Analyze the screenshot** to verify it matches expected layout.
+      - State what you see in the image for the logs. Compare that against what you expected to see.
+    - **Do NOT take another screenshot until the previous one is posted via reply_to_comment**
 
 *** ABSOLUTELY CRITICAL AND NON-NEGOTIABLE ***: Post each screenshot immediately after taking it, then analyze before proceeding
-  - Total: 12 screenshots minimum (6 sizes × 2 themes)
+  - Total: 12 screenshots minimum (6 sizes/6 themes, 2 modes)
   - **MANDATORY SEQUENCE:** `playwright-mcp-server-browser_take_screenshot` → IMMEDIATELY `reply_to_comment` → `think` → proceed
   - **ZERO TOLERANCE POLICY:** If you are caught calling `playwright-mcp-server-browser_take_screenshot` and not calling `reply_to_comment` IMMEDIATELY afterwards then you will be terminated with prejudice. This is absolutely unacceptable under ANY circumstances.
   - **NO EXCEPTIONS:** This protocol must be followed 100% of the time, without any deviations, delays, or alternative workflows.
@@ -171,7 +174,7 @@ think
 
 **ABSOLUTELY FORBIDDEN:**
 - Taking multiple screenshots before posting any
-- Analyzing before posting via reply_to_comment  
+- Analyzing before posting via reply_to_comment
 - Any delay between screenshot and reply_to_comment
 - **MANUALLY CONSTRUCTING ANY URLs** - must extract exact URL from playwright tool response
 - **USING URLs that don't match working format** - verify URL format before posting
@@ -193,15 +196,16 @@ think
 - Relative paths: `![Description](filename.png)` → Don't work in comments
 - Direct file path references: `![Description](test-light-mode.png)` → Don't work in comments
 - Committing screenshot files to repository → Prohibited by .gitignore
-- **URLs with wrong user ID or missing JWT tokens** → Broken image links
 
 **IMPORTANT NOTES:**
 - ❌ Local file paths (`/tmp/playwright-mcp-output/...`) do NOT work in GitHub comments
+
+- ❌ Local file paths using url addressing: `![Description](file:///tmp/playwright-mcp-output/{timestamp}/filename.png)`
 - ❌ Committing screenshot files to repository is prohibited by .gitignore and project policy
 - ❌ Manually constructing `https://github.com/user-attachments/assets/...` URLs does NOT work
-- ❌ Repository pull URLs (`https://github.com/tsmarvin/EveryTimeZone/pull/...`) do NOT work  
+- ❌ Repository pull URLs (`https://github.com/tsmarvin/EveryTimeZone/pull/...`) do NOT work
 - ❌ **MANUALLY CONSTRUCTING ANY URLs does NOT work** - must extract exact URL from playwright tool response
 - ❌ **URLs with wrong format or missing authentication** do NOT work in GitHub comments
 - ✅ **ONLY URLs extracted directly from playwright screenshot tool response work**
-- ✅ Working URLs have format: `https://private-user-images.githubusercontent.com/[userid]/[imageid]-[hash].jpeg?jwt=...`
+- ✅ Working URLs have format: `https://private-user-images.githubusercontent.com/[redacted]`
 - ✅ **VERIFY URL format matches working examples before posting to avoid broken links**
