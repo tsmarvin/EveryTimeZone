@@ -1077,29 +1077,29 @@ export class TimelineManager {
         // Add sunrise/sunset transition indicators with tooltips
         if (hour.isSunriseHour && hour.sunriseTime) {
           hourCell.classList.add('sunrise-hour', 'daylight-hour');
-          hourCell.title = `🌅 Sunrise: ${hour.sunriseTime}`;
+          hourCell.title = `🔆 Sunrise: ${hour.sunriseTime}`;
           hourCell.setAttribute('data-sunrise-time', hour.sunriseTime);
           // Replace content with sunrise icon and time
           if (hour.isDateTransition && hour.dateString) {
             hourCell.innerHTML = `
               <div class="date-display">${hour.dateString}</div>
-              <div class="time-display">🌅 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
+              <div class="time-display">🔆 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
             `;
           } else {
-            hourCell.innerHTML = `🌅 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
+            hourCell.innerHTML = `🔆 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
           }
         } else if (hour.isSunsetHour && hour.sunsetTime) {
           hourCell.classList.add('sunset-hour', 'night-hour');
-          hourCell.title = `🌇 Sunset: ${hour.sunsetTime}`;
+          hourCell.title = `🌆 Sunset: ${hour.sunsetTime}`;
           hourCell.setAttribute('data-sunset-time', hour.sunsetTime);
           // Replace content with sunset icon and time
           if (hour.isDateTransition && hour.dateString) {
             hourCell.innerHTML = `
               <div class="date-display">${hour.dateString}</div>
-              <div class="time-display">🌇 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
+              <div class="time-display">🌆 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
             `;
           } else {
-            hourCell.innerHTML = `🌇 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
+            hourCell.innerHTML = `🌆 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
           }
         } else {
           // Regular hour content (no sunrise/sunset transition)
