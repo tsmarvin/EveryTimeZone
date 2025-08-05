@@ -1090,16 +1090,16 @@ export class TimelineManager {
           }
         } else if (hour.isSunsetHour && hour.sunsetTime) {
           hourCell.classList.add('sunset-hour', 'night-hour');
-          hourCell.title = `🌆 Sunset: ${hour.sunsetTime}`;
+          hourCell.title = `🌅 Sunset: ${hour.sunsetTime}`;
           hourCell.setAttribute('data-sunset-time', hour.sunsetTime);
           // Replace content with sunset icon and time
           if (hour.isDateTransition && hour.dateString) {
             hourCell.innerHTML = `
               <div class="date-display">${hour.dateString}</div>
-              <div class="time-display">🌆 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
+              <div class="time-display">🌅 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
             `;
           } else {
-            hourCell.innerHTML = `🌆 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
+            hourCell.innerHTML = `🌅 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
           }
         } else {
           // Regular hour content (no sunrise/sunset transition)
@@ -2121,6 +2121,14 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'Africa/Cairo': { latitude: 30.0444, longitude: 31.2357, city: 'Cairo' },
   'Africa/Lagos': { latitude: 6.5244, longitude: 3.3792, city: 'Lagos' },
   'Africa/Johannesburg': { latitude: -26.2041, longitude: 28.0473, city: 'Johannesburg' },
+
+  // Additional Pacific and remote timezones
+  'Pacific/Rarotonga': { latitude: -21.2367, longitude: -159.7777, city: 'Rarotonga' },
+  'Pacific/Marquesas': { latitude: -9.0, longitude: -140.0, city: 'Marquesas' },
+  'America/St_Johns': { latitude: 47.5615, longitude: -52.7126, city: 'St. Johns' },
+  'Australia/Eucla': { latitude: -31.6833, longitude: 128.8833, city: 'Eucla' },
+  'Pacific/Dili': { latitude: -8.5569, longitude: 125.5603, city: 'Dili' },
+  'Australia/Lord_Howe': { latitude: -31.5556, longitude: 159.0833, city: 'Lord Howe Island' },
 };
 
 /**
