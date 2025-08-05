@@ -533,8 +533,8 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     // Generate date string for display if this is a date transition
     let dateString: string | undefined;
     if (isDateTransition) {
-      // Format date as "Aug 6" or "12/31" depending on preference
-      dateString = timeInTz.toLocaleDateString('en-US', {
+      // Format date using user's locale (e.g., "Aug 6", "6 Aug", etc. depending on locale)
+      dateString = timeInTz.toLocaleDateString(undefined, {
         month: 'short',
         day: 'numeric',
       });
