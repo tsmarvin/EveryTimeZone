@@ -9,8 +9,9 @@ import { Temporal } from '@js-temporal/polyfill';
 
 /**
  * Load the actual HTML from the site for testing
+ * @param useBuilt - Whether to use the built dist version (default: false for backward compatibility)
  */
-export function loadActualHTML(useBuilt: boolean = true): void {
+export function loadActualHTML(useBuilt: boolean = false): void {
   const htmlPath = join(process.cwd(), useBuilt ? 'dist' : 'src', 'index.html');
   const htmlContent = readFileSync(htmlPath, 'utf-8');
   
