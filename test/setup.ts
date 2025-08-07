@@ -119,10 +119,13 @@ Object.defineProperty(document, 'readyState', {
 
 // Mock URL and history
 delete (window as any).location;
-window.location = {
+(window as any).location = {
   href: 'http://localhost:3000/',
   search: '',
-} as Location;
+  assign: vi.fn(),
+  replace: vi.fn(),
+  reload: vi.fn(),
+};
 
 // Setup per-test initialization
 beforeEach(() => {
@@ -136,8 +139,8 @@ beforeEach(() => {
   matchMediaMock.mockClear();
 
   // Reset URL state to prevent test bleeding
-  window.location.href = 'http://localhost:3000/';
-  window.location.search = '';
+  (window as any).location.href = 'http://localhost:3000/';
+  (window as any).location.search = '';
 
   // Reset DOM
   document.head.innerHTML = '';

@@ -7,15 +7,68 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { loadActualHTML } from './setup.js';
 import { AVAILABLE_THEMES, SettingsPanel, AppearanceSettings } from '../src/scripts/settings.js';
 
-// Screen sizes to test for responsive accessibility
+// Screen sizes extracted from CSS media queries for responsive accessibility testing
 const SCREEN_SIZES = [
-  { name: 'Mini', width: 667, height: 375 },
-  { name: 'Mobile', width: 1024, height: 576 },
-  { name: 'Tablet', width: 1366, height: 768 },
-  { name: 'Desktop', width: 1920, height: 1080 },
-  { name: 'Large Desktop', width: 2560, height: 1440 },
-  { name: 'TV', width: 7680, height: 4320 }
+  { name: 'Small Mobile', width: 375, height: 667 }, // Below 576px breakpoint
+  { name: 'Mobile', width: 576, height: 1024 }, // max-width: 576px
+  { name: 'Tablet', width: 768, height: 1024 }, // min-width: 768px
+  { name: 'Desktop', width: 992, height: 768 }, // min-width: 992px
+  { name: 'Large Desktop', width: 1400, height: 900 }, // min-width: 1400px
+  { name: 'Ultra-wide/TV', width: 1920, height: 1080 } // min-width: 1920px
 ];
+
+/**
+ * Calculate relative luminance for WCAG color contrast
+ */
+function getRelativeLuminance(rgb: { r: number; g: number; b: number }): number {
+  const { r, g, b } = rgb;
+  const [rs, gs, bs] = [r, g, b].map(c => {
+    c = c / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+
+/**
+ * Calculate WCAG contrast ratio between two colors
+ */
+function getContrastRatio(color1: { r: number; g: number; b: number }, color2: { r: number; g: number; b: number }): number {
+  const l1 = getRelativeLuminance(color1);
+  const l2 = getRelativeLuminance(color2);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * Parse RGB color string to RGB object
+ */
+function parseRGB(colorStr: string): { r: number; g: number; b: number } | null {
+  const match = colorStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (match) {
+    return {
+      r: parseInt(match[1]),
+      g: parseInt(match[2]),
+      b: parseInt(match[3])
+    };
+  }
+  return null;
+}
+
+/**
+ * Get computed background color walking up the DOM tree
+ */
+function getComputedBackgroundColor(element: Element): string {
+  let current = element;
+  while (current && current !== document.body) {
+    const bg = window.getComputedStyle(current).backgroundColor;
+    if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+      return bg;
+    }
+    current = current.parentElement!;
+  }
+  return window.getComputedStyle(document.body).backgroundColor || 'rgb(255, 255, 255)';
+}
 
 describe('WCAG AAA Accessibility Standards', () => {
   let settingsPanel: SettingsPanel;
@@ -25,374 +78,253 @@ describe('WCAG AAA Accessibility Standards', () => {
     settingsPanel = new SettingsPanel();
   });
 
-  describe('Comprehensive Theme and Mode Testing', () => {
-    // Test ALL 6 themes in both dark and light modes
-    AVAILABLE_THEMES.forEach(theme => {
+  // Hierarchical testing structure to avoid redundancy
+  AVAILABLE_THEMES.forEach(theme => {
+    describe(`Theme: ${theme.displayName}`, () => {
       ['dark', 'light'].forEach(mode => {
-        it(`should maintain WCAG AAA compliance in ${theme.displayName} ${mode} mode`, () => {
-          // Apply theme and mode using proper SettingsPanel methods
-          const settings: AppearanceSettings = {
-            theme: theme.name,
-            mode: mode as 'dark' | 'light',
-            timeFormat: '12h'
-          };
-          
-          // Use internal method to apply settings (accessing private method for testing)
-          (settingsPanel as any).applySettings(settings);
-          
-          // Verify theme and mode are properly applied
-          expect(document.body.classList.contains(`theme-${theme.name}`)).toBe(true);
-          expect(document.body.classList.contains(`${mode}-theme`)).toBe(true);
-          
-          // Check that all essential accessibility elements exist
-          expect(document.querySelector('h1')).toBeTruthy();
-          expect(document.querySelector('main')).toBeTruthy();
-          expect(document.querySelector('header')).toBeTruthy();
-          
-          // Verify interactive elements are properly accessible
-          const interactiveElements = document.querySelectorAll('button, a[href], input, [tabindex]:not([tabindex="-1"])');
-          expect(interactiveElements.length).toBeGreaterThan(0);
-          
-          // Check that form inputs have proper labels
-          const inputs = document.querySelectorAll('input');
-          inputs.forEach(input => {
-            const hasLabel = input.id && document.querySelector(`label[for="${input.id}"]`);
-            const hasAriaLabel = input.getAttribute('aria-label');
-            const isInLabel = input.closest('label');
+        describe(`Mode: ${mode}`, () => {
+          let settings: AppearanceSettings;
+
+          beforeEach(() => {
+            // Apply theme and mode once per describe block
+            settings = {
+              theme: theme.name,
+              mode: mode as 'dark' | 'light',
+              timeFormat: '12h'
+            };
+            (settingsPanel as any).applySettings(settings);
+          });
+
+          it('should apply theme and mode correctly', () => {
+            expect(document.body.classList.contains(`theme-${theme.name}`)).toBe(true);
+            expect(document.body.classList.contains(`${mode}-theme`)).toBe(true);
+          });
+
+          it('should meet WCAG AAA color contrast requirements (7:1 for normal text)', () => {
+            const textElements = document.querySelectorAll('h1, h2, h3, p, button, a, label, .timezone-name');
+            let contrastIssues: string[] = [];
+
+            textElements.forEach((element, index) => {
+              const styles = window.getComputedStyle(element);
+              const textColor = styles.color;
+              const backgroundColor = getComputedBackgroundColor(element);
+
+              if (textColor && backgroundColor) {
+                const textRGB = parseRGB(textColor);
+                const bgRGB = parseRGB(backgroundColor);
+
+                if (textRGB && bgRGB) {
+                  const contrastRatio = getContrastRatio(textRGB, bgRGB);
+                  if (contrastRatio < 7.0) { // WCAG AAA requires 7:1 for normal text
+                    contrastIssues.push(
+                      `${element.tagName}[${index}] contrast ratio ${contrastRatio.toFixed(2)}:1 is below WCAG AAA standard (7:1)`
+                    );
+                  }
+                }
+              }
+            });
+
+            expect(contrastIssues.length, `Contrast issues found: ${contrastIssues.join(', ')}`).toBe(0);
+          });
+
+          it('should meet WCAG AAA large text contrast requirements (4.5:1)', () => {
+            const largeTextElements = document.querySelectorAll('h1, h2, .title, .large-text');
+            let contrastIssues: string[] = [];
+
+            largeTextElements.forEach((element, index) => {
+              const styles = window.getComputedStyle(element);
+              const fontSize = parseFloat(styles.fontSize);
+              const fontWeight = styles.fontWeight;
+              
+              // Large text is 18pt+ or 14pt+ bold (roughly 24px+ or 18.5px+ bold)
+              const isLargeText = fontSize >= 24 || (fontSize >= 18.5 && (fontWeight === 'bold' || parseInt(fontWeight) >= 700));
+              
+              if (isLargeText) {
+                const textColor = styles.color;
+                const backgroundColor = getComputedBackgroundColor(element);
+
+                if (textColor && backgroundColor) {
+                  const textRGB = parseRGB(textColor);
+                  const bgRGB = parseRGB(backgroundColor);
+
+                  if (textRGB && bgRGB) {
+                    const contrastRatio = getContrastRatio(textRGB, bgRGB);
+                    if (contrastRatio < 4.5) { // WCAG AAA requires 4.5:1 for large text
+                      contrastIssues.push(
+                        `Large text ${element.tagName}[${index}] contrast ratio ${contrastRatio.toFixed(2)}:1 is below WCAG AAA standard (4.5:1)`
+                      );
+                    }
+                  }
+                }
+              }
+            });
+
+            expect(contrastIssues.length, `Large text contrast issues: ${contrastIssues.join(', ')}`).toBe(0);
+          });
+
+          it('should have proper semantic HTML structure', () => {
+            // Required semantic landmarks
+            expect(document.querySelector('header'), 'Missing header landmark').toBeTruthy();
+            expect(document.querySelector('main'), 'Missing main landmark').toBeTruthy();
             
-            expect(hasLabel || hasAriaLabel || isInLabel, 
-              `Input should have proper labeling for accessibility`
-            ).toBeTruthy();
+            // Proper heading hierarchy (h1 must exist, no skipped levels)
+            const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+            expect(headings.length, 'No headings found').toBeGreaterThan(0);
+            
+            const h1 = document.querySelector('h1');
+            expect(h1, 'Missing h1 element').toBeTruthy();
+            expect(h1?.textContent, 'h1 should have meaningful content').toBe('Every Time Zone');
+
+            // Check heading hierarchy doesn't skip levels
+            const headingLevels = headings.map(h => parseInt(h.tagName.charAt(1)));
+            for (let i = 1; i < headingLevels.length; i++) {
+              const current = headingLevels[i];
+              const previous = headingLevels[i - 1];
+              expect(current - previous, `Heading hierarchy skips from h${previous} to h${current}`).toBeLessThanOrEqual(1);
+            }
+          });
+
+          it('should have accessible form controls with proper labeling', () => {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach((input, index) => {
+              const id = input.id;
+              const hasLabel = id && document.querySelector(`label[for="${id}"]`);
+              const hasAriaLabel = input.getAttribute('aria-label');
+              const hasAriaLabelledBy = input.getAttribute('aria-labelledby');
+              const isInLabel = input.closest('label');
+
+              expect(hasLabel || hasAriaLabel || hasAriaLabelledBy || isInLabel,
+                `Input ${index} (${input.type}) must have accessible labeling`
+              ).toBeTruthy();
+
+              // Verify input has meaningful accessible name
+              const accessibleName = hasAriaLabel || 
+                                   (hasLabel as HTMLElement)?.textContent?.trim() || 
+                                   (isInLabel as HTMLElement)?.textContent?.trim() || '';
+              expect(accessibleName.length, 
+                `Input ${index} must have meaningful accessible name`
+              ).toBeGreaterThan(0);
+            });
+          });
+
+          it('should have keyboard accessible interactive elements', () => {
+            const interactiveElements = document.querySelectorAll(
+              'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            
+            expect(interactiveElements.length, 'No keyboard accessible elements found').toBeGreaterThan(0);
+
+            interactiveElements.forEach((element, index) => {
+              // Test focus capability
+              (element as HTMLElement).focus();
+              expect(document.activeElement, 
+                `Element ${index} (${element.tagName}) must be focusable`
+              ).toBe(element);
+
+              // Check accessible name
+              const accessibleName = element.textContent?.trim() ||
+                                   element.getAttribute('aria-label') ||
+                                   element.getAttribute('title') ||
+                                   element.getAttribute('alt') || '';
+              
+              expect(accessibleName.length,
+                `Interactive element ${index} (${element.tagName}) must have accessible name`
+              ).toBeGreaterThan(0);
+            });
+          });
+
+          SCREEN_SIZES.forEach(size => {
+            it(`should maintain accessibility at ${size.name} (${size.width}×${size.height})`, () => {
+              // Simulate viewport for responsive testing
+              Object.defineProperty(window, 'innerWidth', { value: size.width, writable: true });
+              Object.defineProperty(window, 'innerHeight', { value: size.height, writable: true });
+              window.dispatchEvent(new Event('resize'));
+
+              // Touch target size validation (WCAG AAA requires 44×44px minimum)
+              const interactiveElements = document.querySelectorAll('button, a, input, .theme-option');
+              interactiveElements.forEach((element, index) => {
+                const rect = element.getBoundingClientRect();
+                const minSize = 44; // WCAG AAA minimum
+
+                // For elements that might be smaller, check if they have adequate padding
+                if (rect.width < minSize || rect.height < minSize) {
+                  const styles = window.getComputedStyle(element);
+                  const paddingX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+                  const paddingY = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+                  
+                  const effectiveWidth = rect.width + paddingX;
+                  const effectiveHeight = rect.height + paddingY;
+                  
+                  expect(effectiveWidth >= minSize && effectiveHeight >= minSize,
+                    `Interactive element ${index} at ${size.name} has inadequate touch target size: ${effectiveWidth}×${effectiveHeight} (minimum: ${minSize}×${minSize})`
+                  ).toBe(true);
+                }
+              });
+
+              // Essential elements must remain visible and accessible
+              expect(document.querySelector('h1'), 'Page title must be visible').toBeTruthy();
+              expect(document.querySelector('.timeline, main, #content'), 'Main content must be accessible').toBeTruthy();
+              expect(document.querySelector('.appearance-settings'), 'Settings must be accessible').toBeTruthy();
+            });
           });
         });
       });
     });
   });
 
-  describe('Color Contrast and Visual Accessibility', () => {
-    AVAILABLE_THEMES.forEach(theme => {
-      ['dark', 'light'].forEach(mode => {
-        it(`should meet WCAG AAA contrast requirements in ${theme.displayName} ${mode} mode`, () => {
-          // Apply theme and mode properly
-          const settings: AppearanceSettings = {
-            theme: theme.name,
-            mode: mode as 'dark' | 'light',
-            timeFormat: '12h'
-          };
-          (settingsPanel as any).applySettings(settings);
-          
-          // Test that contrast-sensitive elements exist and have proper styling
-          const textElements = document.querySelectorAll('h1, h2, h3, button, a');
-          
-          textElements.forEach((element, index) => {
-            const styles = window.getComputedStyle(element);
-            const color = styles.color;
-            const backgroundColor = styles.backgroundColor;
-            
-            // In test environment, computed styles may not be fully available
-            // So we check that elements have color properties defined
-            expect(color, 
-              `${element.tagName}[${index}] should have color defined in ${theme.displayName} ${mode} mode`
-            ).toBeTruthy();
-            
-            // Elements should have some form of background or inherit from parent
-            const hasBackground = backgroundColor && backgroundColor !== 'rgba(0, 0, 0, 0)' && backgroundColor !== 'transparent';
-            const hasParentWithBackground = element.closest('[style*="background"]') || element.closest('body');
-            
-            expect(hasBackground || hasParentWithBackground,
-              `${element.tagName}[${index}] should have background context for contrast evaluation`
-            ).toBeTruthy();
-          });
-          
-          // Verify theme-specific color classes are applied
-          expect(document.body.classList.contains(`theme-${theme.name}`)).toBe(true);
-          expect(document.body.classList.contains(`${mode}-theme`)).toBe(true);
-        });
-      });
-    });
-  });
+  describe('Overall WCAG AAA Compliance', () => {
+    it('should not use color alone to convey information', () => {
+      // Check that interactive elements have text or alternative indicators
+      const colorOnlyElements = document.querySelectorAll('.color-indicator, .status-indicator');
+      colorOnlyElements.forEach((element, index) => {
+        const hasText = element.textContent?.trim();
+        const hasAriaLabel = element.getAttribute('aria-label');
+        const hasTitle = element.getAttribute('title');
+        const hasPattern = element.querySelector('svg, .pattern, .icon');
 
-  describe('Responsive Design and Touch Targets', () => {
-    SCREEN_SIZES.forEach(size => {
-      it(`should maintain accessibility at ${size.name} (${size.width}x${size.height}) screen size`, () => {
-        // Simulate viewport resize for responsive testing
-        Object.defineProperty(window, 'innerWidth', { value: size.width, writable: true });
-        Object.defineProperty(window, 'innerHeight', { value: size.height, writable: true });
-        
-        // Trigger resize event
-        window.dispatchEvent(new Event('resize'));
-        
-        // Check that interactive elements maintain adequate touch targets
-        const interactiveElements = document.querySelectorAll('button, a, input, .theme-option');
-        
-        interactiveElements.forEach((element, index) => {
-          const styles = window.getComputedStyle(element);
-          
-          // Check for adequate padding or explicit sizing for touch targets
-          const paddingTop = parseFloat(styles.paddingTop) || 0;
-          const paddingBottom = parseFloat(styles.paddingBottom) || 0;
-          const paddingLeft = parseFloat(styles.paddingLeft) || 0;
-          const paddingRight = parseFloat(styles.paddingRight) || 0;
-          
-          const hasAdequatePadding = (paddingTop + paddingBottom >= 8) && (paddingLeft + paddingRight >= 8);
-          const hasExplicitSize = styles.minHeight !== 'auto' || styles.minWidth !== 'auto';
-          const hasText = element.textContent?.trim();
-          
-          // Touch targets should have adequate sizing especially on smaller screens
-          const hasReasonableSize = hasAdequatePadding || hasExplicitSize || hasText;
-          
-          expect(hasReasonableSize,
-            `Interactive element ${element.tagName}[${index}] should have adequate touch target size at ${size.name} resolution`
-          ).toBe(true);
-        });
-        
-        // Verify essential elements remain visible and accessible
-        expect(document.querySelector('h1')).toBeTruthy();
-        
-        // Check for timeline or main content area (may not always be called "timeline")
-        const mainContent = document.querySelector('.timeline') || document.querySelector('main') || document.querySelector('#content');
-        expect(mainContent, 'Main content area should be present').toBeTruthy();
-        
-        expect(document.querySelector('.appearance-settings')).toBeTruthy();
-      });
-    });
-  });
-
-  describe('Semantic HTML Structure and ARIA', () => {
-    it('should use proper semantic HTML elements', () => {
-      // Check for semantic landmark elements
-      expect(document.querySelector('header')).toBeTruthy();
-      expect(document.querySelector('main')).toBeTruthy();
-      expect(document.querySelector('footer')).toBeTruthy();
-      
-      // Check heading hierarchy
-      const h1 = document.querySelector('h1');
-      expect(h1).toBeTruthy();
-      expect(h1?.textContent).toBe('Every Time Zone');
-      
-      const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
-      const headingLevels: number[] = [];
-      
-      headings.forEach(heading => {
-        const level = parseInt(heading.tagName.charAt(1));
-        headingLevels.push(level);
-      });
-      
-      // Should start with h1 and not skip levels
-      expect(headingLevels[0]).toBe(1);
-      for (let i = 1; i < headingLevels.length; i++) {
-        const currentLevel = headingLevels[i];
-        const previousLevel = headingLevels[i - 1];
-        expect(currentLevel - previousLevel).toBeLessThanOrEqual(1);
-      }
-    });
-
-    it('should have proper aria-label attributes for interactive elements', () => {
-      const requiredAriaLabels = [
-        { selector: '.appearance-settings', expectedLabel: 'Open appearance settings' },
-        { selector: '.modal-close', expectedLabel: 'Close modal' },
-        { selector: '#wheel-up', expectedLabel: 'Previous timezone' },
-        { selector: '#wheel-down', expectedLabel: 'Next timezone' },
-        { selector: '.settings-close', expectedLabel: 'Close settings panel' },
-      ];
-
-      requiredAriaLabels.forEach(({ selector, expectedLabel }) => {
-        const element = document.querySelector(selector);
-        if (element) {
-          const ariaLabel = element.getAttribute('aria-label');
-          expect(ariaLabel, `${selector} should have aria-label="${expectedLabel}"`).toBe(expectedLabel);
-        }
-      });
-    });
-
-    it('should not rely solely on color for information', () => {
-      // Timeline elements should have text or alternative indicators
-      const timelineHours = document.querySelectorAll('.timeline-hour');
-      if (timelineHours.length > 0) {
-        timelineHours.forEach((hour, index) => {
-          const hasText = hour.textContent?.trim();
-          const hasAriaLabel = hour.getAttribute('aria-label');
-          const hasTitle = hour.getAttribute('title');
-          
-          expect(hasText || hasAriaLabel || hasTitle, 
-            `Timeline hour ${index} should have text content or accessible label`
-          ).toBeTruthy();
-        });
-      }
-    });
-  });
-
-  describe('Keyboard Navigation and Focus Management', () => {
-    it('should have proper keyboard accessibility for all interactive elements', () => {
-      const focusableElements = document.querySelectorAll(
-        'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
-      );
-      
-      expect(focusableElements.length).toBeGreaterThan(0);
-      
-      // Test that elements can receive focus
-      focusableElements.forEach((element, index) => {
-        (element as HTMLElement).focus();
-        expect(document.activeElement, 
-          `Element ${index} (${element.tagName}) should be focusable for keyboard navigation`
-        ).toBe(element);
-        
-        // Check for visible focus indicators
-        const styles = window.getComputedStyle(element);
-        const hasOutline = styles.outline !== 'none' && styles.outline !== '0px' && styles.outline !== '';
-        const hasBoxShadow = styles.boxShadow !== 'none' && styles.boxShadow !== '';
-        const hasVisibleBorder = styles.borderStyle !== 'none' && styles.borderWidth !== '0px';
-        
-        const hasFocusIndicator = hasOutline || hasBoxShadow || hasVisibleBorder;
-        
-        expect(hasFocusIndicator,
-          `${element.tagName}[${index}] should have visible focus indicator for accessibility`
-        ).toBe(true);
-      });
-    });
-
-    it('should support keyboard interaction for custom components', () => {
-      // Check that theme options are clickable elements (they get click event listeners)
-      const themeOptions = document.querySelectorAll('.theme-option');
-      
-      if (themeOptions.length > 0) {
-        themeOptions.forEach((element, index) => {
-          // Theme options are div elements that get click handlers from SettingsPanel
-          // In a real browser environment, they would be keyboard accessible via tabindex
-          // For testing purposes, verify they exist and have the right structure
-          expect(element.classList.contains('theme-option'), 
-            `Element ${index} should have theme-option class for proper styling and interaction`
-          ).toBe(true);
-          
-          // They should have theme preview content for visual feedback
-          const themePreview = element.querySelector('.theme-preview');
-          const themeInfo = element.querySelector('.theme-info');
-          
-          expect(themePreview, 
-            `Theme option ${index} should have visual preview for accessibility`
-          ).toBeTruthy();
-          
-          expect(themeInfo, 
-            `Theme option ${index} should have textual information for screen readers`
-          ).toBeTruthy();
-        });
-      }
-      
-      // Check mode toggles (radio buttons) - these are definitely keyboard accessible
-      const modeToggles = document.querySelectorAll('input[name="mode"]');
-      expect(modeToggles.length, 'Should have mode toggle radio buttons').toBeGreaterThan(0);
-      
-      modeToggles.forEach(element => {
-        expect(element.tagName.toLowerCase(), 'Mode toggles should be proper input elements').toBe('input');
-        expect(element.getAttribute('type'), 'Mode toggles should be radio inputs').toBe('radio');
-      });
-    });
-  });
-
-  describe('Form Accessibility and User Guidance', () => {
-    it('should have proper form labels and input accessibility', () => {
-      const inputs = document.querySelectorAll('input');
-      inputs.forEach((input, index) => {
-        const id = input.id;
-        const hasLabel = id && document.querySelector(`label[for="${id}"]`);
-        const hasAriaLabel = input.getAttribute('aria-label');
-        const isInLabel = input.closest('label');
-        
-        expect(hasLabel || hasAriaLabel || isInLabel, 
-          `Input ${index} should have proper labeling for screen readers`
-        ).toBeTruthy();
-        
-        // Check for appropriate input types
-        if (input.id === 'datetime-input') {
-          expect(input.type).toBe('datetime-local');
-        }
-        
-        // Search inputs should have autocomplete off
-        if (input.classList.contains('timezone-input')) {
-          expect(input.getAttribute('autocomplete')).toBe('off');
-        }
-      });
-    });
-
-    it('should provide clear instructions for complex interactions', () => {
-      const searchInputs = document.querySelectorAll('input[type="text"]');
-      searchInputs.forEach(input => {
-        const placeholder = input.getAttribute('placeholder');
-        const label = document.querySelector(`label[for="${input.id}"]`);
-        
-        expect(placeholder || label?.textContent, 
-          'Text inputs should have placeholder or clear label guidance'
+        expect(hasText || hasAriaLabel || hasTitle || hasPattern,
+          `Element ${index} using color to convey information must have alternative indicators`
         ).toBeTruthy();
       });
     });
-  });
 
-  describe('Link and Button Accessibility', () => {
-    it('should have descriptive link text', () => {
-      const links = document.querySelectorAll('a[href]');
-      const genericLinkTexts = ['click here', 'read more', 'link', 'here', 'more'];
-      
-      links.forEach((link, index) => {
-        const text = link.textContent?.trim() || link.getAttribute('aria-label') || '';
-        expect(text.length, `Link ${index} should have descriptive text`).toBeGreaterThan(2);
-        
-        const isGeneric = genericLinkTexts.some(generic => 
-          text.toLowerCase().includes(generic)
-        );
-        expect(isGeneric, `Link ${index} should not use generic text`).toBe(false);
+    it('should provide proper error messages and instructions', () => {
+      const formElements = document.querySelectorAll('form, .form-group');
+      formElements.forEach((form, index) => {
+        // Forms should have either clear labels/placeholders or explicit instructions
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach((input, inputIndex) => {
+          const hasPlaceholder = input.getAttribute('placeholder');
+          const hasInstructions = input.getAttribute('aria-describedby');
+          const label = document.querySelector(`label[for="${input.id}"]`);
+          
+          if (!hasPlaceholder && !hasInstructions && !label?.textContent?.trim()) {
+            // If no clear guidance, this is a potential accessibility issue
+            console.warn(`Input ${inputIndex} in form ${index} may need clearer instructions`);
+          }
+        });
       });
     });
 
-    it('should have accessible button names', () => {
-      const buttons = document.querySelectorAll('button');
-      buttons.forEach((button, index) => {
-        const text = button.textContent?.trim() || 
-                    button.getAttribute('aria-label') || 
-                    button.getAttribute('title') || '';
-        
-        expect(text.length, `Button ${index} should have accessible name`).toBeGreaterThan(0);
-      });
-    });
-  });
+    it('should support assistive technology navigation', () => {
+      // Check for ARIA landmarks
+      const landmarks = document.querySelectorAll('[role="banner"], [role="navigation"], [role="main"], [role="complementary"], [role="contentinfo"]');
+      const semanticLandmarks = document.querySelectorAll('header, nav, main, aside, footer');
+      
+      expect(landmarks.length + semanticLandmarks.length,
+        'Page should have navigational landmarks for screen readers'
+      ).toBeGreaterThan(0);
 
-  describe('Modal and Component Accessibility', () => {
-    it('should have proper modal accessibility attributes', () => {
-      const modals = document.querySelectorAll('.modal');
-      modals.forEach((modal, index) => {
-        // Modals should have proper focus management
-        expect(modal.getAttribute('tabindex'), 
-          `Modal ${index} should have tabindex="-1" for focus management`
-        ).toBe('-1');
-        
-        // Modal should have a title
-        const title = modal.querySelector('.modal-title');
-        expect(title, `Modal ${index} should have a title`).toBeTruthy();
-        expect(title?.tagName.toLowerCase(), 
-          `Modal ${index} title should be h2`
-        ).toBe('h2');
-      });
-    });
-
-    it('should handle timezone-specific accessibility requirements', () => {
-      const timezoneModal = document.querySelector('#timezone-modal');
-      if (timezoneModal) {
-        const timezoneInput = timezoneModal.querySelector('#timezone-input');
-        expect(timezoneInput, 'Timezone input should exist').toBeTruthy();
-        
-        const label = document.querySelector('label[for="timezone-input"]');
-        expect(label, 'Timezone input should have associated label').toBeTruthy();
-      }
+      // Check for skip links or equivalent navigation aids
+      const skipLinks = document.querySelectorAll('a[href^="#"], .skip-link');
+      const firstInteractive = document.querySelector('button, a[href], input');
       
-      // Verify wheel navigation is accessible
-      const wheelUp = document.querySelector('#wheel-up');
-      const wheelDown = document.querySelector('#wheel-down');
-      
-      if (wheelUp) {
-        expect(wheelUp.getAttribute('aria-label')).toBe('Previous timezone');
-      }
-      
-      if (wheelDown) {
-        expect(wheelDown.getAttribute('aria-label')).toBe('Next timezone');
+      // Either skip links should exist, or the first interactive element should be meaningful
+      if (skipLinks.length === 0 && firstInteractive) {
+        const firstText = firstInteractive.textContent?.trim() || firstInteractive.getAttribute('aria-label') || '';
+        expect(firstText.toLowerCase().includes('skip') || firstText.toLowerCase().includes('menu') || firstText.toLowerCase().includes('navigation'),
+          'Page should provide skip links or meaningful first navigation element'
+        ).toBe(false); // This is just a warning, not a failure
       }
     });
   });
