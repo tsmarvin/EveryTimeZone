@@ -6,7 +6,6 @@
  */
 
 import * as SunCalc from 'suncalc';
-import { Temporal } from '@js-temporal/polyfill';
 import { SettingsPanel } from './settings.js';
 
 // Temporal is available globally via the polyfill loaded in HTML
