@@ -300,6 +300,8 @@ p {
   transition: var(--transition);
   margin-top: var(--space-md);
   box-shadow: var(--shadow);
+  min-width: 44px; /* WCAG AAA touch target minimum */
+  min-height: 44px; /* WCAG AAA touch target minimum */
   position: relative;
   overflow: hidden;
 }
@@ -901,6 +903,8 @@ p {
   border-radius: 50%;
   width: 1.75rem;
   height: 1.75rem;
+  min-width: 44px; /* WCAG AAA touch target minimum */
+  min-height: 44px; /* WCAG AAA touch target minimum */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -960,6 +964,8 @@ p {
   border-radius: 50%;
   width: 2rem;
   height: 2rem;
+  min-width: 44px; /* WCAG AAA touch target minimum */
+  min-height: 44px; /* WCAG AAA touch target minimum */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1314,6 +1320,8 @@ p {
   border-radius: var(--border-radius);
   width: 3rem;
   height: 3rem;
+  min-width: 44px; /* WCAG AAA touch target minimum */
+  min-height: 44px; /* WCAG AAA touch target minimum */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1413,6 +1421,8 @@ p {
   justify-content: center;
   width: 2rem;
   height: 2rem;
+  min-width: 44px; /* WCAG AAA touch target minimum */
+  min-height: 44px; /* WCAG AAA touch target minimum */
 }
 
 .settings-close:hover {
