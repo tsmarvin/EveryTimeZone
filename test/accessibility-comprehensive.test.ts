@@ -7,13 +7,12 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { loadActualHTML } from './setup.js';
 import { AVAILABLE_THEMES, SettingsPanel, AppearanceSettings } from '../dist/scripts/settings.js';
 import { readFileSync } from 'fs';
-import { join } from 'path';
 
 /**
  * Extract responsive breakpoints from built CSS for accurate testing
  */
 function extractCSSBreakpoints(): { name: string; width: number; height: number }[] {
-  const cssPath = join(process.cwd(), 'dist', 'styles', 'styles.css');
+  const cssPath = './dist/styles/styles.css';
   const cssContent = readFileSync(cssPath, 'utf-8');
   
   // Extract media query breakpoints from CSS
@@ -30,18 +29,22 @@ function extractCSSBreakpoints(): { name: string; width: number; height: number 
   // Remove duplicates and sort
   const uniqueBreakpoints = [...new Set(breakpoints)].sort((a, b) => a - b);
   
-  // Create screen size configurations based on CSS breakpoints
-  const screenSizes = [
-    { name: 'Extra Small', width: 375, height: 667 }, // Below smallest breakpoint
-  ];
+  // Create screen size configurations based on actual CSS breakpoints only
+  const screenSizes: { name: string; width: number; height: number }[] = [];
   
+  // Add a mobile-first base size if no breakpoints below 400px
+  if (uniqueBreakpoints.length === 0 || uniqueBreakpoints[0] > 400) {
+    screenSizes.push({ name: 'Mobile Base', width: 375, height: 667 });
+  }
+  
+  // Create sizes based on actual CSS breakpoints
   uniqueBreakpoints.forEach((bp, index) => {
-    const names = ['Small', 'Medium', 'Large', 'Extra Large', 'Ultra Wide'];
+    const names = ['Small', 'Medium', 'Large', 'Extra Large', 'Ultra Wide', 'Super Wide'];
     if (index < names.length) {
       screenSizes.push({
         name: names[index],
         width: bp,
-        height: index < 2 ? 1024 : 768 + (index * 200) // Vary heights reasonably
+        height: bp < 768 ? 1024 : bp > 1200 ? 800 : 768 // Responsive height based on typical device ratios
       });
     }
   });
@@ -84,7 +87,7 @@ function getContrastRatio(color1: { r: number; g: number; b: number }, color2: {
 }
 
 /**
- * Parse color string to RGB object - supports rgb(), rgba(), hex formats
+ * Parse color string to RGB object - supports rgb(), rgba(), hex formats including 4 and 5 digit hex
  */
 function parseColor(colorStr: string): { r: number; g: number; b: number } | null {
   // Handle RGB/RGBA format: rgb(255, 255, 255) or rgba(255, 255, 255, 1)
@@ -97,8 +100,8 @@ function parseColor(colorStr: string): { r: number; g: number; b: number } | nul
     };
   }
   
-  // Handle hex format: #ffffff or #fff
-  const hexMatch = colorStr.match(/^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$/);
+  // Handle hex format: #ffffff, #fff, #ffff (4-digit), or #fffff (5-digit)
+  const hexMatch = colorStr.match(/^#([a-fA-F0-9]{3,8})$/);
   if (hexMatch) {
     const hex = hexMatch[1];
     if (hex.length === 3) {
@@ -108,8 +111,29 @@ function parseColor(colorStr: string): { r: number; g: number; b: number } | nul
         g: parseInt(hex[1] + hex[1], 16),
         b: parseInt(hex[2] + hex[2], 16)
       };
-    } else {
+    } else if (hex.length === 4) {
+      // 4-digit hex with alpha #ffff -> #ffffff (ignore alpha)
+      return {
+        r: parseInt(hex[0] + hex[0], 16),
+        g: parseInt(hex[1] + hex[1], 16),
+        b: parseInt(hex[2] + hex[2], 16)
+      };
+    } else if (hex.length === 5) {
+      // 5-digit hex (uncommon but valid) -> use first 3 components
+      return {
+        r: parseInt(hex.substring(0, 1) + hex.substring(0, 1), 16),
+        g: parseInt(hex.substring(1, 2) + hex.substring(1, 2), 16),
+        b: parseInt(hex.substring(2, 3) + hex.substring(2, 3), 16)
+      };
+    } else if (hex.length === 6) {
       // Full hex format #ffffff
+      return {
+        r: parseInt(hex.substring(0, 2), 16),
+        g: parseInt(hex.substring(2, 4), 16),
+        b: parseInt(hex.substring(4, 6), 16)
+      };
+    } else if (hex.length === 8) {
+      // 8-digit hex with alpha #ffffffff -> #ffffff (ignore alpha)
       return {
         r: parseInt(hex.substring(0, 2), 16),
         g: parseInt(hex.substring(2, 4), 16),
@@ -140,7 +164,7 @@ describe('WCAG AAA Accessibility Standards', () => {
   let settingsPanel: SettingsPanel;
 
   beforeEach(() => {
-    loadActualHTML(true); // Use built version for ALL accessibility testing
+    loadActualHTML(); // All tests use built version exclusively
     settingsPanel = new SettingsPanel();
   });
 

@@ -4,15 +4,13 @@
 
 import { beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'fs';
-import { join } from 'path';
 import { Temporal } from '@js-temporal/polyfill';
 
 /**
- * Load the actual HTML from the site for testing
- * @param useBuilt - Whether to use the built dist version (default: false for backward compatibility)
+ * Load the actual HTML from the built site for testing
  */
-export function loadActualHTML(useBuilt: boolean = false): void {
-  const htmlPath = join(process.cwd(), useBuilt ? 'dist' : 'src', 'index.html');
+export function loadActualHTML(): void {
+  const htmlPath = './dist/index.html';
   const htmlContent = readFileSync(htmlPath, 'utf-8');
   
   // Extract the body content from the HTML
@@ -123,17 +121,6 @@ delete (window as any).location;
 (window as any).location = {
   href: 'http://localhost:3000/',
   search: '',
-  assign: vi.fn(),
-  replace: vi.fn(),
-  reload: vi.fn(),
-  hash: '',
-  host: 'localhost:3000',
-  hostname: 'localhost',
-  origin: 'http://localhost:3000',
-  pathname: '/',
-  port: '3000',
-  protocol: 'http:',
-  ancestorOrigins: {} as DOMStringList,
 } as Location;
 
 // Setup per-test initialization
@@ -148,8 +135,8 @@ beforeEach(() => {
   matchMediaMock.mockClear();
 
   // Reset URL state to prevent test bleeding
-  (window as any).location.href = 'http://localhost:3000/';
-  (window as any).location.search = '';
+  window.location.href = 'http://localhost:3000/';
+  window.location.search = '';
 
   // Reset DOM
   document.head.innerHTML = '';
