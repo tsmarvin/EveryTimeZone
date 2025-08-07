@@ -4,21 +4,61 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadActualHTML } from './setup.js';
-import { AVAILABLE_THEMES, SettingsPanel, AppearanceSettings } from '../src/scripts/settings.js';
-
-// Screen sizes extracted from CSS media queries for responsive accessibility testing
-const SCREEN_SIZES = [
-  { name: 'Small Mobile', width: 375, height: 667 }, // Below 576px breakpoint
-  { name: 'Mobile', width: 576, height: 1024 }, // max-width: 576px
-  { name: 'Tablet', width: 768, height: 1024 }, // min-width: 768px
-  { name: 'Desktop', width: 992, height: 768 }, // min-width: 992px
-  { name: 'Large Desktop', width: 1400, height: 900 }, // min-width: 1400px
-  { name: 'Ultra-wide/TV', width: 1920, height: 1080 } // min-width: 1920px
-];
+import { loadActualHTML } from './setup.ts';
+import { AVAILABLE_THEMES, SettingsPanel, AppearanceSettings } from '../src/scripts/settings.ts';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 /**
- * Calculate relative luminance for WCAG color contrast
+ * Extract responsive breakpoints from CSS for accurate testing
+ */
+function extractCSSBreakpoints(): { name: string; width: number; height: number }[] {
+  const cssPath = join(process.cwd(), 'src', 'styles', 'styles.css');
+  const cssContent = readFileSync(cssPath, 'utf-8');
+  
+  // Extract media query breakpoints from CSS
+  const mediaQueries = cssContent.match(/@media[^{]+/g) || [];
+  const breakpoints: number[] = [];
+  
+  mediaQueries.forEach(query => {
+    const widthMatch = query.match(/(?:min-width|max-width):\s*(\d+)px/);
+    if (widthMatch) {
+      breakpoints.push(parseInt(widthMatch[1]));
+    }
+  });
+  
+  // Remove duplicates and sort
+  const uniqueBreakpoints = [...new Set(breakpoints)].sort((a, b) => a - b);
+  
+  // Create screen size configurations based on CSS breakpoints
+  const screenSizes = [
+    { name: 'Extra Small', width: 375, height: 667 }, // Below smallest breakpoint
+  ];
+  
+  uniqueBreakpoints.forEach((bp, index) => {
+    const names = ['Small', 'Medium', 'Large', 'Extra Large', 'Ultra Wide'];
+    if (index < names.length) {
+      screenSizes.push({
+        name: names[index],
+        width: bp,
+        height: index < 2 ? 1024 : 768 + (index * 200) // Vary heights reasonably
+      });
+    }
+  });
+  
+  return screenSizes;
+}
+
+// Screen sizes dynamically extracted from CSS media queries
+const SCREEN_SIZES = extractCSSBreakpoints();
+
+/**
+ * Calculate relative luminance for WCAG color contrast using official WCAG 2.1 formula
+ * Constants are from WCAG 2.1 specification:
+ * - 0.2126 for red component
+ * - 0.7152 for green component  
+ * - 0.0722 for blue component
+ * These represent the relative contributions of RGB to perceived brightness
  */
 function getRelativeLuminance(rgb: { r: number; g: number; b: number }): number {
   const { r, g, b } = rgb;
@@ -26,6 +66,7 @@ function getRelativeLuminance(rgb: { r: number; g: number; b: number }): number 
     c = c / 255;
     return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
   });
+  // WCAG 2.1 official luminance formula constants
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
 
@@ -74,7 +115,7 @@ describe('WCAG AAA Accessibility Standards', () => {
   let settingsPanel: SettingsPanel;
 
   beforeEach(() => {
-    loadActualHTML();
+    loadActualHTML(true); // Use built version for accessibility testing
     settingsPanel = new SettingsPanel();
   });
 
@@ -101,13 +142,17 @@ describe('WCAG AAA Accessibility Standards', () => {
           });
 
           it('should meet WCAG AAA color contrast requirements (7:1 for normal text)', () => {
-            const textElements = document.querySelectorAll('h1, h2, h3, p, button, a, label, .timezone-name');
+            // Test all text elements, not just a limited subset
+            const textElements = document.querySelectorAll('*');
             let contrastIssues: string[] = [];
 
             textElements.forEach((element, index) => {
               const styles = window.getComputedStyle(element);
               const textColor = styles.color;
               const backgroundColor = getComputedBackgroundColor(element);
+              
+              // Only test elements that actually have text content
+              if (!element.textContent?.trim()) return;
 
               if (textColor && backgroundColor) {
                 const textRGB = parseRGB(textColor);
@@ -115,9 +160,10 @@ describe('WCAG AAA Accessibility Standards', () => {
 
                 if (textRGB && bgRGB) {
                   const contrastRatio = getContrastRatio(textRGB, bgRGB);
-                  if (contrastRatio < 7.0) { // WCAG AAA requires 7:1 for normal text
+                  // WCAG AAA requires 7:1 for normal text (not 4.5:1 which is AA)
+                  if (contrastRatio < 7.0) {
                     contrastIssues.push(
-                      `${element.tagName}[${index}] contrast ratio ${contrastRatio.toFixed(2)}:1 is below WCAG AAA standard (7:1)`
+                      `${element.tagName}[${index}] "${element.textContent?.trim().substring(0, 20)}..." contrast ratio ${contrastRatio.toFixed(2)}:1 is below WCAG AAA standard (7:1)`
                     );
                   }
                 }
@@ -128,15 +174,19 @@ describe('WCAG AAA Accessibility Standards', () => {
           });
 
           it('should meet WCAG AAA large text contrast requirements (4.5:1)', () => {
-            const largeTextElements = document.querySelectorAll('h1, h2, .title, .large-text');
+            // Test all elements that might contain large text
+            const allElements = document.querySelectorAll('*');
             let contrastIssues: string[] = [];
 
-            largeTextElements.forEach((element, index) => {
+            allElements.forEach((element, index) => {
               const styles = window.getComputedStyle(element);
               const fontSize = parseFloat(styles.fontSize);
               const fontWeight = styles.fontWeight;
               
-              // Large text is 18pt+ or 14pt+ bold (roughly 24px+ or 18.5px+ bold)
+              // Only test elements with text content
+              if (!element.textContent?.trim()) return;
+              
+              // Large text is 18pt+ (24px+) or 14pt+ (18.5px+) bold according to WCAG
               const isLargeText = fontSize >= 24 || (fontSize >= 18.5 && (fontWeight === 'bold' || parseInt(fontWeight) >= 700));
               
               if (isLargeText) {
@@ -149,9 +199,10 @@ describe('WCAG AAA Accessibility Standards', () => {
 
                   if (textRGB && bgRGB) {
                     const contrastRatio = getContrastRatio(textRGB, bgRGB);
-                    if (contrastRatio < 4.5) { // WCAG AAA requires 4.5:1 for large text
+                    // WCAG AAA requires 4.5:1 for large text
+                    if (contrastRatio < 4.5) {
                       contrastIssues.push(
-                        `Large text ${element.tagName}[${index}] contrast ratio ${contrastRatio.toFixed(2)}:1 is below WCAG AAA standard (4.5:1)`
+                        `Large text ${element.tagName}[${index}] "${element.textContent?.trim().substring(0, 20)}..." contrast ratio ${contrastRatio.toFixed(2)}:1 is below WCAG AAA standard (4.5:1)`
                       );
                     }
                   }

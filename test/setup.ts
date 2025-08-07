@@ -9,9 +9,10 @@ import { Temporal } from '@js-temporal/polyfill';
 
 /**
  * Load the actual HTML from the site for testing
+ * @param useBuilt - Whether to use the built dist version (default: false for compatibility)
  */
-export function loadActualHTML(): void {
-  const htmlPath = join(process.cwd(), 'src', 'index.html');
+export function loadActualHTML(useBuilt: boolean = false): void {
+  const htmlPath = join(process.cwd(), useBuilt ? 'dist' : 'src', 'index.html');
   const htmlContent = readFileSync(htmlPath, 'utf-8');
   
   // Extract the body content from the HTML
@@ -125,7 +126,7 @@ delete (window as any).location;
   assign: vi.fn(),
   replace: vi.fn(),
   reload: vi.fn(),
-};
+} as unknown as Location;
 
 // Setup per-test initialization
 beforeEach(() => {
