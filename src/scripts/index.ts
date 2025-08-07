@@ -6,9 +6,8 @@
  */
 
 import * as SunCalc from 'suncalc';
+import { Temporal } from '@js-temporal/polyfill';
 import { SettingsPanel } from './settings.js';
-
-// Temporal polyfill is loaded globally via UMD script in HTML
 
 // Type definitions for timezone and timeline data structures
 
