@@ -12,13 +12,13 @@ import { Temporal } from '@js-temporal/polyfill';
 export function loadActualHTML(): void {
   const htmlPath = '/home/runner/work/EveryTimeZone/EveryTimeZone/dist/index.html';
   const htmlContent = readFileSync(htmlPath, 'utf-8');
-  
+
   // Extract the body content from the HTML
   const bodyMatch = htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i);
   if (bodyMatch) {
     document.body.innerHTML = bodyMatch[1];
   }
-  
+
   // Extract and add stylesheets and scripts to head for context
   const headMatch = htmlContent.match(/<head[^>]*>([\s\S]*)<\/head>/i);
   if (headMatch) {
@@ -27,7 +27,7 @@ export function loadActualHTML(): void {
     const cssLinks = headContent.match(/<link[^>]*rel="stylesheet"[^>]*>/gi) || [];
     const metaTags = headContent.match(/<meta[^>]*>/gi) || [];
     const title = headContent.match(/<title[^>]*>([^<]*)<\/title>/i);
-    
+
     document.head.innerHTML = [
       ...metaTags,
       ...(title ? [title[0]] : []),
@@ -154,7 +154,7 @@ afterEach(() => {
   // Clear all timers to prevent unhandled timeouts
   vi.clearAllTimers();
   vi.runOnlyPendingTimers();
-  
+
   // Remove all event listeners from window to prevent memory leaks
   const windowClone = { ...window };
   Object.getOwnPropertyNames(windowClone).forEach(prop => {

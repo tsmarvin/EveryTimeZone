@@ -2128,6 +2128,11 @@ p {
 
   /* Additional utility colors */
   --color-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Alpha value utilities */
+  --gray-medium-alpha: rgba(102, 102, 102, 0.2);
+  --golden-amber-alpha: rgba(245, 158, 11, 0.4);
+  --gray-alpha-60: rgba(55, 65, 81, 0.6);
   --color-focus-ring: rgba(79, 107, 179, 0.2);
   --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.1);
   --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -2197,20 +2202,32 @@ p {
   --color-text-muted: var(--gray-300);
   --color-text-tertiary: var(--gray-400);
   --color-bg-secondary: var(--gray-800);
-  --color-primary-alpha: rgba(102, 102, 102, 0.2);
+  --color-primary-alpha: var(--gray-medium-alpha);
+  
+  /* Daylight/Night hour styling */
+  --color-daylight-bg-from: var(--golden-yellow);
+  --color-daylight-bg-to: var(--golden-amber);
+  --color-daylight-text: var(--brown-dark);
+  --color-daylight-border: var(--golden-amber);
+  --color-daylight-border-alpha: var(--golden-amber-alpha);
+  --color-night-bg-from: var(--gray-750);
+  --color-night-bg-to: var(--gray-850);
+  --color-night-text: var(--gray-blue);
+  --color-night-border: var(--gray-750);
+  --color-night-border-alpha: var(--gray-alpha-60);
 }
 
 /* Default theme daylight/night overrides */
 .theme-default .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #78350f;
-  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.4);
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px var(--color-daylight-border-alpha);
 }
 
 .theme-default .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #374151, #1f2937);
-  color: #9ca3af;
-  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.6);
+  background: linear-gradient(135deg, var(--color-night-bg-from), var(--color-night-bg-to));
+  color: var(--color-night-text);
+  box-shadow: inset 0 0 0 1px var(--color-night-border-alpha);
 }
 
 .theme-default.light-theme {
@@ -2247,14 +2264,14 @@ p {
 
 /* Default theme light mode daylight/night overrides */
 .theme-default.light-theme .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #92400e;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.3);
 }
 
 .theme-default.light-theme .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #374151, #1f2937);
-  color: #d1d5db;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.4);
 }
 
@@ -2331,14 +2348,14 @@ p {
 
 /* Forest Harmony theme daylight/night overrides */
 .theme-forest-harmony .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #84cc16, #22c55e);
-  color: #14532d;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(132, 204, 22, 0.5);
 }
 
 .theme-forest-harmony .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #1a2e1a, #0a1a0a);
-  color: #86efac;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(26, 46, 26, 0.7);
 }
 
@@ -2376,14 +2393,14 @@ p {
 
 /* Forest Harmony theme light mode daylight/night overrides */
 .theme-forest-harmony.light-theme .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-  color: #14532d;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.3);
 }
 
 .theme-forest-harmony.light-theme .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #1f2937, #111827);
-  color: #86efac;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(31, 41, 55, 0.5);
 }
 
@@ -2460,14 +2477,14 @@ p {
 
 /* Neon Cyber theme daylight/night overrides */
 .theme-neon-cyber .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #a855f7, #ec4899);
-  color: #1a0b2e;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.5);
 }
 
 .theme-neon-cyber .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #1a0b2e, #0f051a);
-  color: #c4b5fd;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(26, 11, 46, 0.7);
 }
 
@@ -2505,14 +2522,14 @@ p {
 
 /* Neon Cyber theme light mode daylight/night overrides */
 .theme-neon-cyber.light-theme .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
-  color: #5b21b6;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(147, 51, 234, 0.3);
 }
 
 .theme-neon-cyber.light-theme .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #374151, #111827);
-  color: #c4b5fd;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.5);
 }
 
@@ -2589,14 +2606,14 @@ p {
 
 /* Ocean Breeze theme daylight/night overrides */
 .theme-ocean-breeze .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #06b6d4, #14b8a6);
-  color: #083344;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.5);
 }
 
 .theme-ocean-breeze .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #0a1a2a, #051923);
-  color: #67e8f9;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(10, 26, 42, 0.7);
 }
 
@@ -2634,14 +2651,14 @@ p {
 
 /* Ocean Breeze theme light mode daylight/night overrides */
 .theme-ocean-breeze.light-theme .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #cffafe, #a5f3fc);
-  color: #0c4a6e;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.3);
 }
 
 .theme-ocean-breeze.light-theme .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #1e293b, #0f172a);
-  color: #67e8f9;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.5);
 }
 
@@ -2718,14 +2735,14 @@ p {
 
 /* Original theme daylight/night overrides */
 .theme-original .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #8ab8a3, #7c9fb8);
-  color: #2a3a4a;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(138, 184, 163, 0.5);
 }
 
 .theme-original .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #3a4a5a, #2a3a4a);
-  color: #b4c6d3;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(58, 74, 90, 0.7);
 }
 
@@ -2763,14 +2780,14 @@ p {
 
 /* Original theme light mode daylight/night overrides */
 .theme-original.light-theme .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #e6f0ea, #d9e9e3);
-  color: #2a3a4a;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(138, 184, 163, 0.3);
 }
 
 .theme-original.light-theme .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #374151, #1f2937);
-  color: #b4c6d3;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.4);
 }
 
@@ -2847,15 +2864,15 @@ p {
 
 /* Sunset Warmth theme daylight/night overrides */
 .theme-sunset-warmth .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #ffab00, #ff6b35);
-  color: #000000;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   font-weight: 600;
   box-shadow: inset 0 0 0 1px rgba(255, 171, 0, 0.5);
 }
 
 .theme-sunset-warmth .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #3e2723, #2a1810);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   font-weight: 500;
   box-shadow: inset 0 0 0 1px rgba(62, 39, 35, 0.7);
 }
@@ -2894,15 +2911,15 @@ p {
 
 /* Sunset Warmth theme light mode daylight/night overrides */
 .theme-sunset-warmth.light-theme .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #fff8e1, #ffe0b2);
-  color: #8b4513;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   font-weight: 600;
   box-shadow: inset 0 0 0 1px rgba(255, 107, 53, 0.3);
 }
 
 .theme-sunset-warmth.light-theme .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #5d4037, #3e2723);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
   font-weight: 500;
   box-shadow: inset 0 0 0 1px rgba(93, 64, 55, 0.5);
 }
