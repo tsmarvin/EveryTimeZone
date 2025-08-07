@@ -481,7 +481,7 @@ p {
 }
 
 .timeline-row.user-timezone {
-  background: linear-gradient(135deg, rgba(79, 107, 179, 0.1), rgba(74, 139, 107, 0.1));
+  background: var(--color-surface-accent);
   border: 2px solid var(--color-primary);
   border-left: none;
   border-right: none;
@@ -559,17 +559,14 @@ p {
 }
 
 .timeline-hour.working-hours {
-  background-color: rgba(74, 139, 107, 0.1);
+  background-color: var(--color-accent-subtle);
   color: var(--color-secondary);
   font-weight: 600;
 }
 
 /* Daylight and Night Indicators */
 .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #78350f;
   font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.4);
   border-radius: 4px;
   position: relative;
 }
@@ -585,10 +582,7 @@ p {
 }
 
 .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #1e293b, #0f172a);
-  color: #94a3b8;
   font-weight: 500;
-  box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.6);
   border-radius: 4px;
   position: relative;
 }
@@ -628,45 +622,29 @@ p {
 
 /* Enhanced styling for sunrise/sunset transition hours */
 .timeline-hour.sunrise-hour {
-  border: 2px solid rgba(255, 193, 7, 0.8);
-  box-shadow:
-    inset 0 0 0 1px rgba(245, 158, 11, 0.4),
-    0 0 8px rgba(255, 193, 7, 0.3);
   animation: sunrise-glow 2s ease-in-out infinite alternate;
 }
 
 .timeline-hour.sunset-hour {
-  border: 2px solid rgba(255, 87, 34, 0.8);
-  box-shadow:
-    inset 0 0 0 1px rgba(245, 158, 11, 0.4),
-    0 0 8px rgba(255, 87, 34, 0.3);
   animation: sunset-glow 2s ease-in-out infinite alternate;
 }
 
 /* Subtle glow animations for sunrise/sunset transitions */
 @keyframes sunrise-glow {
   from {
-    box-shadow:
-      inset 0 0 0 1px rgba(245, 158, 11, 0.4),
-      0 0 8px rgba(255, 193, 7, 0.2);
+    opacity: 0.9;
   }
   to {
-    box-shadow:
-      inset 0 0 0 1px rgba(245, 158, 11, 0.6),
-      0 0 12px rgba(255, 193, 7, 0.4);
+    opacity: 1;
   }
 }
 
 @keyframes sunset-glow {
   from {
-    box-shadow:
-      inset 0 0 0 1px rgba(245, 158, 11, 0.4),
-      0 0 8px rgba(255, 87, 34, 0.2);
+    opacity: 0.9;
   }
   to {
-    box-shadow:
-      inset 0 0 0 1px rgba(245, 158, 11, 0.6),
-      0 0 12px rgba(255, 87, 34, 0.4);
+    opacity: 1;
   }
 }
 
@@ -677,30 +655,17 @@ p {
   transition: transform 0.2s ease-in-out;
 }
 
-/* Light theme adjustments for daylight/night indicators */
-.light-theme .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #92400e;
-  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.3);
-}
-
-.light-theme .timeline-hour.night-hour {
-  background: linear-gradient(135deg, #374151, #1f2937);
-  color: #d1d5db;
-  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.4);
-}
-
 /* Current hour styling with higher specificity to override daylight/night indicators */
 .timeline-hour.current-hour,
 .timeline-hour.current-hour.daylight-hour,
 .timeline-hour.current-hour.night-hour,
 .timeline-hour.current-hour.sunrise-hour,
 .timeline-hour.current-hour.sunset-hour {
-  background: linear-gradient(135deg, var(--color-accent), rgba(220, 38, 38, 0.8)) !important;
-  color: white !important;
+  background: var(--color-current-hour) !important;
+  color: var(--pure-white) !important;
   font-weight: 700;
   position: relative;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 0 0 2px var(--color-current-hour-border);
 }
 
 .timeline-hour.current-hour::after,
@@ -836,7 +801,7 @@ p {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-overlay);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -943,7 +908,7 @@ p {
 .timezone-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(79, 107, 179, 0.2);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
 .timezone-wheel-container {
@@ -1212,7 +1177,7 @@ p {
 .field-group input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(79, 107, 179, 0.2);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
 .form-actions {
@@ -1337,12 +1302,12 @@ p {
   background: var(--color-header-button-hover-bg);
   border-color: var(--color-header-button-hover-border);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-elevated);
 }
 
 .appearance-settings:active {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-subtle);
 }
 
 .appearance-settings-icon {
@@ -1357,7 +1322,7 @@ p {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-overlay);
   backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
@@ -1630,7 +1595,7 @@ p {
   background: var(--color-primary);
   border-radius: 18px;
   transition: var(--transition);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-subtle);
 }
 
 /* When checkbox is checked (24-hour format) */
@@ -1968,7 +1933,7 @@ p {
 
   .timeline-container {
     box-shadow: none;
-    border: 1px solid #000;
+    border: 1px solid var(--pure-black);
   }
 
   .timeline-row.user-timezone {
@@ -1976,8 +1941,8 @@ p {
   }
 
   .timeline-hour.current-hour {
-    background: #666 !important;
-    color: white !important;
+    background: var(--gray-medium-light) !important;
+    color: var(--pure-white) !important;
   }
 }
 
@@ -2160,6 +2125,12 @@ p {
   --cream-light: #fde68a;
   --cream-pale: #fef3c7;
   --brown-medium: #92400e;
+
+  /* Additional utility colors */
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-focus-ring: rgba(79, 107, 179, 0.2);
+  --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* ============================================================================
@@ -2213,6 +2184,20 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(153, 153, 153, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(102, 102, 102, 0.1);
+  --color-accent-subtle: rgba(102, 102, 102, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--gray-300);
+  --color-secondary-hover: var(--gray-200);
+  --color-header-button-hover-bg: rgba(102, 102, 102, 0.4);
+  --color-header-button-hover-border: rgba(102, 102, 102, 0.6);
+  --color-text-muted: var(--gray-300);
+  --color-text-tertiary: var(--gray-400);
+  --color-bg-secondary: var(--gray-800);
+  --color-primary-alpha: rgba(102, 102, 102, 0.2);
 }
 
 /* Default theme daylight/night overrides */

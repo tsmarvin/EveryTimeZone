@@ -291,8 +291,8 @@ describe('WCAG AAA Accessibility Standards', () => {
               });
 
               it('should meet WCAG AAA color contrast requirements (7:1 for normal text)', () => {
-                // Test only relevant text elements for better performance
-                const textElements = document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, div, button, a, label, .timezone-name, .hour-cell, .settings-section-title');
+                // Test all text elements for complete accessibility coverage
+                const textElements = document.querySelectorAll('*');
                 let contrastIssues: string[] = [];
 
                 textElements.forEach((element, index) => {
@@ -300,8 +300,8 @@ describe('WCAG AAA Accessibility Standards', () => {
                   const textColor = styles.color;
                   const backgroundColor = getComputedBackgroundColor(element);
                   
-                  // Only test elements that actually have text content and are visible
-                  if (!element.textContent?.trim() || styles.display === 'none' || styles.visibility === 'hidden') return;
+                  // Test all elements including hidden ones for screen reader compatibility
+                  if (!element.textContent?.trim()) return;
 
                   if (textColor && backgroundColor) {
                     const textRGB = parseColor(textColor);
@@ -323,8 +323,8 @@ describe('WCAG AAA Accessibility Standards', () => {
               });
 
               it('should meet WCAG AAA large text contrast requirements (4.5:1)', () => {
-                // Test only relevant elements that could have large text
-                const allElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, .large-text, button, .timezone-name, p, span, div');
+                // Test all elements for complete accessibility coverage
+                const allElements = document.querySelectorAll('*');
                 let contrastIssues: string[] = [];
 
                 allElements.forEach((element, index) => {
@@ -332,8 +332,7 @@ describe('WCAG AAA Accessibility Standards', () => {
                   const fontSize = parseFloat(styles.fontSize);
                   const fontWeight = styles.fontWeight;
                   
-                  // Only test elements with text content and are visible
-                  if (!element.textContent?.trim() || styles.display === 'none' || styles.visibility === 'hidden') return;
+                  // Test all elements including hidden ones for screen reader compatibility  
                   if (!element.textContent?.trim()) return;
                   
                   // Large text is 18pt+ (24px+) or 14pt+ (18.5px+) bold according to WCAG

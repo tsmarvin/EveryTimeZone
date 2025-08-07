@@ -116,7 +116,7 @@ Object.defineProperty(document, 'readyState', {
   configurable: true,
 });
 
-// Mock URL and history  
+// Mock URL and history
 delete (window as any).location;
 (window as any).location = {
   href: 'http://localhost:3000/',
