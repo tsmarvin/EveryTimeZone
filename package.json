@@ -51,6 +51,7 @@
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
     "@types/suncalc": "^1.9.2",
+    "js-yaml": "^4.1.0",
     "suncalc": "^1.9.0"
   }
 }
