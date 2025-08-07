@@ -60,6 +60,19 @@
   box-sizing: border-box;
 }
 
+/* Accessibility utility classes */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 html {
   font-size: 16px;
   line-height: 1.6;
@@ -588,6 +601,80 @@ p {
   pointer-events: none;
 }
 
+/* Sunrise and Sunset Transition Hour Indicators */
+.timeline-hour.sunrise-hour::after {
+  content: '🔆';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 12px;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.timeline-hour.sunset-hour::after {
+  content: '🔅';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 12px;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Enhanced styling for sunrise/sunset transition hours */
+.timeline-hour.sunrise-hour {
+  border: 2px solid rgba(255, 193, 7, 0.8);
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 158, 11, 0.4),
+    0 0 8px rgba(255, 193, 7, 0.3);
+  animation: sunrise-glow 2s ease-in-out infinite alternate;
+}
+
+.timeline-hour.sunset-hour {
+  border: 2px solid rgba(255, 87, 34, 0.8);
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 158, 11, 0.4),
+    0 0 8px rgba(255, 87, 34, 0.3);
+  animation: sunset-glow 2s ease-in-out infinite alternate;
+}
+
+/* Subtle glow animations for sunrise/sunset transitions */
+@keyframes sunrise-glow {
+  from {
+    box-shadow:
+      inset 0 0 0 1px rgba(245, 158, 11, 0.4),
+      0 0 8px rgba(255, 193, 7, 0.2);
+  }
+  to {
+    box-shadow:
+      inset 0 0 0 1px rgba(245, 158, 11, 0.6),
+      0 0 12px rgba(255, 193, 7, 0.4);
+  }
+}
+
+@keyframes sunset-glow {
+  from {
+    box-shadow:
+      inset 0 0 0 1px rgba(245, 158, 11, 0.4),
+      0 0 8px rgba(255, 87, 34, 0.2);
+  }
+  to {
+    box-shadow:
+      inset 0 0 0 1px rgba(245, 158, 11, 0.6),
+      0 0 12px rgba(255, 87, 34, 0.4);
+  }
+}
+
+/* Tooltip enhancements for sunrise/sunset hours */
+.timeline-hour.sunrise-hour:hover,
+.timeline-hour.sunset-hour:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease-in-out;
+}
+
 /* Light theme adjustments for daylight/night indicators */
 .light-theme .timeline-hour.daylight-hour {
   background: linear-gradient(135deg, #fef3c7, #fde68a);
@@ -604,7 +691,9 @@ p {
 /* Current hour styling with higher specificity to override daylight/night indicators */
 .timeline-hour.current-hour,
 .timeline-hour.current-hour.daylight-hour,
-.timeline-hour.current-hour.night-hour {
+.timeline-hour.current-hour.night-hour,
+.timeline-hour.current-hour.sunrise-hour,
+.timeline-hour.current-hour.sunset-hour {
   background: linear-gradient(135deg, var(--color-accent), rgba(220, 38, 38, 0.8)) !important;
   color: white !important;
   font-weight: 700;
@@ -627,14 +716,61 @@ p {
   border-top: 8px solid var(--color-accent);
 }
 
+/* Preserve sunrise/sunset icons on current hour cells by using ::before for the arrow when combined */
+.timeline-hour.current-hour.sunrise-hour::after {
+  content: '🔆';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 12px;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 3;
+  border: none;
+  width: auto;
+  height: auto;
+  transform: none;
+}
+
+.timeline-hour.current-hour.sunset-hour::after {
+  content: '🔅';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 12px;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 3;
+  border: none;
+  width: auto;
+  height: auto;
+  transform: none;
+}
+
+/* Add arrow indicator for current hour using ::before when it's also sunrise/sunset */
+.timeline-hour.current-hour.sunrise-hour::before,
+.timeline-hour.current-hour.sunset-hour::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--color-accent);
+  z-index: 3;
+}
+
 /* Date Transition Styling */
 .timeline-hour.date-transition {
   flex-direction: column;
   padding: var(--space-xs) 2px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  background: var(--color-surface);
   color: var(--color-text);
   font-weight: 600;
-  border: 2px solid var(--color-accent);
+  border: 1px solid var(--color-border);
   position: relative;
   min-height: 60px;
 }
@@ -646,6 +782,7 @@ p {
   margin-bottom: 2px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  color: var(--color-text-secondary);
 }
 
 .time-display {
@@ -653,32 +790,41 @@ p {
   font-family: 'Courier New', monospace;
   font-weight: 600;
   line-height: 1;
+  color: var(--color-text);
 }
 
 /* Date transition styling that overrides daylight/night indicators */
 .timeline-hour.date-transition.daylight-hour,
 .timeline-hour.date-transition.night-hour {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+  background: var(--color-surface) !important;
   color: var(--color-text) !important;
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 255, 255, 0.3),
-    0 0 0 2px var(--color-accent);
+  border: 1px solid var(--color-border) !important;
+  box-shadow: none !important;
+}
+
+.timeline-hour.date-transition.daylight-hour .date-display,
+.timeline-hour.date-transition.night-hour .date-display {
+  color: var(--color-text-secondary) !important;
+}
+
+.timeline-hour.date-transition.daylight-hour .time-display,
+.timeline-hour.date-transition.night-hour .time-display {
+  color: var(--color-text) !important;
 }
 
 /* Light theme adjustments for date transitions */
 .light-theme .timeline-hour.date-transition {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  background: var(--color-surface);
   color: var(--color-text);
-  border-color: var(--color-accent);
+  border-color: var(--color-border);
 }
 
 .light-theme .timeline-hour.date-transition.daylight-hour,
 .light-theme .timeline-hour.date-transition.night-hour {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+  background: var(--color-surface) !important;
   color: var(--color-text) !important;
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 255, 255, 0.4),
-    0 0 0 2px var(--color-accent);
+  border: 1px solid var(--color-border) !important;
+  box-shadow: none !important;
 }
 
 /* Timezone Selection Modal */

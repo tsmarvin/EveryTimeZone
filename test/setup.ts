@@ -4,14 +4,13 @@
 
 import { beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'fs';
-import { join } from 'path';
 import { Temporal } from '@js-temporal/polyfill';
 
 /**
- * Load the actual HTML from the site for testing
+ * Load the actual HTML from the built site for testing
  */
 export function loadActualHTML(): void {
-  const htmlPath = join(process.cwd(), 'src', 'index.html');
+  const htmlPath = './dist/index.html';
   const htmlContent = readFileSync(htmlPath, 'utf-8');
   
   // Extract the body content from the HTML
@@ -117,9 +116,9 @@ Object.defineProperty(document, 'readyState', {
   configurable: true,
 });
 
-// Mock URL and history
+// Mock URL and history  
 delete (window as any).location;
-window.location = {
+(window as any).location = {
   href: 'http://localhost:3000/',
   search: '',
 } as Location;
