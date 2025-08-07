@@ -9,6 +9,15 @@ import * as SunCalc from 'suncalc';
 import { Temporal } from '@js-temporal/polyfill';
 import { SettingsPanel } from './settings.js';
 
+// Temporal is available globally via the polyfill loaded in HTML
+declare global {
+  interface Window {
+    Temporal: typeof import('@js-temporal/polyfill').Temporal;
+  }
+}
+
+const Temporal = window.Temporal;
+
 // Type definitions for timezone and timeline data structures
 
 /** Daylight calculation data for a specific timezone and time */
