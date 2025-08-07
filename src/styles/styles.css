@@ -2313,6 +2313,20 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(132, 204, 22, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(34, 197, 94, 0.1);
+  --color-accent-subtle: rgba(34, 197, 94, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--forest-bright);
+  --color-secondary-hover: var(--forest-lime);
+  --color-header-button-hover-bg: rgba(34, 197, 94, 0.4);
+  --color-header-button-hover-border: rgba(34, 197, 94, 0.6);
+  --color-text-muted: var(--forest-light);
+  --color-text-tertiary: var(--forest-spring);
+  --color-bg-secondary: var(--forest-medium-green);
+  --color-primary-alpha: rgba(34, 197, 94, 0.2);
 }
 
 /* Forest Harmony theme daylight/night overrides */
@@ -2428,6 +2442,20 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(189, 0, 255, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(0, 212, 255, 0.1);
+  --color-accent-subtle: rgba(0, 212, 255, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--cyber-blue);
+  --color-secondary-hover: var(--cyber-pink);
+  --color-header-button-hover-bg: rgba(0, 212, 255, 0.4);
+  --color-header-button-hover-border: rgba(0, 212, 255, 0.6);
+  --color-text-muted: var(--cyber-light-blue);
+  --color-text-tertiary: var(--cyber-cyan-light);
+  --color-bg-secondary: var(--cyber-medium-dark);
+  --color-primary-alpha: rgba(0, 212, 255, 0.2);
 }
 
 /* Neon Cyber theme daylight/night overrides */
@@ -2543,6 +2571,20 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(20, 184, 166, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(6, 182, 212, 0.1);
+  --color-accent-subtle: rgba(6, 182, 212, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--ocean-blue);
+  --color-secondary-hover: var(--ocean-teal-dark);
+  --color-header-button-hover-bg: rgba(6, 182, 212, 0.4);
+  --color-header-button-hover-border: rgba(6, 182, 212, 0.6);
+  --color-text-muted: var(--ocean-cyan-light);
+  --color-text-tertiary: var(--ocean-cyan-light);
+  --color-bg-secondary: var(--ocean-medium-blue);
+  --color-primary-alpha: rgba(6, 182, 212, 0.2);
 }
 
 /* Ocean Breeze theme daylight/night overrides */
@@ -2658,6 +2700,20 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(138, 184, 163, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(124, 159, 184, 0.1);
+  --color-accent-subtle: rgba(124, 159, 184, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--original-steel);
+  --color-secondary-hover: var(--original-sage-blue);
+  --color-header-button-hover-bg: rgba(124, 159, 184, 0.4);
+  --color-header-button-hover-border: rgba(124, 159, 184, 0.6);
+  --color-text-muted: var(--original-sky);
+  --color-text-tertiary: var(--original-sky);
+  --color-bg-secondary: var(--original-surface);
+  --color-primary-alpha: rgba(124, 159, 184, 0.2);
 }
 
 /* Original theme daylight/night overrides */
@@ -2773,6 +2829,20 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 171, 0, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(255, 107, 53, 0.1);
+  --color-accent-subtle: rgba(255, 107, 53, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--sunset-orange-dark);
+  --color-secondary-hover: var(--sunset-deep-red);
+  --color-header-button-hover-bg: rgba(255, 107, 53, 0.4);
+  --color-header-button-hover-border: rgba(255, 107, 53, 0.6);
+  --color-text-muted: var(--sunset-cream);
+  --color-text-tertiary: var(--sunset-peach);
+  --color-bg-secondary: var(--sunset-surface);
+  --color-primary-alpha: rgba(255, 107, 53, 0.2);
 }
 
 /* Sunset Warmth theme daylight/night overrides */
