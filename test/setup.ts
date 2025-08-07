@@ -9,9 +9,8 @@ import { Temporal } from '@js-temporal/polyfill';
 
 /**
  * Load the actual HTML from the site for testing
- * @param useBuilt - Whether to use the built dist version (default: false for compatibility)
  */
-export function loadActualHTML(useBuilt: boolean = false): void {
+export function loadActualHTML(useBuilt: boolean = true): void {
   const htmlPath = join(process.cwd(), useBuilt ? 'dist' : 'src', 'index.html');
   const htmlContent = readFileSync(htmlPath, 'utf-8');
   
@@ -118,7 +117,7 @@ Object.defineProperty(document, 'readyState', {
   configurable: true,
 });
 
-// Mock URL and history
+// Mock URL and history  
 delete (window as any).location;
 (window as any).location = {
   href: 'http://localhost:3000/',
@@ -126,7 +125,15 @@ delete (window as any).location;
   assign: vi.fn(),
   replace: vi.fn(),
   reload: vi.fn(),
-} as unknown as Location;
+  hash: '',
+  host: 'localhost:3000',
+  hostname: 'localhost',
+  origin: 'http://localhost:3000',
+  pathname: '/',
+  port: '3000',
+  protocol: 'http:',
+  ancestorOrigins: {} as DOMStringList,
+} as Location;
 
 // Setup per-test initialization
 beforeEach(() => {
