@@ -4,6 +4,7 @@
     "module": "ES2022",
     "moduleResolution": "node",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "allowSyntheticDefaultImports": true,
 
     "allowJs": true,
     "outDir": "./dist",
