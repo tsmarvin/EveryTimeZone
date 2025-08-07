@@ -10,7 +10,7 @@ import { Temporal } from '@js-temporal/polyfill';
  * Load the actual HTML from the built site for testing
  */
 export function loadActualHTML(): void {
-  const htmlPath = './dist/index.html';
+  const htmlPath = '/home/runner/work/EveryTimeZone/EveryTimeZone/dist/index.html';
   const htmlContent = readFileSync(htmlPath, 'utf-8');
   
   // Extract the body content from the HTML
