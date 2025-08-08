@@ -5,17 +5,20 @@
  * user interactions, and daylight calculations using SunCalc.
  */
 
-import * as SunCalc from 'suncalc';
 import { SettingsPanel } from './settings.js';
 
 // Temporal is available globally via the polyfill loaded in HTML
 declare global {
   interface Window {
     Temporal: typeof import('@js-temporal/polyfill').Temporal;
+    SunCalc: {
+      getTimes: (date: Date, latitude: number, longitude: number) => { sunrise: Date; sunset: Date };
+    }; // SunCalc library is loaded globally
   }
 }
 
 const Temporal = window.Temporal;
+const SunCalc = window.SunCalc;
 
 // Type definitions for timezone and timeline data structures
 
@@ -2100,6 +2103,9 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'America/Anchorage': { latitude: 61.2181, longitude: -149.9003, city: 'Anchorage' },
   'America/Toronto': { latitude: 43.6532, longitude: -79.3832, city: 'Toronto' },
   'America/Mexico_City': { latitude: 19.4326, longitude: -99.1332, city: 'Mexico City' },
+  'America/Hermosillo': { latitude: 29.0729, longitude: -110.9559, city: 'Hermosillo' },
+  'America/Bahia_Banderas': { latitude: 20.7039, longitude: -105.34, city: 'Bahia Banderas' },
+  'Pacific/Gambier': { latitude: -23.12, longitude: -134.97, city: 'Gambier Islands' },
 
   // Europe - Major populated cities
   'Europe/London': { latitude: 51.5074, longitude: -0.1278, city: 'London' },
@@ -2109,6 +2115,13 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'Europe/Madrid': { latitude: 40.4168, longitude: -3.7038, city: 'Madrid' },
   'Europe/Moscow': { latitude: 55.7558, longitude: 37.6176, city: 'Moscow' },
 
+  // Additional timezone coordinates for common timezones
+  'America/Argentina/La_Rioja': { latitude: -29.4315, longitude: -66.8506, city: 'La Rioja' },
+  'America/Argentina/Buenos_Aires': { latitude: -34.6118, longitude: -58.396, city: 'Buenos Aires' },
+  'America/Argentina/Cordoba': { latitude: -31.4201, longitude: -64.1888, city: 'Córdoba' },
+  'Etc/UTC': { latitude: 51.4769, longitude: -0.0005, city: 'Greenwich' }, // Use Greenwich for UTC
+  UTC: { latitude: 51.4769, longitude: -0.0005, city: 'Greenwich' }, // Use Greenwich for UTC
+
   // Asia - Major populated cities
   'Asia/Tokyo': { latitude: 35.6762, longitude: 139.6503, city: 'Tokyo' },
   'Asia/Shanghai': { latitude: 31.2304, longitude: 121.4737, city: 'Shanghai' },
@@ -2117,6 +2130,8 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'Asia/Seoul': { latitude: 37.5665, longitude: 126.978, city: 'Seoul' },
   'Asia/Kolkata': { latitude: 22.5726, longitude: 88.3639, city: 'Kolkata' },
   'Asia/Dubai': { latitude: 25.2048, longitude: 55.2708, city: 'Dubai' },
+  'Asia/Yerevan': { latitude: 40.1792, longitude: 44.4991, city: 'Yerevan' },
+  'Asia/Anadyr': { latitude: 64.7333, longitude: 177.5067, city: 'Anadyr' },
 
   // Australia/Pacific - Major populated cities
   'Australia/Sydney': { latitude: -33.8688, longitude: 151.2093, city: 'Sydney' },
@@ -2208,18 +2223,35 @@ function isHourInDaylight(timezone: TimeZone, hourDate: Date): boolean {
   const { latitude, longitude } = coordinates;
 
   try {
-    // Get sun times for the date at the coordinates
-    const sunTimes = SunCalc.getTimes(hourDate, latitude, longitude);
+    // Extract the calendar date from hourDate (year, month, day)
+    // hourDate represents local time in the timezone, created through offset arithmetic
+    const year = hourDate.getFullYear();
+    const month = hourDate.getMonth();
+    const day = hourDate.getDate();
+    const hours = hourDate.getHours();
+    const minutes = hourDate.getMinutes();
 
-    // Convert to local time in the timezone
-    const sunriseLocal = new Date(sunTimes.sunrise.toLocaleString('en-US', { timeZone: timezone.iana }));
-    const sunsetLocal = new Date(sunTimes.sunset.toLocaleString('en-US', { timeZone: timezone.iana }));
-    const hourLocal = new Date(hourDate.toLocaleString('en-US', { timeZone: timezone.iana }));
+    // Create a proper UTC date for the calendar date to pass to SunCalc
+    const calendarDate = new Date(Date.UTC(year, month, day, 12, 0, 0)); // Use noon UTC for the date
 
-    // Check if the hour is between sunrise and sunset
-    return hourLocal >= sunriseLocal && hourLocal <= sunsetLocal;
-  } catch {
+    // Get sun times for this calendar date at the coordinates (returns UTC times)
+    const sunTimes = SunCalc.getTimes(calendarDate, latitude, longitude);
+
+    // Now we need to convert the hourDate (which represents local time) to UTC for comparison
+    // The hourDate was created with offset arithmetic, so it's not a true UTC time
+    // We need to create the actual UTC time that corresponds to this local time
+
+    // Create a UTC date representing the same wall-clock time as hourDate
+    const utcWallClock = new Date(Date.UTC(year, month, day, hours, minutes));
+
+    // Adjust by timezone offset to get the actual UTC time
+    const actualUTC = new Date(utcWallClock.getTime() - timezone.offset * 60 * 60 * 1000);
+
+    // Compare the actual UTC time with sunrise/sunset UTC times
+    return actualUTC >= sunTimes.sunrise && actualUTC <= sunTimes.sunset;
+  } catch (error) {
     // Fallback to simple calculation if SunCalc fails
+    console.warn(`SunCalc failed for timezone ${timezone.iana}:`, error);
     return simpleIsDaylight(coordinates.latitude, hourDate);
   }
 }

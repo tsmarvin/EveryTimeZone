@@ -571,15 +571,7 @@ p {
   position: relative;
 }
 
-.timeline-hour.daylight-hour::before {
-  content: '☀️';
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  font-size: 10px;
-  opacity: 0.7;
-  pointer-events: none;
-}
+/* Removed redundant day emoji - styling now handled through background gradients only */
 
 .timeline-hour.night-hour {
   font-weight: 500;
@@ -587,15 +579,7 @@ p {
   position: relative;
 }
 
-.timeline-hour.night-hour::before {
-  content: '🌙';
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  font-size: 10px;
-  opacity: 0.7;
-  pointer-events: none;
-}
+/* Removed redundant night emoji - styling now handled through background gradients only */
 
 /* Sunrise and Sunset Transition Hour Indicators */
 .timeline-hour.sunrise-hour::after {
@@ -2128,7 +2112,7 @@ p {
 
   /* Additional utility colors */
   --color-overlay: rgba(0, 0, 0, 0.5);
-  
+
   /* Alpha value utilities */
   --gray-medium-alpha: rgba(102, 102, 102, 0.2);
   --golden-amber-alpha: rgba(245, 158, 11, 0.4);
@@ -2203,7 +2187,7 @@ p {
   --color-text-tertiary: var(--gray-400);
   --color-bg-secondary: var(--gray-800);
   --color-primary-alpha: var(--gray-medium-alpha);
-  
+
   /* Daylight/Night hour styling */
   --color-daylight-bg-from: var(--golden-yellow);
   --color-daylight-bg-to: var(--golden-amber);
