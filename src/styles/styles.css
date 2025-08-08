@@ -587,10 +587,14 @@ p {
   position: absolute;
   top: 2px;
   left: 2px;
-  font-size: 12px;
-  opacity: 0.9;
+  font-size: 14px;
+  opacity: 1;
   pointer-events: none;
   z-index: 2;
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(0, 0, 0, 0.6);
+  filter: contrast(1.2) brightness(1.1);
 }
 
 .timeline-hour.sunset-hour::after {
@@ -598,10 +602,14 @@ p {
   position: absolute;
   top: 2px;
   left: 2px;
-  font-size: 12px;
-  opacity: 0.9;
+  font-size: 14px;
+  opacity: 1;
   pointer-events: none;
   z-index: 2;
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, 0.8),
+    0 0 6px rgba(0, 0, 0, 0.6);
+  filter: contrast(1.2) brightness(1.1);
 }
 
 /* Enhanced styling for sunrise/sunset transition hours */

@@ -2209,7 +2209,7 @@ function formatTimeInTimezone(date: Date, timezone: string): string {
 /**
  * Calculate if a specific hour in a timezone is during daylight using SunCalc
  * @param timezone Timezone to check (must have entry in TIMEZONE_COORDINATES)
- * @param hourDate Date/time to check for daylight status
+ * @param hourDate Date/time to check for daylight status (represents local time in the timezone)
  * @returns true if hour is during daylight, false if night or no coordinates available
  */
 function isHourInDaylight(timezone: TimeZone, hourDate: Date): boolean {
@@ -2223,8 +2223,7 @@ function isHourInDaylight(timezone: TimeZone, hourDate: Date): boolean {
   const { latitude, longitude } = coordinates;
 
   try {
-    // Extract the calendar date from hourDate (year, month, day)
-    // hourDate represents local time in the timezone, created through offset arithmetic
+    // Extract the calendar date from hourDate for SunCalc
     const year = hourDate.getFullYear();
     const month = hourDate.getMonth();
     const day = hourDate.getDate();
@@ -2232,20 +2231,15 @@ function isHourInDaylight(timezone: TimeZone, hourDate: Date): boolean {
     const minutes = hourDate.getMinutes();
 
     // Create a proper UTC date for the calendar date to pass to SunCalc
-    const calendarDate = new Date(Date.UTC(year, month, day, 12, 0, 0)); // Use noon UTC for the date
+    const calendarDate = new Date(Date.UTC(year, month, day, 12, 0, 0));
 
     // Get sun times for this calendar date at the coordinates (returns UTC times)
     const sunTimes = SunCalc.getTimes(calendarDate, latitude, longitude);
 
-    // Now we need to convert the hourDate (which represents local time) to UTC for comparison
-    // The hourDate was created with offset arithmetic, so it's not a true UTC time
-    // We need to create the actual UTC time that corresponds to this local time
-
-    // Create a UTC date representing the same wall-clock time as hourDate
-    const utcWallClock = new Date(Date.UTC(year, month, day, hours, minutes));
-
-    // Adjust by timezone offset to get the actual UTC time
-    const actualUTC = new Date(utcWallClock.getTime() - timezone.offset * 60 * 60 * 1000);
+    // Convert the local time (hourDate) to the equivalent UTC time for comparison
+    // The hourDate represents local time in the timezone, so we need to add the offset to get UTC
+    const localTimeUTC = new Date(Date.UTC(year, month, day, hours, minutes));
+    const actualUTC = new Date(localTimeUTC.getTime() + timezone.offset * 60 * 60 * 1000);
 
     // Compare the actual UTC time with sunrise/sunset UTC times
     return actualUTC >= sunTimes.sunrise && actualUTC <= sunTimes.sunset;
