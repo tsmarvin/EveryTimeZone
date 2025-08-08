@@ -99,7 +99,12 @@ jobs:
           
           # Return to develop branch
           git checkout develop
-          git stash pop || echo "No stash to pop"
+          # Only pop the stash if one exists, and fail if pop fails
+          if git stash list | grep -q .; then
+            git stash pop
+          else
+            echo "No stash to pop"
+          fi
         env:
           GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
           GITVERSION_FULLSEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
@@ -129,15 +134,15 @@ jobs:
           if [ -f dist/index.html ]; then
             # Add base tag for sub-directory if not present
             if ! grep -q "<base" dist/index.html; then
-              sed "s|<head>|<head>\n  <base href=\"/$DEPLOY_PATH/\">|" dist/index.html > "combined-dist/$DEPLOY_PATH/index.html"
+              sed -E '0,/<head[[:space:]]*>/s|<head[[:space:]]*>|<head>\n  <base href="/'$DEPLOY_PATH'/">|' dist/index.html > "combined-dist/$DEPLOY_PATH/index.html"
               echo "::notice::Added base tag to index.html for sub-directory support"
             else
               cp dist/index.html "combined-dist/$DEPLOY_PATH/"
               echo "::notice::Base tag already exists in index.html"
             fi
             
-            # Copy other files
-            find dist -type f ! -name "index.html" -exec cp {} "combined-dist/$DEPLOY_PATH/" \;
+            # Copy other files, preserving directory structure
+            rsync -av --exclude=index.html dist/ "combined-dist/$DEPLOY_PATH/"
           else
             echo "::warning::dist/index.html not found, copying all files as-is"
             cp -r dist/* "combined-dist/$DEPLOY_PATH/"

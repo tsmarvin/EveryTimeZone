@@ -10,11 +10,12 @@ This repository uses GitHub Actions for deploying to GitHub Pages.
 - The main site is accessible at `https://everytimezone.net/`
 
 ### Develop Branch Previews
-**Note**: GitHub Actions deployment only supports deploying to the root domain. Subdirectory previews (like `test-PR146/`) are not supported with GitHub Actions deployment.
+**Note**: Subdirectory previews (such as `test-PR146/` for PRs or `develop/` for the develop branch) are now supported by combining main and develop builds in the GitHub Actions deployment workflow. The workflow builds and deploys each branch or PR preview to its own subdirectory under the main site.
 
-For develop branch previews, consider these alternatives:
-1. Use external hosting services (Netlify, Vercel) for PR previews
-2. Deploy to separate GitHub repositories
-3. Use GitHub Environments with different domains
+The develop branch deployment workflow:
+1. Builds the main branch content for the root directory
+2. Builds the develop branch content with subdirectory-specific modifications
+3. Combines both builds into a unified directory structure
+4. Deploys the entire combined structure via GitHub Actions
 
-The current develop branch workflow has been disabled as it's incompatible with GitHub Actions deployment.
+This provides full subdirectory preview functionality while using GitHub's recommended Actions deployment method.
