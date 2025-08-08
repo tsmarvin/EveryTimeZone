@@ -2,53 +2,6 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
 
-function getSmartFallbackVersion(): string {
-  // Try to determine a reasonable fallback version
-  try {
-    // Check if we can get the current branch name
-    const branch = execSync('git branch --show-current', {
-      encoding: 'utf-8',
-      cwd: process.cwd(),
-      stdio: 'pipe',
-    }).trim();
-
-    console.log(`Detected branch: '${branch}'`);
-
-    // For non-main branches, generate an alpha version
-    if (branch && branch !== 'main') {
-      // Use a timestamp-based version for feature branches
-      const timestamp = Math.floor(Date.now() / 1000);
-      const shortTimestamp = timestamp.toString().slice(-6); // Last 6 digits
-      const version = `0.0.1-alpha.${shortTimestamp}`;
-      console.log(`Generated smart fallback version for branch '${branch}': ${version}`);
-      return version;
-    }
-
-    // Only return 1.0.0 for explicitly detected main branch
-    if (branch === 'main') {
-      console.log('Using smart fallback version for main branch: 1.0.0');
-      return '1.0.0';
-    }
-
-    // If branch is empty/unknown but git worked, assume it's a feature branch in CI
-    console.log('Branch detection unclear, assuming feature branch and generating alpha version');
-    const timestamp = Math.floor(Date.now() / 1000);
-    const shortTimestamp = timestamp.toString().slice(-6);
-    const version = `0.0.1-alpha.${shortTimestamp}`;
-    console.log(`Generated alpha version for unknown branch: ${version}`);
-    return version;
-  } catch (error) {
-    // If git operations fail entirely, still generate alpha version for safety
-    // This ensures we don't accidentally return 1.0.0 for feature branches in CI
-    console.log(`Git operations failed (${error}), generating alpha version for safety`);
-    const timestamp = Math.floor(Date.now() / 1000);
-    const shortTimestamp = timestamp.toString().slice(-6);
-    const version = `0.0.1-alpha.${shortTimestamp}`;
-    console.log(`Generated safe alpha fallback version: ${version}`);
-    return version;
-  }
-}
-
 function getGitVersion(): string {
   // First, check if GitVersion environment variables are available (from CI)
   const envSemVer = process.env.GITVERSION_SEMVER;
@@ -75,67 +28,68 @@ function getGitVersion(): string {
         console.log('Failed to fetch tags, continuing anyway');
       }
 
-      // Check current branch first for debugging
-      let branch = '';
-      try {
-        branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-        console.log(`Current branch: ${branch}`);
-      } catch (branchError) {
-        console.log(`Failed to get branch: ${branchError}`);
-      }
-
       const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-      console.log(`Last tag found: ${lastTag}`);
-
       const commitsSince = execSync(`git rev-list ${lastTag}..HEAD --count`, {
         encoding: 'utf-8',
         cwd: process.cwd(),
       }).trim();
       const commits = parseInt(commitsSince, 10);
-      console.log(`Commits since tag: ${commits}`);
 
-      // If the tag already contains version info, use it directly for tagged commits
-      if (commits === 0) {
-        // We're exactly on a tag - use the tag directly
-        const cleanTag = lastTag.replace(/^v/, '');
-        console.log(`Using exact tag version: ${cleanTag}`);
-        return cleanTag;
-      }
+      console.log(`Last tag: ${lastTag}, commits since: ${commits}`);
 
       // Parse the tag version - handle both normal and pre-release tags
       const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
       if (!match || !match[1] || !match[2] || !match[3]) {
-        console.log('Tag format not recognized, using smart fallback version');
-        return getSmartFallbackVersion();
+        console.log(`Tag format not recognized: ${lastTag}, falling back to git-based version`);
+        // Use git describe for better version fallback
+        try {
+          const describe = execSync('git describe --tags --always', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+          console.log(`Using git describe fallback: ${describe}`);
+          return describe;
+        } catch {
+          console.log('Git describe failed, using basic fallback');
+          return '0.0.1-unknown';
+        }
       }
 
       const major = parseInt(match[1], 10);
       const minor = parseInt(match[2], 10);
       let patch = parseInt(match[3], 10);
-      const prerelease = match[4]; // This captures any pre-release part like "65"
 
-      // Simple branch-based logic (use the branch we already fetched)
-      if (branch === 'main' && commits > 0) {
+      // Get current branch
+      const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+      console.log(`Current branch: ${branch}`);
+
+      // If we're exactly on a tag, use the tag directly
+      if (commits === 0) {
+        const cleanTag = lastTag.replace(/^v/, '');
+        console.log(`Using exact tag version: ${cleanTag}`);
+        return cleanTag;
+      }
+
+      // For commits beyond the tag, increment appropriately based on branch
+      if (branch === 'main') {
         patch += 1;
         const version = `${major}.${minor}.${patch}`;
         console.log(`Using fallback git logic for main branch: ${version}`);
         return version;
-      } else if (commits > 0) {
+      } else {
         patch += 1;
         const version = `${major}.${minor}.${patch}-alpha.${commits}`;
         console.log(`Using fallback git logic for feature branch: ${version}`);
         return version;
       }
-
-      // This shouldn't happen since commits === 0 is handled above, but just in case
-      const version = prerelease ? `${major}.${minor}.${patch}-${prerelease}` : `${major}.${minor}.${patch}`;
-      console.log(`Using fallback git logic: ${version}`);
-      return version;
     } catch (gitError) {
-      // Git operations failed - try smart fallback
-      const errorMessage = gitError instanceof Error ? gitError.message : String(gitError);
-      console.log(`Git operations failed (${errorMessage}), using smart fallback version`);
-      return getSmartFallbackVersion();
+      console.log(`Git operations failed: ${gitError}`);
+      // Last resort - use git describe or basic fallback
+      try {
+        const describe = execSync('git describe --tags --always', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+        console.log(`Using git describe as last resort: ${describe}`);
+        return describe;
+      } catch {
+        console.log('All git operations failed, using basic fallback');
+        return '0.0.1-unknown';
+      }
     }
   }
 }
@@ -148,37 +102,7 @@ function injectVersionIntoHtml(): void {
     process.exit(1);
   }
 
-  let version = getGitVersion();
-
-  // Final safety check: if we somehow got '1.0.0' for a non-main branch,
-  // force generate an alpha version to prevent CI test failures
-  if (version === '1.0.0') {
-    try {
-      const branch = execSync('git branch --show-current', {
-        encoding: 'utf-8',
-        cwd: process.cwd(),
-        stdio: 'pipe',
-      }).trim();
-
-      console.log(`Final safety check: version is '1.0.0' on branch '${branch}'`);
-
-      if (branch && branch !== 'main') {
-        console.log('Non-main branch detected with 1.0.0 version, forcing alpha generation');
-        const timestamp = Math.floor(Date.now() / 1000);
-        const shortTimestamp = timestamp.toString().slice(-6);
-        version = `0.0.1-alpha.${shortTimestamp}`;
-        console.log(`Final safety override version: ${version}`);
-      }
-    } catch {
-      // If branch detection fails but we have 1.0.0, be safe and generate alpha
-      console.log('Branch detection failed for 1.0.0 version, generating alpha for safety');
-      const timestamp = Math.floor(Date.now() / 1000);
-      const shortTimestamp = timestamp.toString().slice(-6);
-      version = `0.0.1-alpha.${shortTimestamp}`;
-      console.log(`Final emergency alpha version: ${version}`);
-    }
-  }
-
+  const version = getGitVersion();
   let htmlContent = readFileSync(distIndexPath, 'utf-8');
 
   // Remove any existing app-version meta tags
