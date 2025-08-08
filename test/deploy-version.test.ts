@@ -9,7 +9,10 @@ describe('Deploy Version Behavior', () => {
     // the inject-version script falls back to git-based version calculation
     // which will produce different versions for different branches
     
-    const originalEnv = process.env;
+    // Store original values
+    const originalSemVer = process.env.GITVERSION_SEMVER;
+    const originalFullSemVer = process.env.GITVERSION_FULLSEMVER;
+    const originalInformationalVersion = process.env.GITVERSION_INFORMATIONALVERSION;
     
     try {
       // Clear GitVersion environment variables to simulate main branch build
@@ -37,24 +40,45 @@ describe('Deploy Version Behavior', () => {
       expect(versionMatch).toBeTruthy();
       
       const injectedVersion = versionMatch![1];
+      const currentBranch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+      
+      console.log(`Injected version: ${injectedVersion}`);
+      console.log(`Current branch: ${currentBranch}`);
       
       // Should be a valid semver-like version
       expect(injectedVersion).toMatch(/^\d+\.\d+\.\d+/);
       
       // Since we're not on main branch and have no GitVersion env vars,
       // it should use git fallback which produces alpha versions for non-main branches
-      if (execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim() !== 'main') {
+      if (currentBranch !== 'main') {
         expect(injectedVersion).toMatch(/alpha/);
       }
       
     } finally {
-      // Restore environment
-      process.env = originalEnv;
+      // Restore environment variables
+      if (originalSemVer !== undefined) {
+        process.env.GITVERSION_SEMVER = originalSemVer;
+      } else {
+        delete process.env.GITVERSION_SEMVER;
+      }
+      if (originalFullSemVer !== undefined) {
+        process.env.GITVERSION_FULLSEMVER = originalFullSemVer;
+      } else {
+        delete process.env.GITVERSION_FULLSEMVER;
+      }
+      if (originalInformationalVersion !== undefined) {
+        process.env.GITVERSION_INFORMATIONALVERSION = originalInformationalVersion;
+      } else {
+        delete process.env.GITVERSION_INFORMATIONALVERSION;
+      }
     }
   });
 
   it('should use GitVersion env vars when available', () => {
-    const originalEnv = process.env;
+    // Store original values
+    const originalSemVer = process.env.GITVERSION_SEMVER;
+    const originalFullSemVer = process.env.GITVERSION_FULLSEMVER;
+    const originalInformationalVersion = process.env.GITVERSION_INFORMATIONALVERSION;
     
     try {
       // Set GitVersion environment variables (simulating develop branch build with CI)
@@ -74,8 +98,22 @@ describe('Deploy Version Behavior', () => {
       expect(htmlContent).toContain('<meta name="app-version" content="1.2.3-beta.4"');
       
     } finally {
-      // Restore environment
-      process.env = originalEnv;
+      // Restore environment variables
+      if (originalSemVer !== undefined) {
+        process.env.GITVERSION_SEMVER = originalSemVer;
+      } else {
+        delete process.env.GITVERSION_SEMVER;
+      }
+      if (originalFullSemVer !== undefined) {
+        process.env.GITVERSION_FULLSEMVER = originalFullSemVer;
+      } else {
+        delete process.env.GITVERSION_FULLSEMVER;
+      }
+      if (originalInformationalVersion !== undefined) {
+        process.env.GITVERSION_INFORMATIONALVERSION = originalInformationalVersion;
+      } else {
+        delete process.env.GITVERSION_INFORMATIONALVERSION;
+      }
     }
   });
 });
