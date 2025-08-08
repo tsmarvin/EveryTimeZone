@@ -1,0 +1,132 @@
+name: Deploy Develop Branch to Sub-directory
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number for deployment path'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages-develop"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout develop branch
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0  # Full history for gitversion
+      
+      - name: Get PR number for deployment path
+        id: pr-info
+        run: |
+          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
+            # Use manually provided PR number
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          else
+            # Try to extract PR number from the most recent merge commit
+            PR_NUMBER=$(git log --oneline -1 --grep="Merge pull request" | grep -o '#[0-9]\+' | head -1 | sed 's/#//' || echo "")
+            
+            # If no PR number found, try to get it from commit message
+            if [ -z "$PR_NUMBER" ]; then
+              PR_NUMBER=$(git log --oneline -5 | grep -o '#[0-9]\+' | head -1 | sed 's/#//' || echo "")
+            fi
+            
+            # Fallback: use timestamp if no PR number found
+            if [ -z "$PR_NUMBER" ]; then
+              PR_NUMBER="dev-$(date +%Y%m%d-%H%M%S)"
+            fi
+          fi
+          
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "deploy_path=test-PR$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "Found PR number: $PR_NUMBER"
+      
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v4
+        with:
+          versionSpec: '6.x.x'
+          
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build project for develop
+        run: npm run build
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
+          GITVERSION_FULLSEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
+          GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
+      
+      - name: Modify build for sub-directory deployment
+        run: |
+          # Update any absolute paths in the built files to work in sub-directories
+          DEPLOY_PATH="${{ steps.pr-info.outputs.deploy_path }}"
+          
+          # Update base href in index.html if it exists
+          if [ -f "dist/index.html" ]; then
+            # Add base tag for sub-directory if not present
+            if ! grep -q "<base" dist/index.html; then
+              sed -i 's|<head>|<head>\n  <base href="/'$DEPLOY_PATH'/">|' dist/index.html
+            fi
+          fi
+      
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Deploy to sub-directory
+        run: |
+          cd gh-pages-repo
+          
+          # Create the sub-directory for this PR/deployment
+          DEPLOY_DIR="${{ steps.pr-info.outputs.deploy_path }}"
+          
+          # Remove existing directory if it exists
+          rm -rf "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR"
+          
+          # Copy built files to the sub-directory
+          cp -r ../dist/* "$DEPLOY_DIR/"
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add and commit changes
+          git add "$DEPLOY_DIR"
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Deploy develop branch to $DEPLOY_DIR ($(date))"
+            git push origin gh-pages
+          fi
+      
+      - name: Output deployment URL
+        run: |
+          echo "🚀 Deployed to: https://everytimezone.net/${{ steps.pr-info.outputs.deploy_path }}/"
+          echo "::notice::Develop branch deployed to https://everytimezone.net/${{ steps.pr-info.outputs.deploy_path }}/"

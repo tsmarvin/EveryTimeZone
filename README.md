@@ -190,3 +190,32 @@ The application uses GitVersion for semantic versioning:
 - **🏷️ Runtime Version:** Dynamically injected into the site before deployment (package.json maintains static version `1.0.0`)
 - **📍 Version Display:** Injected into built HTML and displayed in footer
 - **🔀 Branch Strategy:** Main branch releases, feature branches get prerelease versions
+
+#### Development Branch Workflow
+
+The repository supports a development workflow for previewing changes before they reach production:
+
+**Branch Structure:**
+- **`main`** - Production branch (deploys to https://everytimezone.net/)
+- **`develop`** - Development branch (deploys to sub-directories for preview)
+
+**Workflow Process:**
+1. **Create PR targeting `main`** - Standard development flow
+2. **If Copilot screenshots are sufficient** ✅ - Merge directly to `main`
+3. **If preview needed** 🔄 - Change PR target to `develop` branch:
+   - Merge PR to `develop`
+   - GitHub Actions automatically deploys to `https://everytimezone.net/test-PR{number}/`
+   - Review and iterate on the preview site
+   - When ready, merge `develop` → `main` (triggers cleanup of preview sites)
+
+**Preview Deployment:**
+- **Trigger:** Push to `develop` branch
+- **URL Format:** `https://everytimezone.net/test-PR{number}/` (PR number extracted from merge commit)
+- **Manual Trigger:** Workflow can be manually triggered with custom PR number
+- **Cleanup:** All preview sites (`test-PR*`) are automatically removed when `develop` is merged to `main`
+
+**Benefits:**
+- ✅ Preview complex changes that can't be verified via screenshots
+- ✅ Share preview links with stakeholders for feedback
+- ✅ Test deployments in production-like environment
+- ✅ Automatic cleanup prevents orphaned preview sites
