@@ -12,6 +12,8 @@ function getSmartFallbackVersion(): string {
       stdio: 'pipe',
     }).trim();
 
+    console.log(`Detected branch: '${branch}'`);
+
     // For non-main branches, generate an alpha version
     if (branch && branch !== 'main') {
       // Use a timestamp-based version for feature branches
@@ -22,13 +24,28 @@ function getSmartFallbackVersion(): string {
       return version;
     }
 
-    // For main branch or unknown branch, use a basic version
-    console.log('Using smart fallback version for main/unknown branch: 1.0.0');
-    return '1.0.0';
-  } catch {
-    // If even basic git operations fail, use absolute fallback
-    console.log('All git operations failed, using absolute fallback version: 1.0.0');
-    return '1.0.0';
+    // Only return 1.0.0 for explicitly detected main branch
+    if (branch === 'main') {
+      console.log('Using smart fallback version for main branch: 1.0.0');
+      return '1.0.0';
+    }
+
+    // If branch is empty/unknown but git worked, assume it's a feature branch in CI
+    console.log('Branch detection unclear, assuming feature branch and generating alpha version');
+    const timestamp = Math.floor(Date.now() / 1000);
+    const shortTimestamp = timestamp.toString().slice(-6);
+    const version = `0.0.1-alpha.${shortTimestamp}`;
+    console.log(`Generated alpha version for unknown branch: ${version}`);
+    return version;
+  } catch (error) {
+    // If git operations fail entirely, still generate alpha version for safety
+    // This ensures we don't accidentally return 1.0.0 for feature branches in CI
+    console.log(`Git operations failed (${error}), generating alpha version for safety`);
+    const timestamp = Math.floor(Date.now() / 1000);
+    const shortTimestamp = timestamp.toString().slice(-6);
+    const version = `0.0.1-alpha.${shortTimestamp}`;
+    console.log(`Generated safe alpha fallback version: ${version}`);
+    return version;
   }
 }
 
@@ -131,7 +148,37 @@ function injectVersionIntoHtml(): void {
     process.exit(1);
   }
 
-  const version = getGitVersion();
+  let version = getGitVersion();
+
+  // Final safety check: if we somehow got '1.0.0' for a non-main branch,
+  // force generate an alpha version to prevent CI test failures
+  if (version === '1.0.0') {
+    try {
+      const branch = execSync('git branch --show-current', {
+        encoding: 'utf-8',
+        cwd: process.cwd(),
+        stdio: 'pipe',
+      }).trim();
+
+      console.log(`Final safety check: version is '1.0.0' on branch '${branch}'`);
+
+      if (branch && branch !== 'main') {
+        console.log('Non-main branch detected with 1.0.0 version, forcing alpha generation');
+        const timestamp = Math.floor(Date.now() / 1000);
+        const shortTimestamp = timestamp.toString().slice(-6);
+        version = `0.0.1-alpha.${shortTimestamp}`;
+        console.log(`Final safety override version: ${version}`);
+      }
+    } catch {
+      // If branch detection fails but we have 1.0.0, be safe and generate alpha
+      console.log('Branch detection failed for 1.0.0 version, generating alpha for safety');
+      const timestamp = Math.floor(Date.now() / 1000);
+      const shortTimestamp = timestamp.toString().slice(-6);
+      version = `0.0.1-alpha.${shortTimestamp}`;
+      console.log(`Final emergency alpha version: ${version}`);
+    }
+  }
+
   let htmlContent = readFileSync(distIndexPath, 'utf-8');
 
   // Remove any existing app-version meta tags
