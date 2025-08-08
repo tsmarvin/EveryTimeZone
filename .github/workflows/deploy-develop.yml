@@ -91,7 +91,9 @@ jobs:
           # Checkout main branch
           git checkout main
           
-          # Build main branch content
+          # Build main branch content (without develop GitVersion env vars)
+          # This allows the inject-version script to use git-based version calculation
+          # which will correctly determine the main branch version
           npm run build
           
           # Save main build
@@ -105,10 +107,6 @@ jobs:
           else
             echo "No stash to pop"
           fi
-        env:
-          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
-          GITVERSION_FULLSEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
-          GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
       
       # Second: Build develop branch content for the subdirectory
       - name: Build develop branch for sub-directory
