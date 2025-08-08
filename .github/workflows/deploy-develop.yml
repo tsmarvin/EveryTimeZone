@@ -126,24 +126,35 @@ jobs:
           # Create the sub-directory for this PR/deployment
           DEPLOY_DIR="${{ steps.pr-info.outputs.deploy_path }}"
           
+          echo "::notice::Deploying to subdirectory: $DEPLOY_DIR"
+          
           # Remove existing directory if it exists
-          rm -rf "$DEPLOY_DIR"
+          if [ -d "$DEPLOY_DIR" ]; then
+            echo "::notice::Removing existing deployment directory: $DEPLOY_DIR"
+            rm -rf "$DEPLOY_DIR"
+          fi
+          
+          # Create the directory
           mkdir -p "$DEPLOY_DIR"
           
           # Copy built files to the sub-directory
           cp -r ../dist/* "$DEPLOY_DIR/"
+          
+          # Ensure .nojekyll exists at root level for GitHub Pages
+          touch .nojekyll
           
           # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
           # Add and commit changes
-          git add "$DEPLOY_DIR"
+          git add .
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "Deploy develop branch to $DEPLOY_DIR ($(date))"
             git push origin gh-pages
+            echo "::notice::Successfully deployed to $DEPLOY_DIR"
           fi
       
       - name: Output deployment URL

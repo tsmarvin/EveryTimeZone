@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -57,46 +57,63 @@ jobs:
           path: './dist'
 
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
-      - name: Cleanup develop sub-sites after main deployment
-        if: github.ref == 'refs/heads/main'
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: ./artifact
+      
+      - name: Extract artifact
         run: |
-          # This cleanup is necessary because GitHub Pages deployment only replaces the root directory
-          # contents, not sub-directories. Without this cleanup, old test-PR* directories would
-          # persist indefinitely on the gh-pages branch, creating stale preview sites.
-          echo "::notice::Cleaning up develop branch preview sites after main deployment"
+          cd ./artifact
+          tar -xf artifact.tar
+          ls -la
+      
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Deploy to gh-pages root and cleanup develop sub-sites
+        run: |
+          cd gh-pages-repo
           
-          # Checkout gh-pages to clean up sub-directories
-          git clone --single-branch --branch gh-pages https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git gh-pages-cleanup
-          cd gh-pages-cleanup
-          
-          # Remove all test-PR* directories (and legacy test-commit-* if any exist)
-          echo "::notice::Removing test-PR* directories..."
+          # Clean up develop branch sub-sites first
+          echo "::notice::Cleaning up develop branch preview sites"
           find . -maxdepth 1 -type d -name "test-PR*" -exec rm -rf {} \; 2>/dev/null || true
           find . -maxdepth 1 -type d -name "test-commit-*" -exec rm -rf {} \; 2>/dev/null || true
+          
+          # Remove all files in root except .git and test-PR* directories
+          # Keep any remaining test-PR* directories that might have been created since cleanup
+          find . -maxdepth 1 -type f -not -name ".git*" -not -name ".nojekyll" -delete 2>/dev/null || true
+          find . -maxdepth 1 -type d -not -name ".git" -not -name "test-PR*" -not -name "test-commit-*" -not -name "." -exec rm -rf {} \; 2>/dev/null || true
+          
+          # Copy new build files to root
+          cp -r ../artifact/* ./
+          
+          # Ensure .nojekyll exists for GitHub Pages
+          touch .nojekyll
           
           # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Commit cleanup if there are changes
-          if [[ -n $(git status --porcelain) ]]; then
-            git add -A
-            git commit -m "Cleanup: Remove develop branch sub-sites after main deployment"
-            git push origin gh-pages
-            echo "::notice::Cleaned up develop branch sub-sites"
+          # Add and commit changes
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
           else
-            echo "::notice::No develop branch sub-sites to clean up"
+            git commit -m "Deploy main branch to GitHub Pages ($(date))"
+            git push origin gh-pages
+            echo "::notice::Main branch deployed to GitHub Pages"
           fi
-          
-          cd ..
-          rm -rf gh-pages-cleanup
