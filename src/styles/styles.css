@@ -1,0 +1,2729 @@
+/* 
+ * Every Time Zone - Base Stylesheet
+ * 
+ * This is the default theme stylesheet that provides the foundation for the timezone
+ * visualization application. It uses CSS custom properties for theming and responsive design.
+ * 
+ * Architecture:
+ * 1. CSS Custom Properties (CSS Variables) for spacing, typography, and layout
+ * 2. Base structural styles that work across all themes
+ * 3. Theme-specific color variables (defined in theme classes)
+ * 4. Component-specific styles (header, timeline, modals, settings)
+ * 5. Responsive design using media queries
+ * 
+ * Theme System:
+ * - Theme classes: .theme-default, .theme-forest-harmony, etc.
+ * - Mode classes: .dark-theme, .light-theme
+ * - Color variables: --color-bg, --color-text, --color-primary, etc.
+ * 
+ * The theme system is managed by SettingsPanel class in settings.ts
+ */
+
+/* Design System: Spacing and Typography Scales */
+/* These variables provide consistent spacing and typography throughout the application */
+:root {
+  /* Spacing Scale - Used for padding, margins, and gaps */
+  --space-xs: 0.5rem; /* 8px */
+  --space-sm: 1rem; /* 16px */
+  --space-md: 1.5rem; /* 24px */
+  --space-lg: 2rem; /* 32px */
+  --space-xl: 3rem; /* 48px */
+  --space-2xl: 4rem; /* 64px */
+
+  /* Typography Scale - Font sizes for consistent hierarchy */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px - base font size */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem; /* 36px */
+
+  /* Font Weight Scale - Consistent font weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Layout Constants */
+  --container-max-width: 1200px; /* Maximum width for content containers */
+  --border-radius: 0.75rem; /* Standard border radius (12px) */
+  --border-radius-sm: 0.375rem; /* Small border radius (6px) */
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transitions */
+}
+
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: var(--transition);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Container */
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-sm);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Allow container to fill available space */
+}
+
+/* Typography */
+h2 {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-md);
+  color: var(--color-text);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-sm);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+p {
+  margin-bottom: var(--space-sm);
+}
+
+/* Layout Components */
+.header {
+  background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-xs) 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 30%, var(--color-header-overlay) 50%, transparent 70%);
+  pointer-events: none;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  position: relative;
+  z-index: 1;
+}
+
+.header-text {
+  text-align: center;
+  flex: 1;
+}
+
+.title {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  margin-bottom: var(--space-xs);
+  color: var(--color-header-text);
+  text-shadow: 0 2px 4px var(--color-header-shadow);
+}
+
+.subtitle {
+  font-size: var(--text-lg);
+  color: var(--color-header-text-secondary);
+  margin-bottom: var(--space-sm);
+  text-shadow: 0 1px 2px var(--color-header-shadow);
+}
+
+.theme-toggle {
+  background: var(--color-header-button-bg);
+  border: 1px solid var(--color-header-button-border);
+  border-radius: var(--border-radius);
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: var(--text-lg);
+  flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+
+.theme-toggle:hover {
+  background: var(--color-header-button-bg-hover);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
+
+.theme-toggle:active {
+  transform: translateY(0) scale(1);
+}
+
+.theme-toggle-icon {
+  transition: var(--transition);
+}
+
+.main {
+  flex: 1;
+  padding: 0; /* Remove vertical padding to use space more efficiently */
+  display: flex;
+  flex-direction: column;
+}
+
+.footer {
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-lg) 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  margin-top: var(--space-md); /* Add spacing above footer */
+  flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+.footer a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.footer a:hover {
+  color: var(--color-secondary);
+  text-decoration: underline;
+}
+
+.footer .version {
+  margin-left: var(--space-md);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
+  opacity: 0.7;
+}
+
+/* Welcome Section */
+.welcome {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-lg);
+  margin: var(--space-2xl) 0;
+}
+
+.feature {
+  background: linear-gradient(135deg, var(--color-surface), var(--color-surface-variant));
+  padding: var(--space-lg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.feature::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary), var(--color-accent));
+}
+
+.feature:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-lg);
+}
+
+.feature:nth-child(even):hover {
+  background: linear-gradient(135deg, var(--color-surface-variant), var(--color-surface));
+}
+
+.cta {
+  margin-top: var(--space-2xl);
+}
+
+/* Button */
+.button {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-variant));
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--text-base);
+  font-weight: 600;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: var(--space-md);
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--color-button-shimmer), transparent);
+  transition: left 0.5s;
+}
+
+.button:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
+
+.button:hover::before {
+  left: 100%;
+}
+
+.button:active {
+  transform: translateY(0) scale(1);
+}
+
+/* Timeline Visualization Styles */
+
+.timeline-section {
+  padding: 0; /* Remove all padding to maximize space usage */
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Allow timeline section to grow and fill available space */
+}
+
+/* Timeline Controls */
+.timeline-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0; /* Remove margin to minimize whitespace */
+  gap: var(--space-sm);
+}
+
+.add-timezone-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+
+.add-timezone-btn:hover {
+  background: var(--color-primary-variant);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.date-picker-btn {
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+
+.date-picker-btn:hover {
+  background: var(--color-border);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* DateTime Modal Styles */
+.datetime-input-container {
+  padding: 1rem 0;
+}
+
+.datetime-label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+
+.datetime-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text);
+  transition: border-color 0.2s ease-in-out;
+}
+
+.datetime-input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-color: var(--color-primary);
+  background-color: var(--color-bg);
+}
+
+.remove-timezone-btn {
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: var(--text-xs);
+  font-weight: bold;
+  transition: var(--transition);
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  z-index: 2;
+}
+
+.remove-timezone-btn:hover {
+  background: var(--sunset-red);
+  transform: scale(1.1);
+}
+
+.timezone-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.timeline-container {
+  overflow-x: auto;
+  overflow-y: visible;
+  min-width: 100%;
+  position: relative; /* For sticky positioning of timezone labels */
+  /* Remove background, borders, and shadows to blend with page */
+}
+
+/* Make timeline container extend to full page width */
+.timeline-container {
+  /* Break out of container constraints and fill full viewport width */
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+}
+
+.timeline-row:hover {
+  background-color: var(--color-surface-variant);
+}
+
+.timeline-row {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  transition: var(--transition);
+  min-width: fit-content; /* Ensure row expands to contain all timeline cells */
+}
+
+.timeline-row:hover {
+  background-color: var(--color-surface-variant);
+}
+
+.timeline-row.user-timezone {
+  background: linear-gradient(135deg, rgba(79, 107, 179, 0.1), rgba(74, 139, 107, 0.1));
+  border: 2px solid var(--color-primary);
+  border-left: none;
+  border-right: none;
+  position: relative;
+}
+
+.timeline-row.user-timezone::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--color-primary), var(--color-secondary));
+}
+
+.timeline-cell {
+  min-width: 60px; /* Fixed minimum width for hour cells to ensure 24 hours fit properly */
+  max-width: 60px; /* Fixed width for consistent layout */
+  padding: var(--space-sm);
+  text-align: center;
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Prevent text overflow */
+  text-overflow: ellipsis; /* Show ellipsis for extreme overflow */
+  flex-shrink: 0; /* Prevent cells from shrinking */
+}
+
+.timeline-cell:last-child {
+  border-right: none;
+}
+
+.timeline-timezone-label {
+  min-width: 160px;
+  width: 160px;
+  background: var(--color-surface-variant);
+  border-right: 2px solid var(--color-border);
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  padding: var(--space-sm) calc(var(--space-md) + 1.5rem) var(--space-sm) var(--space-md);
+  position: sticky; /* Keep timezone labels fixed during horizontal scroll */
+  left: 0;
+  z-index: 10; /* Ensure it stays above hour cells */
+  flex-shrink: 0;
+  background-clip: padding-box; /* Prevent background bleeding under borders during scroll */
+}
+
+.timezone-name {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timezone-offset {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+}
+
+.timeline-hour {
+  font-family: 'Courier New', monospace;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  transition: var(--transition);
+}
+
+.timeline-hour.working-hours {
+  background-color: rgba(74, 139, 107, 0.1);
+  color: var(--color-secondary);
+  font-weight: 600;
+}
+
+/* Daylight and Night Indicators */
+.timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--golden-yellow), var(--golden-amber));
+  color: var(--brown-dark);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.3);
+}
+
+.timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--slate-dark), var(--slate-darkest));
+  color: var(--gray-blue);
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.5);
+}
+
+/* Light theme adjustments for daylight/night indicators */
+.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--cream-pale), var(--cream-light));
+  color: var(--brown-medium);
+  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.2);
+}
+
+.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--gray-750), var(--gray-850));
+  color: var(--gray-warm);
+  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.3);
+}
+
+/* Current hour styling with higher specificity to override daylight/night indicators */
+.timeline-hour.current-hour,
+.timeline-hour.current-hour.daylight-hour,
+.timeline-hour.current-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-accent), rgba(220, 38, 38, 0.8)) !important;
+  color: white !important;
+  font-weight: 700;
+  position: relative;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.timeline-hour.current-hour::after,
+.timeline-hour.current-hour.daylight-hour::after,
+.timeline-hour.current-hour.night-hour::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--color-accent);
+}
+
+/* Date Transition Styling */
+.timeline-hour.date-transition {
+  flex-direction: column;
+  padding: var(--space-xs) 2px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  color: var(--color-text);
+  font-weight: 600;
+  border: 2px solid var(--color-accent);
+  position: relative;
+  min-height: 60px;
+}
+
+.date-display {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.time-display {
+  font-size: var(--text-sm);
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Date transition styling that overrides daylight/night indicators */
+.timeline-hour.date-transition.daylight-hour,
+.timeline-hour.date-transition.night-hour {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+  color: var(--color-text) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.3),
+    0 0 0 2px var(--color-accent);
+}
+
+/* Light theme adjustments for date transitions */
+.light-theme .timeline-hour.date-transition {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.light-theme .timeline-hour.date-transition.daylight-hour,
+.light-theme .timeline-hour.date-transition.night-hour {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+  color: var(--color-text) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.4),
+    0 0 0 2px var(--color-accent);
+}
+
+/* Timezone Selection Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  width: fit-content;
+  max-width: min(95vw, 800px);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transform: scale(0.9) translateY(20px);
+  transition: var(--transition);
+  overflow: hidden;
+  min-width: 360px;
+  min-height: 320px;
+}
+
+.modal-overlay.active .modal {
+  transform: scale(1) translateY(0);
+}
+
+.modal-header {
+  padding: var(--space-xs);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, var(--color-surface), var(--color-surface-variant));
+}
+
+.modal-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  color: var(--color-text);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: var(--text-xl);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--space-xs);
+  border-radius: 50%;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.modal-close:hover {
+  background-color: var(--color-surface-variant);
+  color: var(--color-text);
+}
+
+.modal-content {
+  flex: 1;
+  padding: var(--space-xs);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.timezone-search {
+  margin: 0;
+}
+
+.timezone-input {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  transition: var(--transition);
+}
+
+.timezone-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(79, 107, 179, 0.2);
+}
+
+.timezone-wheel-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-xs);
+  min-height: 160px;
+  padding: var(--space-xs) 0;
+}
+
+.wheel-nav-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: var(--text-lg);
+  font-weight: bold;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+
+.wheel-nav-btn:hover {
+  background: var(--color-primary-variant);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg);
+}
+
+.wheel-nav-btn:active {
+  transform: scale(0.95);
+}
+
+.timezone-wheel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  flex: 1;
+  justify-content: center;
+  width: 100%;
+  min-height: 120px;
+  overflow-y: auto;
+  padding: var(--space-xs) 0;
+}
+
+.wheel-timezone-item {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  min-width: 280px;
+  border: 1px solid transparent;
+}
+
+.wheel-timezone-item.center {
+  background: var(--color-primary);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
+}
+
+.wheel-timezone-item.adjacent {
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  opacity: 0.8;
+  transform: scale(0.95);
+}
+
+.wheel-timezone-item.distant {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+  transform: scale(0.9);
+}
+
+.wheel-timezone-item:hover:not(.center) {
+  background: var(--color-surface-variant);
+  opacity: 1;
+  transform: scale(0.98);
+}
+
+.wheel-timezone-item.current {
+  border: 2px solid var(--color-secondary);
+}
+
+.wheel-timezone-name {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  margin-bottom: 2px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.wheel-timezone-display {
+  font-size: var(--text-xs);
+  opacity: 0.8;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+/* Expandable timezone variant styles */
+.variant-count {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-left: var(--space-xs);
+  opacity: 0.7;
+}
+
+.wheel-timezone-item.variant-item {
+  background: var(--color-surface);
+  margin-top: 2px;
+  margin-left: var(--space-md);
+  transform: scale(0.9);
+  opacity: 0.8;
+  border-left: 2px solid var(--color-primary);
+  min-width: 260px;
+}
+
+.wheel-timezone-item.variant-item:hover {
+  background: var(--color-surface-variant);
+  opacity: 1;
+  transform: scale(0.95);
+}
+
+.variant-name {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  font-family: monospace;
+}
+
+.variant-display {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+/* Custom Timezone Styles */
+.add-custom-timezone {
+  background: var(--color-secondary) !important;
+  color: white !important;
+  border: 2px dashed var(--color-secondary) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: var(--space-md) !important;
+}
+
+.add-custom-timezone:hover {
+  background: var(--color-secondary-hover) !important;
+  transform: scale(1.05) !important;
+}
+
+.custom-timezone-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.add-icon {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.add-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.primary-text {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+}
+
+.offset-text {
+  font-size: var(--text-sm);
+  font-family: monospace;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+.custom-timezone-form {
+  background: var(--color-surface);
+  border-radius: var(--border-radius);
+  padding: var(--space-lg);
+  margin: var(--space-sm);
+  border: 1px solid var(--color-border);
+  min-width: 320px;
+  max-width: 400px;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.form-header h3 {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.offset-display {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-family: monospace;
+  background: var(--color-surface-variant);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius);
+  margin-top: var(--space-xs);
+}
+
+.form-fields {
+  margin-bottom: var(--space-lg);
+}
+
+.field-group {
+  margin-bottom: var(--space-md);
+}
+
+.field-group label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.field-group input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  transition: var(--transition);
+  box-sizing: border-box;
+}
+
+.field-group input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(79, 107, 179, 0.2);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.form-actions button {
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 80px;
+}
+
+.form-actions button:hover {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+}
+
+.form-actions #add-custom {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.form-actions #add-custom:hover {
+  background: var(--color-primary-hover);
+}
+
+.custom-form-body {
+  margin-bottom: var(--space-md);
+}
+
+.custom-form-label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.custom-form-input {
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  transition: var(--transition);
+}
+
+.custom-form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-alpha);
+}
+
+.custom-form-footer {
+  display: flex;
+  gap: var(--space-xs);
+  justify-content: flex-end;
+}
+
+.custom-form-footer .button {
+  min-width: 80px;
+}
+
+.modal-footer {
+  padding: var(--space-xs);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  gap: var(--space-xs);
+  justify-content: flex-end;
+  background: linear-gradient(135deg, var(--color-surface), var(--color-surface-variant));
+}
+
+.button.secondary {
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.button.secondary:hover {
+  background: var(--color-border);
+}
+
+/* Appearance Controls and Settings Panel Styles */
+.appearance-controls {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.appearance-settings {
+  background: var(--color-header-button-bg);
+  border: 1px solid var(--color-header-button-border);
+  border-radius: var(--border-radius);
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: var(--text-lg);
+  flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+
+.appearance-settings:hover {
+  background: var(--color-header-button-hover-bg);
+  border-color: var(--color-header-button-hover-border);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.appearance-settings:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.appearance-settings-icon {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Settings Panel Styles */
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.settings-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  max-width: 90vw;
+  height: 100%;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: 1002;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-panel.active {
+  transform: translateX(0);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background);
+}
+
+.settings-title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.settings-close {
+  background: none;
+  border: none;
+  font-size: var(--text-xl);
+  cursor: pointer;
+  padding: var(--space-xs);
+  border-radius: var(--border-radius);
+  color: var(--color-text-secondary);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+}
+
+.settings-close:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.settings-content {
+  flex: 1;
+  padding: var(--space-lg);
+  overflow-y: auto;
+}
+
+.settings-section {
+  margin-bottom: var(--space-xl);
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section-title {
+  margin: 0 0 var(--space-md) 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+/* Theme Grid Styles */
+.theme-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-sm);
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  padding: var(--space-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--color-surface);
+}
+
+.theme-option:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-hover);
+}
+
+.theme-option.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.theme-preview {
+  display: flex;
+  width: 3rem;
+  height: 2rem;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  margin-right: var(--space-md);
+  flex-shrink: 0;
+}
+
+.theme-preview-color {
+  flex: 1;
+}
+
+.theme-info {
+  flex: 1;
+}
+
+.theme-name {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.theme-description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+/* Mode Toggle Styles */
+.mode-toggle-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.mode-radio {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.mode-option {
+  display: flex;
+  align-items: center;
+  padding: var(--space-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  background: var(--color-surface);
+  width: 100%;
+}
+
+.mode-option::before {
+  content: '⚙️';
+  margin-right: var(--space-sm);
+  font-size: var(--text-lg);
+}
+
+.mode-option:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-hover);
+}
+
+.mode-radio:checked + .mode-option {
+  border-color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.mode-text {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+/* Time Format Toggle Switch Styles */
+.time-format-toggle-container {
+  display: flex;
+  justify-content: center;
+}
+
+.time-format-switch {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.time-format-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.time-format-slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 200px;
+  height: 48px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 24px;
+  transition: var(--transition);
+  padding: 4px;
+}
+
+.time-format-slider:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-hover);
+}
+
+.time-format-labels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-sm);
+  pointer-events: none;
+}
+
+.time-format-label-12h,
+.time-format-label-24h {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  transition: var(--transition);
+}
+
+.time-format-handle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 88px;
+  height: 36px;
+  background: var(--color-primary);
+  border-radius: 18px;
+  transition: var(--transition);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* When checkbox is checked (24-hour format) */
+.time-format-checkbox:checked + .time-format-slider .time-format-handle {
+  transform: translateX(104px);
+}
+
+.time-format-checkbox:checked + .time-format-slider .time-format-label-24h {
+  color: var(--color-text);
+}
+
+.time-format-checkbox:not(:checked) + .time-format-slider .time-format-label-12h {
+  color: var(--color-text);
+}
+
+.stylesheet-selector:hover {
+  background: var(--color-header-button-bg-hover);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
+
+.stylesheet-selector:active {
+  transform: translateY(0) scale(1);
+}
+
+.stylesheet-selector-icon {
+  transition: var(--transition);
+}
+
+/* Stylesheet Modal Styles */
+.stylesheet-modal-overlay {
+  z-index: 1001; /* Higher than timezone modal */
+}
+
+.stylesheet-modal {
+  max-width: 600px;
+  width: 90vw;
+}
+
+.stylesheet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+}
+
+.stylesheet-option {
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface);
+  padding: var(--space-md);
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.stylesheet-option:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-variant);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stylesheet-preview {
+  margin-bottom: var(--space-sm);
+  height: 60px;
+  border-radius: var(--border-radius);
+  background: var(--color-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.preview-color-bar {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.preview-color {
+  flex: 1;
+  height: 100%;
+}
+
+.stylesheet-info {
+  text-align: left;
+}
+
+.stylesheet-name {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+  color: var(--color-text);
+}
+
+.stylesheet-description {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+
+/* Small devices (landscape phones) */
+@media (max-width: 576px) {
+  :root {
+    --space-sm: 0.75rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 2.5rem;
+  }
+
+  .title {
+    font-size: var(--text-2xl);
+  }
+
+  .subtitle {
+    font-size: var(--text-base);
+  }
+
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .header-text {
+    padding-right: calc(3rem + var(--space-md)); /* Accommodate settings gear button */
+  }
+
+  .theme-toggle {
+    align-self: flex-end;
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-sm);
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .feature {
+    padding: var(--space-md);
+  }
+
+  .timeline-cell {
+    min-width: 60px;
+    padding: var(--space-xs);
+    font-size: var(--text-xs);
+  }
+
+  .timeline-timezone-label {
+    min-width: 120px;
+    width: 120px;
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .timezone-name {
+    font-size: var(--text-xs);
+  }
+
+  .timezone-offset {
+    font-size: 10px;
+  }
+
+  .timeline-container {
+    margin: 0 -var(--space-sm);
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .modal {
+    width: 95%;
+    height: 90vh;
+    max-height: none;
+    min-width: 280px;
+    resize: none;
+  }
+
+  .modal-header,
+  .modal-content,
+  .modal-footer {
+    padding: var(--space-xs);
+  }
+
+  .wheel-timezone-item {
+    max-width: 240px;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .modal-resize-handle {
+    display: none;
+  }
+
+  .settings-panel {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .appearance-controls {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-sm);
+  }
+
+  .theme-controls {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-sm);
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+}
+
+/* Medium devices (tablets) */
+@media (min-width: 768px) {
+  .container {
+    padding: 0 var(--space-md);
+  }
+
+  .header {
+    padding: var(--space-xs) 0;
+  }
+
+  .main {
+    padding: var(--space-md) 0;
+  }
+
+  .timeline-cell {
+    min-width: 90px;
+  }
+
+  .timeline-timezone-label {
+    min-width: 180px;
+    width: 180px;
+  }
+}
+
+/* Large devices (desktops) */
+@media (min-width: 992px) {
+  .container {
+    padding: 0 var(--space-lg);
+  }
+
+  .title {
+    font-size: var(--text-4xl);
+  }
+
+  .subtitle {
+    font-size: var(--text-xl);
+  }
+
+  .timeline-cell {
+    min-width: 100px;
+    padding: var(--space-md);
+  }
+
+  .timeline-timezone-label {
+    min-width: 200px;
+    width: 200px;
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .timezone-name {
+    font-size: var(--text-base);
+  }
+
+  .timezone-offset {
+    font-size: var(--text-sm);
+  }
+}
+
+/* Extra large devices (large desktops, TVs) */
+@media (min-width: 1400px) {
+  :root {
+    --space-lg: 2.5rem;
+    --space-xl: 4rem;
+    --space-2xl: 6rem;
+    --text-3xl: 2.5rem;
+    --text-4xl: 3rem;
+  }
+
+  .container {
+    padding: 0 var(--space-xl);
+  }
+
+  .features {
+    gap: var(--space-xl);
+  }
+
+  .feature {
+    padding: var(--space-xl);
+  }
+
+  .timeline-cell {
+    min-width: 120px;
+  }
+
+  .timeline-timezone-label {
+    min-width: 220px;
+    width: 220px;
+  }
+}
+
+/* Ultra-wide displays and TVs */
+@media (min-width: 1920px) {
+  :root {
+    --container-max-width: 1600px;
+  }
+
+  html {
+    font-size: 18px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .header,
+  .footer {
+    background-color: transparent !important;
+    border: none !important;
+  }
+
+  .feature {
+    break-inside: avoid;
+  }
+
+  .timeline-container {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+
+  .timeline-row.user-timezone {
+    background: var(--gray-50) !important;
+  }
+
+  .timeline-hour.current-hour {
+    background: #666 !important;
+    color: white !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-border: currentColor;
+  }
+
+  .feature {
+    border-width: 2px;
+  }
+
+  .timeline-container {
+    border-width: 2px;
+  }
+
+  .timeline-cell {
+    border-width: 2px;
+  }
+
+  .timeline-row.user-timezone {
+    border-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition: none;
+  }
+
+  .feature:hover,
+  .button:hover,
+  .theme-toggle:hover {
+    transform: none;
+  }
+
+  .timeline-row,
+  .timeline-hour {
+    transition: none;
+  }
+}
+
+/* 
+==========================================================================
+   GLOBAL COLOR PALETTE
+   Each hex value defined only once with meaningful semantic names
+   ============================================================================ */
+
+:root {
+  /* Base Neutrals */
+  --pure-black: #000000;
+  --pure-white: #ffffff;
+
+  /* Gray Scale */
+  --gray-darkest: #0f0f0f;
+  --gray-darker: #1a1a1a;
+  --gray-dark: #262626;
+  --gray-medium-dark: #404040;
+  --gray-medium: #4a4a4a;
+  --gray-medium-light: #666666;
+  --gray-light: #999999;
+  --gray-lighter: #cccccc;
+  --gray-lightest: #f5f5f5;
+
+  /* Extended Grays */
+  --gray-850: #1f2937;
+  --gray-750: #374151;
+  --gray-650: #4c4c4c;
+  --gray-550: #5c5c5c;
+  --gray-450: #2a2a2a;
+  --gray-350: #2c2c2c;
+  --gray-250: #3c3c3c;
+  --gray-150: #d0d0d0;
+  --gray-125: #d1d1d1;
+  --gray-75: #e0e0e0;
+  --gray-50: #f0f0f0;
+  --gray-25: #fafafa;
+  --gray-blue: #94a3b8;
+  --gray-warm: #d1d5db;
+
+  /* Forest Green Palette */
+  --forest-darkest: #0a1a0a;
+  --forest-darker: #1a2e1a;
+  --forest-dark: #254025;
+  --forest-medium: #365c36;
+  --forest-bright: #22c55e;
+  --forest-emerald: #16a34a;
+  --forest-lime: #84cc16;
+  --forest-yellow: #eab308;
+  --forest-light-bg: #f0fdf4;
+  --forest-light: #bbf7d0;
+  --forest-pale: #f7fef7;
+  --forest-pale-green: #e8f5e8;
+  --forest-mint: #d1e8d1;
+  --forest-deep-green: #15803d;
+  --forest-olive: #65a30d;
+  --forest-amber: #ca8a04;
+  --forest-shadow: #14532d;
+  --forest-sage: #166534;
+  --forest-spring: #a3d977;
+
+  /* Cyber/Neon Palette */
+  --cyber-darkest: #0a0a14;
+  --cyber-dark: #141428;
+  --cyber-medium: #1e1e3c;
+  --cyber-blue-dark: #2d2d5a;
+  --cyber-cyan: #00d4ff;
+  --cyber-blue: #0099cc;
+  --cyber-purple: #bd00ff;
+  --cyber-pink: #ff0080;
+  --cyber-light-bg: #e0f0ff;
+  --cyber-light-blue: #a0c4ff;
+  --cyber-pale: #f0f9ff;
+  --cyber-sky-pale: #e0f2fe;
+  --cyber-sky-light: #bae6fd;
+  --cyber-blue-600: #0284c7;
+  --cyber-blue-700: #0369a1;
+  --cyber-purple-600: #7c3aed;
+  --cyber-pink-600: #db2777;
+  --cyber-blue-900: #082f49;
+  --cyber-blue-800: #0c4a6e;
+  --cyber-cyan-light: #7dd3fc;
+
+  /* Ocean Blue Palette */
+  --ocean-darkest: #0a1628;
+  --ocean-dark: #1e2939;
+  --ocean-medium: #2a3441;
+  --ocean-cyan: #06b6d4;
+  --ocean-blue: #0891b2;
+  --ocean-teal: #14b8a6;
+  --ocean-blue-bright: #3b82f6;
+  --ocean-deep: #0e7490;
+  --ocean-teal-dark: #0d9488;
+  --ocean-royal: #2563eb;
+  --ocean-navy: #075985;
+  --ocean-cyan-light: #67e8f9;
+  --ocean-slate: #164e63;
+  --ocean-midnight: #0c2d48;
+
+  /* Original Theme Colors */
+  --original-blue-gray: #7c9fb8;
+  --original-blue-medium: #6a8aa3;
+  --original-green-blue: #8ab8a3;
+  --original-tan: #b8a37c;
+  --original-steel: #5a7a93;
+  --original-slate: #4a6a83;
+  --original-sage-blue: #6a9383;
+  --original-bronze: #93835a;
+  --original-sky: #9ab8d3;
+
+  /* Sunset/Warm Palette */
+  --sunset-darkest: #2a1810;
+  --sunset-dark: #3a2820;
+  --sunset-medium: #4a3830;
+  --sunset-brown: #5a4840;
+  --sunset-orange: #ff6b35;
+  --sunset-orange-dark: #e55a2b;
+  --sunset-red: #d32f2f;
+  --sunset-amber: #ffab00;
+  --sunset-cream: #fff8e1;
+  --sunset-peach: #ffe0b2;
+  --sunset-ivory: #fff3e0;
+  --sunset-deep-orange: #e65100;
+  --sunset-deep-red: #bf360c;
+  --sunset-gold: #f57c00;
+  --sunset-yellow: #ff8f00;
+  --sunset-coffee: #3e2723;
+  --sunset-mocha: #5d4037;
+  --sunset-bright-yellow: #ffcc02;
+  --sunset-charcoal: #292524;
+
+  /* Additional Utility Colors */
+  --golden-yellow: #fbbf24;
+  --golden-amber: #f59e0b;
+  --brown-dark: #78350f;
+  --slate-dark: #1e293b;
+  --slate-darkest: #0f172a;
+  --cream-light: #fde68a;
+  --cream-pale: #fef3c7;
+  --brown-medium: #92400e;
+}
+
+/* ============================================================================
+   THEME DEFINITIONS
+   All themes using semantic colors from global palette
+   ============================================================================ */
+
+/* Default Theme - Monochrome Professional */
+.theme-default {
+  /* Base semantic colors using global palette */
+  --gray-900: var(--gray-darkest);
+  --gray-800: var(--gray-darker);
+  --gray-700: var(--gray-dark);
+  --gray-600: var(--gray-medium-dark);
+  --gray-500: var(--gray-medium);
+  --gray-400: var(--gray-medium-light);
+  --gray-300: var(--gray-light);
+  --gray-200: var(--gray-lighter);
+  --gray-100: var(--gray-125);
+  --gray-50: var(--gray-lightest);
+  --white: var(--pure-white);
+  --black: var(--pure-black);
+
+  /* Dark Theme Colors */
+  --color-bg: var(--gray-900);
+  --color-background: var(--gray-900);
+  --color-surface: var(--gray-800);
+  --color-surface-variant: var(--gray-700);
+  --color-surface-hover: var(--gray-600);
+  --color-primary: var(--gray-400);
+  --color-primary-variant: var(--gray-500);
+  --color-primary-subtle: rgba(102, 102, 102, 0.1);
+  --color-secondary: var(--gray-300);
+  --color-accent: var(--gray-200);
+  --color-text: var(--gray-50);
+  --color-text-secondary: var(--gray-100);
+  --color-border: var(--gray-600);
+  --color-gradient-start: var(--gray-400);
+  --color-gradient-end: var(--gray-300);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+
+  /* Header-specific theme colors */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(245, 245, 245, 0.95);
+  --color-header-shadow: rgba(0, 0, 0, 0.6);
+  --color-header-overlay: rgba(102, 102, 102, 0.2);
+  --color-header-button-bg: rgba(102, 102, 102, 0.3);
+  --color-header-button-border: rgba(102, 102, 102, 0.5);
+  --color-header-button-bg-hover: rgba(102, 102, 102, 0.4);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(153, 153, 153, 0.4);
+}
+
+.theme-default.light-theme {
+  --color-bg: var(--white);
+  --color-background: var(--white);
+  --color-surface: var(--gray-50);
+  --color-surface-variant: var(--gray-100);
+  --color-surface-hover: var(--gray-200);
+  --color-primary: var(--gray-500);
+  --color-primary-variant: var(--gray-600);
+  --color-primary-subtle: rgba(74, 74, 74, 0.1);
+  --color-secondary: var(--gray-400);
+  --color-accent: var(--gray-700);
+  --color-text: var(--gray-900);
+  --color-text-secondary: var(--gray-700);
+  --color-border: var(--gray-300);
+  --color-gradient-start: var(--gray-500);
+  --color-gradient-end: var(--gray-400);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Header-specific theme colors for light mode */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(255, 255, 255, 0.95);
+  --color-header-shadow: rgba(15, 15, 15, 0.3);
+  --color-header-overlay: rgba(255, 255, 255, 0.2);
+  --color-header-button-bg: rgba(255, 255, 255, 0.3);
+  --color-header-button-border: rgba(255, 255, 255, 0.4);
+  --color-header-button-bg-hover: rgba(255, 255, 255, 0.5);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Forest Harmony Theme */
+.theme-forest-harmony {
+  /* Base semantic colors using global palette */
+  --forest-dark-green: var(--forest-darkest);
+  --forest-medium-green: var(--forest-darker);
+  --forest-variant-green: var(--forest-dark);
+  --forest-border-green: var(--forest-medium);
+  --forest-bright-green: var(--forest-bright);
+  --forest-medium-bright-green: var(--forest-emerald);
+  --forest-lime: var(--forest-lime);
+  --forest-yellow: var(--forest-yellow);
+  --forest-dark-text: var(--forest-light-bg);
+  --forest-dark-text-secondary: var(--forest-light);
+  --forest-light-bg: var(--forest-pale);
+  --forest-light-surface: var(--forest-pale-green);
+  --forest-light-variant: var(--forest-mint);
+  --forest-light-primary: var(--forest-emerald);
+  --forest-light-primary-variant: var(--forest-deep-green);
+  --forest-light-secondary: var(--forest-olive);
+  --forest-light-accent: var(--forest-amber);
+  --forest-light-text: var(--forest-shadow);
+  --forest-light-text-secondary: var(--forest-sage);
+  --forest-light-border: var(--forest-spring);
+  --white: var(--pure-white);
+
+  /* Dark Theme Colors */
+  --color-bg: var(--forest-dark-green);
+  --color-background: var(--forest-dark-green);
+  --color-surface: var(--forest-medium-green);
+  --color-surface-variant: var(--forest-variant-green);
+  --color-surface-hover: var(--forest-border-green);
+  --color-primary: var(--forest-bright-green);
+  --color-primary-variant: var(--forest-medium-bright-green);
+  --color-primary-subtle: rgba(34, 197, 94, 0.1);
+  --color-secondary: var(--forest-lime);
+  --color-accent: var(--forest-yellow);
+  --color-text: var(--forest-dark-text);
+  --color-text-secondary: var(--forest-dark-text-secondary);
+  --color-border: var(--forest-border-green);
+  --color-gradient-start: var(--forest-bright-green);
+  --color-gradient-end: var(--forest-lime);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+
+  /* Header-specific theme colors */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(240, 253, 244, 0.95);
+  --color-header-shadow: rgba(0, 0, 0, 0.6);
+  --color-header-overlay: rgba(34, 197, 94, 0.2);
+  --color-header-button-bg: rgba(34, 197, 94, 0.3);
+  --color-header-button-border: rgba(34, 197, 94, 0.5);
+  --color-header-button-bg-hover: rgba(34, 197, 94, 0.4);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(132, 204, 22, 0.4);
+}
+
+.theme-forest-harmony.light-theme {
+  --color-bg: var(--forest-light-bg);
+  --color-background: var(--forest-light-bg);
+  --color-surface: var(--forest-light-surface);
+  --color-surface-variant: var(--forest-light-variant);
+  --color-surface-hover: var(--forest-light-border);
+  --color-primary: var(--forest-light-primary);
+  --color-primary-variant: var(--forest-light-primary-variant);
+  --color-primary-subtle: rgba(22, 163, 74, 0.1);
+  --color-secondary: var(--forest-light-secondary);
+  --color-accent: var(--forest-light-accent);
+  --color-text: var(--forest-light-text);
+  --color-text-secondary: var(--forest-light-text-secondary);
+  --color-border: var(--forest-light-border);
+  --color-gradient-start: var(--forest-light-primary);
+  --color-gradient-end: var(--forest-light-secondary);
+  --shadow: 0 4px 6px -1px rgba(20, 83, 45, 0.1), 0 2px 4px -1px rgba(20, 83, 45, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(20, 83, 45, 0.1), 0 4px 6px -2px rgba(20, 83, 45, 0.05);
+
+  /* Header-specific theme colors for light mode */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(255, 255, 255, 0.95);
+  --color-header-shadow: rgba(20, 83, 45, 0.3);
+  --color-header-overlay: rgba(255, 255, 255, 0.2);
+  --color-header-button-bg: rgba(255, 255, 255, 0.3);
+  --color-header-button-border: rgba(255, 255, 255, 0.4);
+  --color-header-button-bg-hover: rgba(255, 255, 255, 0.5);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Neon Cyber Theme */
+.theme-neon-cyber {
+  /* Base semantic colors using global palette */
+  --cyber-dark-blue: var(--cyber-darkest);
+  --cyber-blue: var(--cyber-dark);
+  --cyber-medium-blue: var(--cyber-medium);
+  --cyber-border-blue: var(--cyber-blue-dark);
+  --cyber-cyan: var(--cyber-cyan);
+  --cyber-cyan-variant: var(--cyber-blue);
+  --cyber-purple: var(--cyber-purple);
+  --cyber-pink: var(--cyber-pink);
+  --cyber-light-blue: var(--cyber-light-bg);
+  --cyber-medium-light-blue: var(--cyber-light-blue);
+  --cyber-light-bg: var(--cyber-pale);
+  --cyber-light-surface: var(--cyber-sky-pale);
+  --cyber-light-variant: var(--cyber-sky-light);
+  --cyber-light-primary: var(--cyber-blue-600);
+  --cyber-light-primary-variant: var(--cyber-blue-700);
+  --cyber-light-secondary: var(--cyber-purple-600);
+  --cyber-light-accent: var(--cyber-pink-600);
+  --cyber-light-text: var(--cyber-blue-900);
+  --cyber-light-text-secondary: var(--cyber-blue-800);
+  --cyber-light-border: var(--cyber-cyan-light);
+  --white: var(--pure-white);
+
+  /* Dark Theme Colors */
+  --color-bg: var(--cyber-dark-blue);
+  --color-background: var(--cyber-dark-blue);
+  --color-surface: var(--cyber-blue);
+  --color-surface-variant: var(--cyber-medium-blue);
+  --color-surface-hover: var(--cyber-border-blue);
+  --color-primary: var(--cyber-cyan);
+  --color-primary-variant: var(--cyber-cyan-variant);
+  --color-primary-subtle: rgba(0, 212, 255, 0.1);
+  --color-secondary: var(--cyber-purple);
+  --color-accent: var(--cyber-pink);
+  --color-text: var(--cyber-light-blue);
+  --color-text-secondary: var(--cyber-medium-light-blue);
+  --color-border: var(--cyber-border-blue);
+  --color-gradient-start: var(--cyber-cyan);
+  --color-gradient-end: var(--cyber-purple);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+
+  /* Header-specific theme colors */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(224, 240, 255, 0.95);
+  --color-header-shadow: rgba(0, 0, 0, 0.6);
+  --color-header-overlay: rgba(0, 212, 255, 0.2);
+  --color-header-button-bg: rgba(0, 212, 255, 0.3);
+  --color-header-button-border: rgba(0, 212, 255, 0.5);
+  --color-header-button-bg-hover: rgba(0, 212, 255, 0.4);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(189, 0, 255, 0.4);
+}
+
+.theme-neon-cyber.light-theme {
+  --color-bg: var(--cyber-light-bg);
+  --color-background: var(--cyber-light-bg);
+  --color-surface: var(--cyber-light-surface);
+  --color-surface-variant: var(--cyber-light-variant);
+  --color-surface-hover: var(--cyber-light-border);
+  --color-primary: var(--cyber-light-primary);
+  --color-primary-variant: var(--cyber-light-primary-variant);
+  --color-primary-subtle: rgba(2, 132, 199, 0.1);
+  --color-secondary: var(--cyber-light-secondary);
+  --color-accent: var(--cyber-light-accent);
+  --color-text: var(--cyber-light-text);
+  --color-text-secondary: var(--cyber-light-text-secondary);
+  --color-border: var(--cyber-light-border);
+  --color-gradient-start: var(--cyber-light-primary);
+  --color-gradient-end: var(--cyber-light-secondary);
+  --shadow: 0 4px 6px -1px rgba(8, 47, 73, 0.1), 0 2px 4px -1px rgba(8, 47, 73, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(8, 47, 73, 0.1), 0 4px 6px -2px rgba(8, 47, 73, 0.05);
+
+  /* Header-specific theme colors for light mode */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(255, 255, 255, 0.95);
+  --color-header-shadow: rgba(8, 47, 73, 0.3);
+  --color-header-overlay: rgba(255, 255, 255, 0.2);
+  --color-header-button-bg: rgba(255, 255, 255, 0.3);
+  --color-header-button-border: rgba(255, 255, 255, 0.4);
+  --color-header-button-bg-hover: rgba(255, 255, 255, 0.5);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Ocean Breeze Theme */
+.theme-ocean-breeze {
+  /* Base semantic colors using global palette */
+  --ocean-dark-blue: var(--ocean-darkest);
+  --ocean-medium-blue: var(--ocean-dark);
+  --ocean-variant-blue: var(--ocean-medium);
+  --ocean-border: var(--gray-750);
+  --ocean-cyan: var(--ocean-cyan);
+  --ocean-cyan-variant: var(--ocean-blue);
+  --ocean-teal: var(--ocean-teal);
+  --ocean-blue: var(--ocean-blue-bright);
+  --ocean-dark-text: var(--cyber-pale);
+  --ocean-dark-text-secondary: var(--cyber-cyan-light);
+  --ocean-light-bg: var(--cyber-pale);
+  --ocean-light-surface: var(--cyber-sky-pale);
+  --ocean-light-variant: var(--cyber-sky-light);
+  --ocean-light-primary: var(--ocean-blue);
+  --ocean-light-primary-variant: var(--ocean-deep);
+  --ocean-light-secondary: var(--ocean-teal-dark);
+  --ocean-light-accent: var(--ocean-royal);
+  --ocean-light-text: var(--cyber-blue-800);
+  --ocean-light-text-secondary: var(--ocean-navy);
+  --ocean-light-border: var(--ocean-cyan-light);
+  --white: var(--pure-white);
+
+  /* Dark Theme Colors */
+  --color-bg: var(--ocean-dark-blue);
+  --color-background: var(--ocean-dark-blue);
+  --color-surface: var(--ocean-medium-blue);
+  --color-surface-variant: var(--ocean-variant-blue);
+  --color-surface-hover: var(--ocean-border);
+  --color-primary: var(--ocean-cyan);
+  --color-primary-variant: var(--ocean-cyan-variant);
+  --color-primary-subtle: rgba(6, 182, 212, 0.1);
+  --color-secondary: var(--ocean-teal);
+  --color-accent: var(--ocean-blue);
+  --color-text: var(--ocean-dark-text);
+  --color-text-secondary: var(--ocean-dark-text-secondary);
+  --color-border: var(--ocean-border);
+  --color-gradient-start: var(--ocean-cyan);
+  --color-gradient-end: var(--ocean-teal);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+
+  /* Header-specific theme colors */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(240, 249, 255, 0.95);
+  --color-header-shadow: rgba(0, 0, 0, 0.6);
+  --color-header-overlay: rgba(6, 182, 212, 0.2);
+  --color-header-button-bg: rgba(6, 182, 212, 0.3);
+  --color-header-button-border: rgba(6, 182, 212, 0.5);
+  --color-header-button-bg-hover: rgba(6, 182, 212, 0.4);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(20, 184, 166, 0.4);
+}
+
+.theme-ocean-breeze.light-theme {
+  --color-bg: var(--ocean-light-bg);
+  --color-background: var(--ocean-light-bg);
+  --color-surface: var(--ocean-light-surface);
+  --color-surface-variant: var(--ocean-light-variant);
+  --color-surface-hover: var(--ocean-light-border);
+  --color-primary: var(--ocean-light-primary);
+  --color-primary-variant: var(--ocean-light-primary-variant);
+  --color-primary-subtle: rgba(8, 145, 178, 0.1);
+  --color-secondary: var(--ocean-light-secondary);
+  --color-accent: var(--ocean-light-accent);
+  --color-text: var(--ocean-light-text);
+  --color-text-secondary: var(--ocean-light-text-secondary);
+  --color-border: var(--ocean-light-border);
+  --color-gradient-start: var(--ocean-light-primary);
+  --color-gradient-end: var(--ocean-light-secondary);
+  --shadow: 0 4px 6px -1px rgba(12, 74, 110, 0.1), 0 2px 4px -1px rgba(12, 74, 110, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(12, 74, 110, 0.1), 0 4px 6px -2px rgba(12, 74, 110, 0.05);
+
+  /* Header-specific theme colors for light mode */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(255, 255, 255, 0.95);
+  --color-header-shadow: rgba(12, 74, 110, 0.3);
+  --color-header-overlay: rgba(255, 255, 255, 0.2);
+  --color-header-button-bg: rgba(255, 255, 255, 0.3);
+  --color-header-button-border: rgba(255, 255, 255, 0.4);
+  --color-header-button-bg-hover: rgba(255, 255, 255, 0.5);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Original Theme */
+.theme-original {
+  /* Base semantic colors using global palette */
+  --original-dark: var(--gray-350);
+  --original-surface: var(--gray-250);
+  --original-surface-variant: var(--gray-650);
+  --original-border: var(--gray-550);
+  --original-muted-blue: var(--original-blue-gray);
+  --original-muted-blue-variant: var(--original-blue-medium);
+  --original-muted-green: var(--original-green-blue);
+  --original-muted-orange: var(--original-tan);
+  --original-dark-text: var(--gray-50);
+  --original-dark-text-secondary: var(--gray-150);
+  --original-light-bg: var(--gray-25);
+  --original-light-surface: var(--gray-50);
+  --original-light-surface-variant: var(--gray-75);
+  --original-light-primary: var(--original-steel);
+  --original-light-primary-variant: var(--original-slate);
+  --original-light-secondary: var(--original-sage-blue);
+  --original-light-accent: var(--original-bronze);
+  --original-light-text: var(--gray-450);
+  --original-light-text-secondary: var(--gray-medium);
+  --original-light-border: var(--original-sky);
+  --white: var(--pure-white);
+
+  /* Dark Theme Colors */
+  --color-bg: var(--original-dark);
+  --color-background: var(--original-dark);
+  --color-surface: var(--original-surface);
+  --color-surface-variant: var(--original-surface-variant);
+  --color-surface-hover: var(--original-border);
+  --color-primary: var(--original-muted-blue);
+  --color-primary-variant: var(--original-muted-blue-variant);
+  --color-primary-subtle: rgba(124, 159, 184, 0.1);
+  --color-secondary: var(--original-muted-green);
+  --color-accent: var(--original-muted-orange);
+  --color-text: var(--original-dark-text);
+  --color-text-secondary: var(--original-dark-text-secondary);
+  --color-border: var(--original-border);
+  --color-gradient-start: var(--original-muted-blue);
+  --color-gradient-end: var(--original-muted-green);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+
+  /* Header-specific theme colors */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(240, 240, 240, 0.95);
+  --color-header-shadow: rgba(0, 0, 0, 0.6);
+  --color-header-overlay: rgba(124, 159, 184, 0.2);
+  --color-header-button-bg: rgba(124, 159, 184, 0.3);
+  --color-header-button-border: rgba(124, 159, 184, 0.5);
+  --color-header-button-bg-hover: rgba(124, 159, 184, 0.4);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(138, 184, 163, 0.4);
+}
+
+.theme-original.light-theme {
+  --color-bg: var(--original-light-bg);
+  --color-background: var(--original-light-bg);
+  --color-surface: var(--original-light-surface);
+  --color-surface-variant: var(--original-light-surface-variant);
+  --color-surface-hover: var(--original-light-border);
+  --color-primary: var(--original-light-primary);
+  --color-primary-variant: var(--original-light-primary-variant);
+  --color-primary-subtle: rgba(90, 122, 147, 0.1);
+  --color-secondary: var(--original-light-secondary);
+  --color-accent: var(--original-light-accent);
+  --color-text: var(--original-light-text);
+  --color-text-secondary: var(--original-light-text-secondary);
+  --color-border: var(--original-light-border);
+  --color-gradient-start: var(--original-light-primary);
+  --color-gradient-end: var(--original-light-secondary);
+  --shadow: 0 4px 6px -1px rgba(42, 42, 42, 0.1), 0 2px 4px -1px rgba(42, 42, 42, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(42, 42, 42, 0.1), 0 4px 6px -2px rgba(42, 42, 42, 0.05);
+
+  /* Header-specific theme colors for light mode */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(255, 255, 255, 0.95);
+  --color-header-shadow: rgba(42, 42, 42, 0.3);
+  --color-header-overlay: rgba(255, 255, 255, 0.2);
+  --color-header-button-bg: rgba(255, 255, 255, 0.3);
+  --color-header-button-border: rgba(255, 255, 255, 0.4);
+  --color-header-button-bg-hover: rgba(255, 255, 255, 0.5);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Sunset Warmth Theme */
+.theme-sunset-warmth {
+  /* Base semantic colors using global palette */
+  --sunset-dark: var(--sunset-darkest);
+  --sunset-surface: var(--sunset-dark);
+  --sunset-surface-variant: var(--sunset-medium);
+  --sunset-border: var(--sunset-brown);
+  --sunset-orange: var(--sunset-orange);
+  --sunset-orange-variant: var(--sunset-orange-dark);
+  --sunset-red: var(--sunset-red);
+  --sunset-gold: var(--sunset-amber);
+  --sunset-light-text: var(--sunset-cream);
+  --sunset-medium-text: var(--sunset-peach);
+  --sunset-light-bg: var(--sunset-cream);
+  --sunset-light-surface: var(--sunset-ivory);
+  --sunset-light-surface-variant: var(--sunset-peach);
+  --sunset-light-primary: var(--sunset-deep-orange);
+  --sunset-light-primary-variant: var(--sunset-deep-red);
+  --sunset-light-secondary: var(--sunset-gold);
+  --sunset-light-accent: var(--sunset-yellow);
+  --sunset-light-text: var(--sunset-cream);
+  --sunset-light-text-secondary: var(--sunset-peach);
+  --sunset-light-border: var(--sunset-bright-yellow);
+  --white: var(--pure-white);
+
+  /* Dark Theme Colors */
+  --color-bg: var(--sunset-dark);
+  --color-background: var(--sunset-dark);
+  --color-surface: var(--sunset-surface);
+  --color-surface-variant: var(--sunset-surface-variant);
+  --color-surface-hover: var(--sunset-border);
+  --color-primary: var(--sunset-orange);
+  --color-primary-variant: var(--sunset-orange-variant);
+  --color-primary-subtle: rgba(255, 107, 53, 0.1);
+  --color-secondary: var(--sunset-red);
+  --color-accent: var(--sunset-gold);
+  --color-text: var(--sunset-light-text);
+  --color-text-secondary: var(--sunset-medium-text);
+  --color-border: var(--sunset-border);
+  --color-gradient-start: var(--sunset-orange);
+  --color-gradient-end: var(--sunset-red);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+
+  /* Header-specific theme colors */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(255, 248, 225, 0.95);
+  --color-header-shadow: rgba(0, 0, 0, 0.6);
+  --color-header-overlay: rgba(255, 107, 53, 0.2);
+  --color-header-button-bg: rgba(255, 107, 53, 0.3);
+  --color-header-button-border: rgba(255, 107, 53, 0.5);
+  --color-header-button-bg-hover: rgba(255, 107, 53, 0.4);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(255, 171, 0, 0.4);
+}
+
+.theme-sunset-warmth.light-theme {
+  --color-bg: var(--sunset-light-bg);
+  --color-background: var(--sunset-light-bg);
+  --color-surface: var(--sunset-light-surface);
+  --color-surface-variant: var(--sunset-light-surface-variant);
+  --color-surface-hover: var(--sunset-light-border);
+  --color-primary: var(--sunset-light-primary);
+  --color-primary-variant: var(--sunset-light-primary-variant);
+  --color-primary-subtle: rgba(230, 81, 0, 0.1);
+  --color-secondary: var(--sunset-light-secondary);
+  --color-accent: var(--sunset-light-accent);
+  --color-text: var(--sunset-coffee);
+  --color-text-secondary: var(--sunset-mocha);
+  --color-border: var(--sunset-light-border);
+  --color-gradient-start: var(--sunset-light-primary);
+  --color-gradient-end: var(--sunset-light-secondary);
+  --shadow: 0 4px 6px -1px rgba(62, 39, 35, 0.1), 0 2px 4px -1px rgba(62, 39, 35, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(62, 39, 35, 0.1), 0 4px 6px -2px rgba(62, 39, 35, 0.05);
+
+  /* Header-specific theme colors for light mode */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(255, 255, 255, 0.95);
+  --color-header-shadow: rgba(62, 39, 35, 0.3);
+  --color-header-overlay: rgba(255, 255, 255, 0.2);
+  --color-header-button-bg: rgba(255, 255, 255, 0.3);
+  --color-header-button-border: rgba(255, 255, 255, 0.4);
+  --color-header-button-bg-hover: rgba(255, 255, 255, 0.5);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Default root colors for fallback */
+:root {
+  /* Base semantic colors using global palette */
+  --gray-900: var(--gray-darkest);
+  --gray-800: var(--gray-darker);
+  --gray-700: var(--gray-dark);
+  --gray-600: var(--gray-medium-dark);
+  --gray-500: var(--gray-medium);
+  --gray-400: var(--gray-medium-light);
+  --gray-300: var(--gray-light);
+  --gray-200: var(--gray-lighter);
+  --gray-100: var(--gray-125);
+  --gray-50: var(--gray-lightest);
+  --white: var(--pure-white);
+  --black: var(--pure-black);
+
+  /* Default theme colors (dark) */
+  --color-bg: var(--gray-900);
+  --color-background: var(--gray-900);
+  --color-surface: var(--gray-800);
+  --color-surface-variant: var(--gray-700);
+  --color-surface-hover: var(--gray-600);
+  --color-primary: var(--gray-400);
+  --color-primary-variant: var(--gray-500);
+  --color-primary-subtle: rgba(102, 102, 102, 0.1);
+  --color-secondary: var(--gray-300);
+  --color-accent: var(--gray-200);
+  --color-text: var(--gray-50);
+  --color-text-secondary: var(--gray-100);
+  --color-border: var(--gray-600);
+  --color-gradient-start: var(--gray-400);
+  --color-gradient-end: var(--gray-300);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+
+  /* Header-specific theme colors */
+  --color-header-text: var(--white);
+  --color-header-text-secondary: rgba(245, 245, 245, 0.95);
+  --color-header-shadow: rgba(0, 0, 0, 0.6);
+  --color-header-overlay: rgba(102, 102, 102, 0.2);
+  --color-header-button-bg: rgba(102, 102, 102, 0.3);
+  --color-header-button-border: rgba(102, 102, 102, 0.5);
+  --color-header-button-bg-hover: rgba(102, 102, 102, 0.4);
+
+  /* Button effects */
+  --color-button-shimmer: rgba(153, 153, 153, 0.4);
+}
+
+/* Theme preview colors for settings panel */
+/* Each theme option defines its own color variables to ensure correct preview colors regardless of active theme */
+
+.theme-option.theme-default {
+  /* Define actual theme color variables within this theme option using global palette */
+  --gray-400: var(--gray-medium-light);
+  --gray-800: var(--gray-darker);
+  --gray-200: var(--gray-lighter);
+}
+.theme-option.theme-default .theme-preview-color:nth-child(1) {
+  background: var(--gray-400);
+}
+.theme-option.theme-default .theme-preview-color:nth-child(2) {
+  background: var(--gray-800);
+}
+.theme-option.theme-default .theme-preview-color:nth-child(3) {
+  background: var(--gray-200);
+}
+
+.theme-option.theme-forest-harmony {
+  /* Define actual theme color variables within this theme option using global palette */
+  --forest-bright-green: var(--forest-bright);
+  --forest-medium-green: var(--forest-darker);
+  --forest-yellow: var(--forest-yellow);
+}
+.theme-option.theme-forest-harmony .theme-preview-color:nth-child(1) {
+  background: var(--forest-bright-green);
+}
+.theme-option.theme-forest-harmony .theme-preview-color:nth-child(2) {
+  background: var(--forest-medium-green);
+}
+.theme-option.theme-forest-harmony .theme-preview-color:nth-child(3) {
+  background: var(--forest-yellow);
+}
+
+.theme-option.theme-neon-cyber {
+  /* Define actual theme color variables within this theme option using global palette */
+  --cyber-cyan: var(--cyber-cyan);
+  --cyber-blue: var(--cyber-dark);
+  --cyber-pink: var(--cyber-pink);
+}
+.theme-option.theme-neon-cyber .theme-preview-color:nth-child(1) {
+  background: var(--cyber-cyan);
+}
+.theme-option.theme-neon-cyber .theme-preview-color:nth-child(2) {
+  background: var(--cyber-blue);
+}
+.theme-option.theme-neon-cyber .theme-preview-color:nth-child(3) {
+  background: var(--cyber-pink);
+}
+
+.theme-option.theme-ocean-breeze {
+  /* Define actual theme color variables within this theme option using global palette */
+  --ocean-cyan-variant: var(--ocean-blue);
+  --ocean-medium-blue: var(--cyber-blue-800);
+  --ocean-blue: var(--ocean-slate);
+}
+.theme-option.theme-ocean-breeze .theme-preview-color:nth-child(1) {
+  background: var(--ocean-cyan-variant);
+}
+.theme-option.theme-ocean-breeze .theme-preview-color:nth-child(2) {
+  background: var(--ocean-medium-blue);
+}
+.theme-option.theme-ocean-breeze .theme-preview-color:nth-child(3) {
+  background: var(--ocean-blue);
+}
+
+.theme-option.theme-original {
+  /* Define actual theme color variables within this theme option using global palette */
+  --original-muted-blue: var(--original-blue-gray);
+  --original-surface: var(--gray-250);
+  --original-muted-orange: var(--original-tan);
+}
+.theme-option.theme-original .theme-preview-color:nth-child(1) {
+  background: var(--original-muted-blue);
+}
+.theme-option.theme-original .theme-preview-color:nth-child(2) {
+  background: var(--original-surface);
+}
+.theme-option.theme-original .theme-preview-color:nth-child(3) {
+  background: var(--original-muted-orange);
+}
+
+.theme-option.theme-sunset-warmth {
+  /* Define actual theme color variables within this theme option using global palette */
+  --sunset-orange: var(--sunset-orange);
+  --sunset-surface: var(--sunset-dark);
+  --sunset-gold: var(--sunset-amber);
+}
+.theme-option.theme-sunset-warmth .theme-preview-color:nth-child(1) {
+  background: var(--sunset-orange);
+}
+.theme-option.theme-sunset-warmth .theme-preview-color:nth-child(2) {
+  background: var(--sunset-surface);
+}
+.theme-option.theme-sunset-warmth .theme-preview-color:nth-child(3) {
+  background: var(--sunset-gold);
+}
+
+/* Theme-specific styling for theme options */
+/* This ensures each theme option shows text in that theme's colors for better readability preview */
+
+/* Default theme styling */
+.theme-option.theme-default {
+  background: var(--gray-darker); /* Use semantic color from global palette */
+}
+.theme-option.theme-default .theme-name {
+  color: var(--gray-lightest); /* Light gray text for dark background */
+}
+.theme-option.theme-default .theme-description {
+  color: var(--gray-lighter); /* Medium gray text */
+}
+
+/* Forest Harmony theme styling */
+.theme-option.theme-forest-harmony {
+  background: var(--forest-darker); /* Forest medium green */
+}
+.theme-option.theme-forest-harmony .theme-name {
+  color: var(--forest-light-bg); /* Light green text for dark background */
+}
+.theme-option.theme-forest-harmony .theme-description {
+  color: var(--forest-light); /* Medium light green text */
+}
+
+/* Neon Cyber theme styling */
+.theme-option.theme-neon-cyber {
+  background: var(--cyber-darkest); /* Cyber dark blue */
+}
+.theme-option.theme-neon-cyber .theme-name {
+  color: var(--cyber-sky-pale); /* Light cyan text for dark background */
+}
+.theme-option.theme-neon-cyber .theme-description {
+  color: var(--cyber-cyan-light); /* Medium light cyan text */
+}
+
+/* Ocean Breeze theme styling */
+.theme-option.theme-ocean-breeze {
+  background: var(--ocean-midnight); /* Ocean dark blue */
+}
+.theme-option.theme-ocean-breeze .theme-name {
+  color: var(--cyber-pale); /* Light blue text for dark background */
+}
+.theme-option.theme-ocean-breeze .theme-description {
+  color: var(--cyber-cyan-light); /* Medium light blue text */
+}
+
+/* Original theme styling */
+.theme-option.theme-original {
+  background: var(--gray-450); /* Original surface */
+}
+.theme-option.theme-original .theme-name {
+  color: var(--gray-50); /* Light text for dark background */
+}
+.theme-option.theme-original .theme-description {
+  color: var(--gray-150); /* Medium light text */
+}
+
+/* Sunset Warmth theme styling */
+.theme-option.theme-sunset-warmth {
+  background: var(--sunset-charcoal); /* Sunset surface */
+}
+.theme-option.theme-sunset-warmth .theme-name {
+  color: var(--sunset-cream); /* Light warm text for dark background */
+}
+.theme-option.theme-sunset-warmth .theme-description {
+  color: var(--sunset-peach); /* Medium warm text */
+}
