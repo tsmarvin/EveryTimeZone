@@ -1,0 +1,180 @@
+name: Deploy Develop Branch to Sub-directory
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number for deployment path'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages-develop"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout develop branch
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0  # Full history for gitversion
+      
+      - name: Get PR number for deployment path
+        id: pr-info
+        run: |
+          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
+            # Use manually provided PR number
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+            echo "::notice::Using manually provided PR number: $PR_NUMBER"
+          else
+            echo "::notice::Attempting to extract PR number from git history..."
+            
+            # Try to extract PR number from the most recent merge commit
+            PR_NUMBER=$(git log --oneline -1 --grep="Merge pull request" | grep -o '#[0-9]\+' | head -1 | sed 's/#//' || echo "")
+            if [ -n "$PR_NUMBER" ]; then
+              echo "::notice::Found PR number from merge commit: $PR_NUMBER"
+            else
+              echo "::notice::No merge commit found, searching commit messages..."
+              
+              # If no PR number found, try to get it from commit message
+              PR_NUMBER=$(git log --oneline -5 | grep -o '#[0-9]\+' | head -1 | sed 's/#//' || echo "")
+              if [ -n "$PR_NUMBER" ]; then
+                echo "::notice::Found PR number from commit message: $PR_NUMBER"
+              else
+                echo "::notice::No PR number found in recent commits, using timestamp fallback"
+                
+                # Fallback: use timestamp if no PR number found
+                PR_NUMBER="dev-$(date +%Y%m%d-%H%M%S)"
+                echo "::notice::Generated fallback identifier: $PR_NUMBER"
+              fi
+            fi
+          fi
+          
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "deploy_path=test-PR$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "::notice::Final deployment path: test-PR$PR_NUMBER"
+      
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v4
+        with:
+          versionSpec: '6.x.x'
+          
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+
+      # First: Build main branch content for the root
+      - name: Checkout and build main branch
+        run: |
+          # Save current state
+          git stash push -m "Save develop changes"
+          
+          # Checkout main branch
+          git checkout main
+          
+          # Build main branch content
+          npm run build
+          
+          # Save main build
+          mv dist main-dist
+          
+          # Return to develop branch
+          git checkout develop
+          # Only pop the stash if one exists, and fail if pop fails
+          if git stash list | grep -q .; then
+            git stash pop
+          else
+            echo "No stash to pop"
+          fi
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
+          GITVERSION_FULLSEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
+          GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
+      
+      # Second: Build develop branch content for the subdirectory
+      - name: Build develop branch for sub-directory
+        run: npm run build
+        env:
+          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
+          GITVERSION_FULLSEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
+          GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
+
+      # Third: Combine both builds into a single directory structure
+      - name: Combine builds for deployment
+        run: |
+          DEPLOY_PATH="${{ steps.pr-info.outputs.deploy_path }}"
+          
+          # Start with main content at root
+          rm -rf combined-dist
+          cp -r main-dist combined-dist
+          
+          # Add develop content to subdirectory
+          mkdir -p "combined-dist/$DEPLOY_PATH"
+          
+          # Modify develop build for sub-directory deployment
+          if [ -f dist/index.html ]; then
+            # Add base tag for sub-directory if not present
+            if ! grep -q "<base" dist/index.html; then
+              sed -E '0,/<head[[:space:]]*>/s|<head[[:space:]]*>|<head>\n  <base href="/'$DEPLOY_PATH'/">|' dist/index.html > "combined-dist/$DEPLOY_PATH/index.html"
+              echo "::notice::Added base tag to index.html for sub-directory support"
+            else
+              cp dist/index.html "combined-dist/$DEPLOY_PATH/"
+              echo "::notice::Base tag already exists in index.html"
+            fi
+            
+            # Copy other files, preserving directory structure
+            rsync -av --exclude=index.html dist/ "combined-dist/$DEPLOY_PATH/"
+          else
+            echo "::warning::dist/index.html not found, copying all files as-is"
+            cp -r dist/* "combined-dist/$DEPLOY_PATH/"
+          fi
+          
+          # Replace dist with combined structure
+          rm -rf dist
+          mv combined-dist dist
+          
+          echo "::notice::Combined main site (root) and develop preview (/$DEPLOY_PATH/)"
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+          
+      - name: Output deployment URL
+        run: |
+          echo "🚀 Main site: https://everytimezone.net/"
+          echo "🚀 Develop preview: https://everytimezone.net/${{ steps.pr-info.outputs.deploy_path }}/"
+          echo "::notice::Develop branch deployed to https://everytimezone.net/${{ steps.pr-info.outputs.deploy_path }}/"
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build-and-deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
