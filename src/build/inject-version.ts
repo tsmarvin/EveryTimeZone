@@ -101,16 +101,13 @@ function injectVersionIntoHtml(): void {
   if (footerRegex.test(htmlContent)) {
     const testSitePath = process.env.TEST_SITE_PATH;
     let versionHtml = `\n          <span class="version">v${version}</span>\n          `;
-    
+
     // Add test site link if this is the main site build (has TEST_SITE_PATH env var)
     if (testSitePath) {
       versionHtml += `\n          - preview the <a href="https://www.everytimezone.net/${testSitePath}/" target="_blank" rel="noopener noreferrer">test site</a>\n          `;
     }
-    
-    htmlContent = htmlContent.replace(
-      footerRegex,
-      `$1${versionHtml}`,
-    );
+
+    htmlContent = htmlContent.replace(footerRegex, `$1${versionHtml}`);
   }
 
   writeFileSync(distIndexPath, htmlContent, 'utf-8');
