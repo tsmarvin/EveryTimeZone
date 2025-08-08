@@ -2237,9 +2237,9 @@ function isHourInDaylight(timezone: TimeZone, hourDate: Date): boolean {
     const sunTimes = SunCalc.getTimes(calendarDate, latitude, longitude);
 
     // Convert the local time (hourDate) to the equivalent UTC time for comparison
-    // The hourDate represents local time in the timezone, so we need to add the offset to get UTC
+    // The hourDate represents local time in the timezone, so we need to subtract the offset to get UTC
     const localTimeUTC = new Date(Date.UTC(year, month, day, hours, minutes));
-    const actualUTC = new Date(localTimeUTC.getTime() + timezone.offset * 60 * 60 * 1000);
+    const actualUTC = new Date(localTimeUTC.getTime() - timezone.offset * 60 * 60 * 1000);
 
     // Compare the actual UTC time with sunrise/sunset UTC times
     return actualUTC >= sunTimes.sunrise && actualUTC <= sunTimes.sunset;
