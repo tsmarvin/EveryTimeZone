@@ -66,3 +66,37 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      
+      - name: Cleanup develop sub-sites after main deployment
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # This cleanup is necessary because GitHub Pages deployment only replaces the root directory
+          # contents, not sub-directories. Without this cleanup, old test-PR* directories would
+          # persist indefinitely on the gh-pages branch, creating stale preview sites.
+          echo "::notice::Cleaning up develop branch preview sites after main deployment"
+          
+          # Checkout gh-pages to clean up sub-directories
+          git clone --single-branch --branch gh-pages https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git gh-pages-cleanup
+          cd gh-pages-cleanup
+          
+          # Remove all test-PR* directories (and legacy test-commit-* if any exist)
+          echo "::notice::Removing test-PR* directories..."
+          find . -maxdepth 1 -type d -name "test-PR*" -exec rm -rf {} \; 2>/dev/null || true
+          find . -maxdepth 1 -type d -name "test-commit-*" -exec rm -rf {} \; 2>/dev/null || true
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Commit cleanup if there are changes
+          if [[ -n $(git status --porcelain) ]]; then
+            git add -A
+            git commit -m "Cleanup: Remove develop branch sub-sites after main deployment"
+            git push origin gh-pages
+            echo "::notice::Cleaned up develop branch sub-sites"
+          else
+            echo "::notice::No develop branch sub-sites to clean up"
+          fi
+          
+          cd ..
+          rm -rf gh-pages-cleanup
