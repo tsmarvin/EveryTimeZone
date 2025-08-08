@@ -103,7 +103,7 @@ jobs:
             # Add base tag for sub-directory if not present
             # This ensures all relative URLs (CSS, JS, images) resolve correctly in the sub-directory
             if ! grep -q "<base" dist/index.html; then
-              sed -i 's|<head>|<head>\n  <base href="/'$DEPLOY_PATH'/">|' dist/index.html
+              sed -i "s|<head>|<head>\n  <base href=\"/$DEPLOY_PATH/\">|" dist/index.html
               echo "::notice::Added base tag to index.html for sub-directory support"
             else
               echo "::notice::Base tag already exists in index.html"
