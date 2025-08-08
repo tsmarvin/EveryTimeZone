@@ -11,9 +11,10 @@ This repository hosts a static timezone overlap visualization tool deployed via 
 
 **Static Site Structure:**
 - Primary development occurs on `main` branch
-- GitHub Actions automatically builds and deploys to `gh-pages` branch on merge
+- GitHub Actions automatically builds and deploys via GitHub Pages on merge
 - HTML/CSS for UI with TypeScript for logic
 - Build process required: TypeScript compilation, asset copying, and version injection
+- Support for develop branch subdirectory previews via combined deployment strategy
 
 **Key Features:**
 - URL-based configuration storage for shareability
