@@ -106,6 +106,7 @@ jobs:
           
           # Build main branch content (without develop GitVersion env vars)
           # This allows the inject-version script to use git-based version calculation
+
           npm run build
           
           # Save main build
