@@ -27,7 +27,15 @@ function getGitVersion(): string {
       }).trim();
       const commits = parseInt(commitsSince, 10);
 
-      // Parse the tag version
+      // If the tag already contains version info, use it directly for tagged commits
+      if (commits === 0) {
+        // We're exactly on a tag - use the tag directly
+        const cleanTag = lastTag.replace(/^v/, '');
+        console.log(`Using exact tag version: ${cleanTag}`);
+        return cleanTag;
+      }
+
+      // Parse the tag version - handle both normal and pre-release tags
       const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
       if (!match || !match[1] || !match[2] || !match[3]) {
         console.log('Using default fallback version: 1.0.0');
@@ -37,6 +45,7 @@ function getGitVersion(): string {
       const major = parseInt(match[1], 10);
       const minor = parseInt(match[2], 10);
       let patch = parseInt(match[3], 10);
+      const prerelease = match[4]; // This captures any pre-release part like "65"
 
       // Simple branch-based logic
       const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
@@ -52,8 +61,9 @@ function getGitVersion(): string {
         return version;
       }
 
-      const version = `${major}.${minor}.${patch}`;
-      console.log(`Using fallback git logic for tagged commit: ${version}`);
+      // This shouldn't happen since commits === 0 is handled above, but just in case
+      const version = prerelease ? `${major}.${minor}.${patch}-${prerelease}` : `${major}.${minor}.${patch}`;
+      console.log(`Using fallback git logic: ${version}`);
       return version;
     } catch {
       // No git or tags available, use default
@@ -89,9 +99,17 @@ function injectVersionIntoHtml(): void {
   // Inject version into footer
   const footerRegex = /(<footer class="footer">[\s\S]*?<div class="container">[\s\S]*?<p>)/;
   if (footerRegex.test(htmlContent)) {
+    const testSitePath = process.env.TEST_SITE_PATH;
+    let versionHtml = `\n          <span class="version">v${version}</span>\n          `;
+    
+    // Add test site link if this is the main site build (has TEST_SITE_PATH env var)
+    if (testSitePath) {
+      versionHtml += `\n          - preview the <a href="https://www.everytimezone.net/${testSitePath}/" target="_blank" rel="noopener noreferrer">test site</a>\n          `;
+    }
+    
     htmlContent = htmlContent.replace(
       footerRegex,
-      `$1\n          <span class="version">v${version}</span>\n          `,
+      `$1${versionHtml}`,
     );
   }
 
