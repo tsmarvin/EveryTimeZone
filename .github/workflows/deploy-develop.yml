@@ -100,9 +100,12 @@ jobs:
           # Save current develop state
           git stash push -m "Save develop changes" || echo "No changes to stash"
           
-          # Checkout main branch with full history
+          # Checkout main branch with full history and ensure tags are available
           git checkout main
           git pull origin main || echo "No changes to pull"
+          
+          # Ensure all tags are fetched for version calculation
+          git fetch --tags || echo "Tags already available"
           
           # Build main branch content (without develop GitVersion env vars)
           # This allows the inject-version script to use git-based version calculation

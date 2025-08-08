@@ -2,6 +2,36 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
 
+function getSmartFallbackVersion(): string {
+  // Try to determine a reasonable fallback version
+  try {
+    // Check if we can get the current branch name
+    const branch = execSync('git branch --show-current', {
+      encoding: 'utf-8',
+      cwd: process.cwd(),
+      stdio: 'pipe',
+    }).trim();
+
+    // For non-main branches, generate an alpha version
+    if (branch && branch !== 'main') {
+      // Use a timestamp-based version for feature branches
+      const timestamp = Math.floor(Date.now() / 1000);
+      const shortTimestamp = timestamp.toString().slice(-6); // Last 6 digits
+      const version = `0.0.1-alpha.${shortTimestamp}`;
+      console.log(`Generated smart fallback version for branch '${branch}': ${version}`);
+      return version;
+    }
+
+    // For main branch or unknown branch, use a basic version
+    console.log('Using smart fallback version for main/unknown branch: 1.0.0');
+    return '1.0.0';
+  } catch {
+    // If even basic git operations fail, use absolute fallback
+    console.log('All git operations failed, using absolute fallback version: 1.0.0');
+    return '1.0.0';
+  }
+}
+
 function getGitVersion(): string {
   // First, check if GitVersion environment variables are available (from CI)
   const envSemVer = process.env.GITVERSION_SEMVER;
@@ -20,6 +50,13 @@ function getGitVersion(): string {
   } catch {
     // Fallback to simple git tag approach
     try {
+      // Ensure tags are fetched (helpful in CI environments)
+      try {
+        execSync('git fetch --tags', { stdio: 'pipe', cwd: process.cwd() });
+      } catch {
+        // Tags might already be available or fetch might fail - continue anyway
+      }
+
       const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8', cwd: process.cwd() }).trim();
       const commitsSince = execSync(`git rev-list ${lastTag}..HEAD --count`, {
         encoding: 'utf-8',
@@ -38,8 +75,8 @@ function getGitVersion(): string {
       // Parse the tag version - handle both normal and pre-release tags
       const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
       if (!match || !match[1] || !match[2] || !match[3]) {
-        console.log('Using default fallback version: 1.0.0');
-        return '1.0.0';
+        console.log('Tag format not recognized, using smart fallback version');
+        return getSmartFallbackVersion();
       }
 
       const major = parseInt(match[1], 10);
@@ -65,10 +102,11 @@ function getGitVersion(): string {
       const version = prerelease ? `${major}.${minor}.${patch}-${prerelease}` : `${major}.${minor}.${patch}`;
       console.log(`Using fallback git logic: ${version}`);
       return version;
-    } catch {
-      // No git or tags available, use default
-      console.log('No git available, using default version: 1.0.0');
-      return '1.0.0';
+    } catch (gitError) {
+      // Git operations failed - try smart fallback
+      const errorMessage = gitError instanceof Error ? gitError.message : String(gitError);
+      console.log(`Git operations failed (${errorMessage}), using smart fallback version`);
+      return getSmartFallbackVersion();
     }
   }
 }
