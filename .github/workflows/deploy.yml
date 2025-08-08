@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -57,63 +57,12 @@ jobs:
           path: './dist'
 
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: github-pages
-          path: ./artifact
-      
-      - name: Extract artifact
-        run: |
-          cd ./artifact
-          tar -xf artifact.tar
-          ls -la
-      
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: gh-pages-repo
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Deploy to gh-pages root and cleanup develop sub-sites
-        run: |
-          cd gh-pages-repo
-          
-          # Clean up develop branch sub-sites first
-          echo "::notice::Cleaning up develop branch preview sites"
-          find . -maxdepth 1 -type d -name "test-PR*" -exec rm -rf {} \; 2>/dev/null || true
-          find . -maxdepth 1 -type d -name "test-commit-*" -exec rm -rf {} \; 2>/dev/null || true
-          
-          # Remove all files in root except .git and test-PR* directories
-          # Keep any remaining test-PR* directories that might have been created since cleanup
-          find . -maxdepth 1 -type f -not -name ".git*" -not -name ".nojekyll" -delete 2>/dev/null || true
-          find . -maxdepth 1 -type d -not -name ".git" -not -name "test-PR*" -not -name "test-commit-*" -not -name "." -exec rm -rf {} \; 2>/dev/null || true
-          
-          # Copy new build files to root
-          cp -r ../artifact/* ./
-          
-          # Ensure .nojekyll exists for GitHub Pages
-          touch .nojekyll
-          
-          # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Add and commit changes
-          git add .
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Deploy main branch to GitHub Pages ($(date))"
-            git push origin gh-pages
-            echo "::notice::Main branch deployed to GitHub Pages"
-          fi
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
