@@ -11,13 +11,17 @@ export default defineConfig({
     },
     // Increased timeout for comprehensive accessibility tests across all themes and screen sizes
     testTimeout: 30000,
-    // Prevent race conditions when tests access dist/index.html
-    pool: 'forks',
+    // Use threads with minimal configuration to prevent RPC timeout issues
+    pool: 'threads',
     poolOptions: {
-      forks: {
-        singleFork: true,
+      threads: {
+        // Use single thread to prevent race conditions when tests access dist/index.html
+        singleThread: true,
       },
     },
+    // Increase overall test timeout and worker communication timeout
+    hookTimeout: 60000,
+    teardownTimeout: 60000,
   },
   resolve: {
     alias: {
