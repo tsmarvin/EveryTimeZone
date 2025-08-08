@@ -53,16 +53,29 @@ function getGitVersion(): string {
       // Ensure tags are fetched (helpful in CI environments)
       try {
         execSync('git fetch --tags', { stdio: 'pipe', cwd: process.cwd() });
+        console.log('Tags fetched successfully');
       } catch {
-        // Tags might already be available or fetch might fail - continue anyway
+        console.log('Failed to fetch tags, continuing anyway');
+      }
+
+      // Check current branch first for debugging
+      let branch = '';
+      try {
+        branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+        console.log(`Current branch: ${branch}`);
+      } catch (branchError) {
+        console.log(`Failed to get branch: ${branchError}`);
       }
 
       const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+      console.log(`Last tag found: ${lastTag}`);
+
       const commitsSince = execSync(`git rev-list ${lastTag}..HEAD --count`, {
         encoding: 'utf-8',
         cwd: process.cwd(),
       }).trim();
       const commits = parseInt(commitsSince, 10);
+      console.log(`Commits since tag: ${commits}`);
 
       // If the tag already contains version info, use it directly for tagged commits
       if (commits === 0) {
@@ -84,8 +97,7 @@ function getGitVersion(): string {
       let patch = parseInt(match[3], 10);
       const prerelease = match[4]; // This captures any pre-release part like "65"
 
-      // Simple branch-based logic
-      const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+      // Simple branch-based logic (use the branch we already fetched)
       if (branch === 'main' && commits > 0) {
         patch += 1;
         const version = `${major}.${minor}.${patch}`;
