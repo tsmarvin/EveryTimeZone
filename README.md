@@ -182,7 +182,7 @@ The application automatically deploys to production when code is merged into the
 
 - **🔄 Continuous Integration:** Full test suite (lint + format + type-check + unit tests) runs on every pull request
 - **🚀 Release Pipeline:** `release.yml` GitHub Action publishes the built site as a GitHub release with automatically generated release notes from conventional commit messages
-- **🌐 Web Deployment:** `deploy.yml` GitHub Action publishes the built site to the `gh-pages` branch, automatically published via GitHub Pages
+- **🌐 Web Deployment:** `deploy.yml` GitHub Action publishes the built site directly to GitHub Pages using the modern deployment API
 
 #### Version Management
 
