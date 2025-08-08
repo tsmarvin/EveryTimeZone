@@ -14,7 +14,7 @@ branches:
     regex: ^develop$
     mode: ContinuousDeployment
     label: alpha
-    increment: Minor
+    increment: None
   release:
     regex: ^releases?[/-]
     mode: ContinuousDelivery
