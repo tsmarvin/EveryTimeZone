@@ -189,7 +189,7 @@ The application automatically deploys to production when code is merged into the
 The application uses GitVersion for semantic versioning:
 - **🏷️ Runtime Version:** Dynamically injected into the site before deployment (package.json maintains static version `1.0.0`)
 - **📍 Version Display:** Injected into built HTML and displayed in footer
-- **🔀 Branch Strategy:** Main branch releases, feature branches get prerelease versions
+- **🔀 Branch Strategy:** Main branch deploys live releases, feature branches get prerelease versions
 
 #### Development Branch Workflow
 
