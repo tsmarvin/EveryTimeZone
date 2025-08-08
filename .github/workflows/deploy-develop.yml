@@ -11,7 +11,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -81,7 +81,7 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
-      
+
       # First: Build main branch content for the root
       - name: Checkout and build main branch
         run: |
@@ -112,7 +112,7 @@ jobs:
           GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
           GITVERSION_FULLSEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
           GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
-      
+
       # Third: Combine both builds into a single directory structure
       - name: Combine builds for deployment
         run: |
