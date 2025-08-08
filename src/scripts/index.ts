@@ -70,13 +70,14 @@ export interface TimelineRow {
 
 /**
  * Get user's current timezone using Temporal API
- * @returns TimeZone object with user's timezone details
+ * @param date Optional date to calculate timezone offset for (defaults to current date)
+ * @returns TimeZone object with user's timezone details for the specified date
  */
-export function getUserTimezone(): TimeZone {
+export function getUserTimezone(date?: Date): TimeZone {
   // Get user's timezone ID using Temporal (polyfill ensures availability)
   const userTimezone = Temporal.Now.timeZoneId();
 
-  const now = new Date();
+  const now = date || new Date();
 
   // Use Intl for offset calculation (proven compatibility)
   const formatter = new Intl.DateTimeFormat('en', {
@@ -105,12 +106,12 @@ export function getUserTimezone(): TimeZone {
     displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || userTimezone;
 
   return {
-    name: createTimezoneDisplayName(userTimezone, offset),
+    name: createTimezoneDisplayName(userTimezone, offset, now),
     offset,
     displayName,
     iana: userTimezone,
     cityName: extractCityName(userTimezone),
-    abbreviation: getTimezoneAbbreviation(displayName, userTimezone),
+    abbreviation: getTimezoneAbbreviation(displayName, userTimezone, now),
   };
 }
 
@@ -119,16 +120,17 @@ export function getUserTimezone(): TimeZone {
  * Enhanced to handle edge cases where user's timezone is at start/end of offset range
  *
  * @param numRows Number of timezone rows to display (default: 5, always uses odd numbers, minimum 3)
+ * @param date Optional date to calculate timezone offsets for (defaults to current date)
  * @returns Array of timezone objects ordered by offset with user's actual timezone guaranteed in the center
  */
-export function getTimezonesForTimeline(numRows = 5): TimeZone[] {
-  const userTz = getUserTimezone();
+export function getTimezonesForTimeline(numRows = 5, date?: Date): TimeZone[] {
+  const userTz = getUserTimezone(date);
 
   // Ensure we always use an odd number of timezones (minimum 3) so user timezone can be centered
   const oddNumRows = Math.max(3, numRows % 2 === 0 ? numRows + 1 : numRows);
 
   // Get all available timezones from the browser
-  const allTimezones = getAllTimezonesOrdered();
+  const allTimezones = getAllTimezonesOrdered(date);
 
   // Create a map of offset -> timezone for quick lookup
   const timezonesByOffset = new Map<number, TimeZone>();
@@ -399,9 +401,10 @@ function extractCityName(iana: string, timezone?: TimeZone): string {
  * Generate timezone abbreviation from full timezone name and IANA identifier
  * @param displayName Full timezone name (e.g., "Eastern Daylight Time")
  * @param iana IANA timezone identifier for fallback logic
+ * @param date Date to calculate timezone abbreviation for (defaults to current date)
  * @returns Timezone abbreviation (e.g., "EDT")
  */
-function getTimezoneAbbreviation(displayName: string, iana: string): string {
+function getTimezoneAbbreviation(displayName: string, iana: string, date?: Date): string {
   try {
     // Use browser's Intl.DateTimeFormat to get timezone abbreviation in user's native language
     const formatter = new Intl.DateTimeFormat(undefined, {
@@ -409,8 +412,8 @@ function getTimezoneAbbreviation(displayName: string, iana: string): string {
       timeZoneName: 'short',
     });
 
-    // Format a date and extract the timezone abbreviation
-    const parts = formatter.formatToParts(new Date());
+    // Format the provided date (or current date) and extract the timezone abbreviation
+    const parts = formatter.formatToParts(date || new Date());
     const timeZonePart = parts.find(part => part.type === 'timeZoneName');
 
     if (timeZonePart && timeZonePart.value && timeZonePart.value.length <= 5) {
@@ -446,9 +449,10 @@ function getTimezoneAbbreviation(displayName: string, iana: string): string {
  * Create a timezone display name using browser's native localization
  * @param iana IANA timezone identifier
  * @param offset UTC offset in hours (fallback for display)
+ * @param date Date to calculate timezone name for (defaults to current date)
  * @returns Browser-localized timezone name
  */
-function createTimezoneDisplayName(iana: string, offset: number): string {
+function createTimezoneDisplayName(iana: string, offset: number, date?: Date): string {
   try {
     // Use browser's native timezone display names in user's language
     const formatter = new Intl.DateTimeFormat(undefined, {
@@ -456,8 +460,8 @@ function createTimezoneDisplayName(iana: string, offset: number): string {
       timeZoneName: 'long',
     });
 
-    // Get the timezone name from a sample date
-    const parts = formatter.formatToParts(new Date());
+    // Get the timezone name from the provided date (or current date)
+    const parts = formatter.formatToParts(date || new Date());
     const timeZonePart = parts.find(part => part.type === 'timeZoneName');
 
     if (timeZonePart && timeZonePart.value) {
@@ -630,8 +634,8 @@ function getCurrentHourScrollPosition(): number {
  * @returns Array of timeline rows
  */
 export function createTimelineData(numHours: number, numRows: number, baseDate?: Date): TimelineRow[] {
-  const userTz = getUserTimezone();
-  const timezones = getTimezonesForTimeline(numRows);
+  const userTz = getUserTimezone(baseDate);
+  const timezones = getTimezonesForTimeline(numRows, baseDate);
 
   return timezones.map(timezone => ({
     timezone,
@@ -731,8 +735,9 @@ function adjustTimezoneLabelWidths(): void {
 
 /**
  * Render the timeline visualization
+ * @param baseDate Optional date to center the timeline on (defaults to current date)
  */
-export function renderTimeline(): void {
+export function renderTimeline(baseDate?: Date): void {
   const container = document.getElementById('timeline-container');
   if (!container) {
     console.error('Timeline container not found');
@@ -745,7 +750,7 @@ export function renderTimeline(): void {
   const settings = SettingsPanel.getCurrentSettings();
   const timeFormat = settings?.timeFormat || '12h';
 
-  const timelineData = createTimelineData(numHours, numRows);
+  const timelineData = createTimelineData(numHours, numRows, baseDate);
 
   // Clear container
   container.innerHTML = '';
@@ -853,8 +858,8 @@ export class TimelineManager {
       throw new Error('Timeline container not found');
     }
 
-    // Initialize modal with callback
-    this.modal = new TimezoneModal((timezone: TimeZone) => this.addTimezone(timezone));
+    // Initialize modal with callback and selected date
+    this.modal = new TimezoneModal((timezone: TimeZone) => this.addTimezone(timezone), this.selectedDate);
 
     // Initialize datetime modal with callback
     this.dateTimeModal = new DateTimeModal((dateTime: Date) => this.setSelectedDate(dateTime));
@@ -872,8 +877,8 @@ export class TimelineManager {
     // Get screen-appropriate number of timezone rows
     const { numRows } = getTimelineDimensions();
 
-    // Get properly centered timezones with user timezone in the middle
-    this.selectedTimezones = getTimezonesForTimeline(numRows);
+    // Get properly centered timezones with user timezone in the middle using selected date
+    this.selectedTimezones = getTimezonesForTimeline(numRows, this.selectedDate);
 
     // Also load any saved custom timezones that were previously added to timeline
     const customTimezones = CustomTimezoneManager.getCustomTimezones();
@@ -912,6 +917,24 @@ export class TimelineManager {
 
   public setSelectedDate(date: Date): void {
     this.selectedDate = new Date(date);
+
+    // Recalculate timezones for the new date to handle DST transitions
+    const { numRows } = getTimelineDimensions();
+    this.selectedTimezones = getTimezonesForTimeline(numRows, this.selectedDate);
+
+    // Re-add any custom timezones
+    const customTimezones = CustomTimezoneManager.getCustomTimezones();
+    for (const customTz of customTimezones) {
+      // Only add if not already included
+      const exists = this.selectedTimezones.find(tz => tz.iana === customTz.iana);
+      if (!exists) {
+        this.selectedTimezones.push(customTz);
+      }
+    }
+
+    // Update the modal with the new date and recalculated timezones
+    this.modal = new TimezoneModal((timezone: TimeZone) => this.addTimezone(timezone), this.selectedDate);
+
     this.renderTimeline();
   }
 
@@ -969,7 +992,7 @@ export class TimelineManager {
     // Create timeline rows for selected timezones
     // For initial load, preserve the centered order from getTimezonesForTimeline
     // For manually added timezones, sort by offset for logical progression
-    const userTz = getUserTimezone();
+    const userTz = getUserTimezone(this.selectedDate);
     const userIndex = this.selectedTimezones.findIndex(tz => tz.iana === userTz.iana);
 
     let timezonesToRender: TimeZone[];
@@ -985,7 +1008,7 @@ export class TimelineManager {
       const rowElement = document.createElement('div');
       rowElement.className = 'timeline-row';
 
-      const userTz = getUserTimezone();
+      const userTz = getUserTimezone(this.selectedDate);
       if (timezone.iana === userTz.iana) {
         rowElement.classList.add('user-timezone');
       }
@@ -1108,13 +1131,14 @@ interface WindowWithTimeline extends Window {
 /**
  * Get all supported timezones that the browser knows about,
  * ordered starting with the user's current timezone and going around the world
+ * @param date Optional date to calculate timezone offsets for (defaults to current date)
  * @returns Array of timezone objects ordered from user's timezone around the globe
  */
-export function getAllTimezonesOrdered(): TimeZone[] {
+export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
   // Get user's timezone using Temporal (polyfill ensures availability)
   const userTimezone = Temporal.Now.timeZoneId();
 
-  const now = new Date();
+  const now = date || new Date();
 
   // Get all supported timezones (comprehensive list)
   const allTimezones = Intl.supportedValuesOf('timeZone');
@@ -1146,12 +1170,12 @@ export function getAllTimezonesOrdered(): TimeZone[] {
     const displayName = displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || iana;
 
     return {
-      name: createTimezoneDisplayName(iana, offset),
+      name: createTimezoneDisplayName(iana, offset, now),
       offset,
       displayName,
       iana,
       cityName: extractCityName(iana),
-      abbreviation: getTimezoneAbbreviation(displayName, iana),
+      abbreviation: getTimezoneAbbreviation(displayName, iana, now),
     };
   });
 
@@ -1319,8 +1343,10 @@ export class TimezoneModal {
   private currentUserTimezone: string;
   private onTimezoneSelectedCallback: ((timezone: TimeZone) => void) | undefined;
   private userSearchQuery = ''; // Store user's search query separately
+  private selectedDate: Date; // Date to use for timezone calculations
 
-  constructor(onTimezoneSelected?: (timezone: TimeZone) => void) {
+  constructor(onTimezoneSelected?: (timezone: TimeZone) => void, selectedDate?: Date) {
+    this.selectedDate = selectedDate || new Date();
     this.modal = document.getElementById('timezone-modal') as HTMLElement;
     this.overlay = document.getElementById('timezone-modal-overlay') as HTMLElement;
     this.input = document.getElementById('timezone-input') as HTMLInputElement;
@@ -1334,8 +1360,8 @@ export class TimezoneModal {
     // Get user's timezone using Temporal (polyfill ensures availability)
     this.currentUserTimezone = Temporal.Now.timeZoneId();
 
-    // Combine standard and custom timezones
-    const standardTimezones = getAllTimezonesOrdered();
+    // Combine standard and custom timezones using the selected date
+    const standardTimezones = getAllTimezonesOrdered(this.selectedDate);
     const customTimezones = CustomTimezoneManager.getCustomTimezones();
     this.timezones = [...standardTimezones, ...customTimezones];
 
