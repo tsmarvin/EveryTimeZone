@@ -5,17 +5,20 @@
  * user interactions, and daylight calculations using SunCalc.
  */
 
-import * as SunCalc from 'suncalc';
 import { SettingsPanel } from './settings.js';
 
 // Temporal is available globally via the polyfill loaded in HTML
 declare global {
   interface Window {
     Temporal: typeof import('@js-temporal/polyfill').Temporal;
+    SunCalc: {
+      getTimes: (date: Date, latitude: number, longitude: number) => { sunrise: Date; sunset: Date };
+    }; // SunCalc library is loaded globally
   }
 }
 
 const Temporal = window.Temporal;
+const SunCalc = window.SunCalc;
 
 // Type definitions for timezone and timeline data structures
 
@@ -59,6 +62,10 @@ export interface TimelineHour {
   isDaylight?: boolean;
   isDateTransition?: boolean; // true when this hour represents midnight (start of new day)
   dateString?: string | undefined; // formatted date string for display (e.g., "Aug 6")
+  isSunriseHour?: boolean; // true when this hour marks the start of daylight
+  isSunsetHour?: boolean; // true when this hour marks the start of night
+  sunriseTime?: string | undefined; // formatted sunrise time (e.g., "6:42 AM")
+  sunsetTime?: string | undefined; // formatted sunset time (e.g., "7:18 PM")
 }
 
 /** Complete timeline row for a single timezone */
@@ -518,6 +525,9 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
   // This gives us 24 hours before and 24 hours after the current time
   const startOffset = -24;
 
+  // Calculate sunrise/sunset times for the date range we'll display
+  const sunriseSunsetCache = new Map<string, { sunrise: Date; sunset: Date } | null>();
+
   for (let i = 0; i < numHours; i++) {
     // Calculate the time in the target timezone
     const hourOffset = startOffset + i;
@@ -551,6 +561,44 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
       });
     }
 
+    // Get sunrise/sunset times for this date (cache by date string)
+    const dateKey = timeInTz.toDateString();
+    if (!sunriseSunsetCache.has(dateKey)) {
+      sunriseSunsetCache.set(dateKey, getSunriseSunsetTimes(timezone, timeInTz));
+    }
+    const sunTimes = sunriseSunsetCache.get(dateKey);
+
+    let isSunriseHour = false;
+    let isSunsetHour = false;
+    let sunriseTime: string | undefined;
+    let sunsetTime: string | undefined;
+
+    if (sunTimes) {
+      // Format sunrise/sunset times for display
+      sunriseTime = formatTimeInTimezone(sunTimes.sunrise, timezone.iana);
+      sunsetTime = formatTimeInTimezone(sunTimes.sunset, timezone.iana);
+
+      // Check if this is the sunrise hour (transition from night to day)
+      // We check if this hour is daylight and the previous hour would be night
+      if (isDaylight) {
+        const prevHourTime = new Date(timeInTz.getTime() - 60 * 60 * 1000);
+        const prevHourDaylight = isHourInDaylight(timezone, prevHourTime);
+        if (!prevHourDaylight) {
+          isSunriseHour = true;
+        }
+      }
+
+      // Check if this is the sunset hour (transition from day to night)
+      // We check if this hour is night and the previous hour was daylight
+      if (!isDaylight) {
+        const prevHourTime = new Date(timeInTz.getTime() - 60 * 60 * 1000);
+        const prevHourDaylight = isHourInDaylight(timezone, prevHourTime);
+        if (prevHourDaylight) {
+          isSunsetHour = true;
+        }
+      }
+    }
+
     hours.push({
       hour: timeInTz.getHours(),
       date: timeInTz,
@@ -559,6 +607,10 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
       isDaylight,
       isDateTransition,
       dateString,
+      isSunriseHour,
+      isSunsetHour,
+      sunriseTime,
+      sunsetTime,
     });
   }
 
@@ -820,6 +872,19 @@ export function renderTimeline(baseDate?: Date): void {
         }
       }
 
+      // Add sunrise/sunset transition indicators with tooltips
+      if (hour.isSunriseHour && hour.sunriseTime) {
+        hourCell.classList.add('sunrise-hour');
+        hourCell.title = `Sunrise: ${hour.sunriseTime}`;
+        hourCell.setAttribute('data-sunrise-time', hour.sunriseTime);
+      }
+
+      if (hour.isSunsetHour && hour.sunsetTime) {
+        hourCell.classList.add('sunset-hour');
+        hourCell.title = `Sunset: ${hour.sunsetTime}`;
+        hourCell.setAttribute('data-sunset-time', hour.sunsetTime);
+      }
+
       rowElement.appendChild(hourCell);
     });
 
@@ -1042,17 +1107,46 @@ export class TimelineManager {
         const hourCell = document.createElement('div');
         hourCell.className = 'timeline-cell timeline-hour';
 
-        // Add date transition class and display date if this is midnight
-        if (hour.isDateTransition && hour.dateString) {
-          hourCell.classList.add('date-transition');
-          // Create a container for both date and time
-          hourCell.innerHTML = `
-            <div class="date-display">${hour.dateString}</div>
-            <div class="time-display">${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
-          `;
+        // Add sunrise/sunset transition indicators with tooltips
+        if (hour.isSunriseHour && hour.sunriseTime) {
+          hourCell.classList.add('sunrise-hour', 'daylight-hour');
+          hourCell.title = `🔆 Sunrise: ${hour.sunriseTime}`;
+          hourCell.setAttribute('data-sunrise-time', hour.sunriseTime);
+          // Replace content with sunrise icon and time
+          if (hour.isDateTransition && hour.dateString) {
+            hourCell.innerHTML = `
+              <div class="date-display">${hour.dateString}</div>
+              <div class="time-display">🔆 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
+            `;
+          } else {
+            hourCell.innerHTML = `🔆 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
+          }
+        } else if (hour.isSunsetHour && hour.sunsetTime) {
+          hourCell.classList.add('sunset-hour', 'night-hour');
+          hourCell.title = `🔅 Sunset: ${hour.sunsetTime}`;
+          hourCell.setAttribute('data-sunset-time', hour.sunsetTime);
+          // Replace content with sunset icon and time
+          if (hour.isDateTransition && hour.dateString) {
+            hourCell.innerHTML = `
+              <div class="date-display">${hour.dateString}</div>
+              <div class="time-display">🔅 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
+            `;
+          } else {
+            hourCell.innerHTML = `🔅 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
+          }
         } else {
-          // Use consistent format based on setting for regular hours
-          hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+          // Regular hour content (no sunrise/sunset transition)
+          if (hour.isDateTransition && hour.dateString) {
+            hourCell.classList.add('date-transition');
+            // Create a container for both date and time
+            hourCell.innerHTML = `
+              <div class="date-display">${hour.dateString}</div>
+              <div class="time-display">${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
+            `;
+          } else {
+            // Use consistent format based on setting for regular hours
+            hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
+          }
         }
 
         // Mark current hour (index 24 since we start from -24 hours)
@@ -1063,6 +1157,17 @@ export class TimelineManager {
         // Add working hours class (9 AM to 5 PM)
         if (hour.hour >= 9 && hour.hour < 17) {
           hourCell.classList.add('working-hours');
+        }
+
+        // Add daylight/night indicator (only if not already handled by sunrise/sunset)
+        if (hour.isDaylight !== undefined && !hour.isSunriseHour && !hour.isSunsetHour) {
+          if (hour.isDaylight) {
+            hourCell.classList.add('daylight-hour');
+            hourCell.title = 'Daylight hours';
+          } else {
+            hourCell.classList.add('night-hour');
+            hourCell.title = 'Night hours';
+          }
         }
 
         rowElement.appendChild(hourCell);
@@ -2347,6 +2452,9 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'America/Anchorage': { latitude: 61.2181, longitude: -149.9003, city: 'Anchorage' },
   'America/Toronto': { latitude: 43.6532, longitude: -79.3832, city: 'Toronto' },
   'America/Mexico_City': { latitude: 19.4326, longitude: -99.1332, city: 'Mexico City' },
+  'America/Hermosillo': { latitude: 29.0729, longitude: -110.9559, city: 'Hermosillo' },
+  'America/Bahia_Banderas': { latitude: 20.7039, longitude: -105.34, city: 'Bahia Banderas' },
+  'Pacific/Gambier': { latitude: -23.12, longitude: -134.97, city: 'Gambier Islands' },
 
   // Europe - Major populated cities
   'Europe/London': { latitude: 51.5074, longitude: -0.1278, city: 'London' },
@@ -2356,6 +2464,13 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'Europe/Madrid': { latitude: 40.4168, longitude: -3.7038, city: 'Madrid' },
   'Europe/Moscow': { latitude: 55.7558, longitude: 37.6176, city: 'Moscow' },
 
+  // Additional timezone coordinates for common timezones
+  'America/Argentina/La_Rioja': { latitude: -29.4315, longitude: -66.8506, city: 'La Rioja' },
+  'America/Argentina/Buenos_Aires': { latitude: -34.6118, longitude: -58.396, city: 'Buenos Aires' },
+  'America/Argentina/Cordoba': { latitude: -31.4201, longitude: -64.1888, city: 'Córdoba' },
+  'Etc/UTC': { latitude: 51.4769, longitude: -0.0005, city: 'Greenwich' }, // Use Greenwich for UTC
+  UTC: { latitude: 51.4769, longitude: -0.0005, city: 'Greenwich' }, // Use Greenwich for UTC
+
   // Asia - Major populated cities
   'Asia/Tokyo': { latitude: 35.6762, longitude: 139.6503, city: 'Tokyo' },
   'Asia/Shanghai': { latitude: 31.2304, longitude: 121.4737, city: 'Shanghai' },
@@ -2364,6 +2479,8 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'Asia/Seoul': { latitude: 37.5665, longitude: 126.978, city: 'Seoul' },
   'Asia/Kolkata': { latitude: 22.5726, longitude: 88.3639, city: 'Kolkata' },
   'Asia/Dubai': { latitude: 25.2048, longitude: 55.2708, city: 'Dubai' },
+  'Asia/Yerevan': { latitude: 40.1792, longitude: 44.4991, city: 'Yerevan' },
+  'Asia/Anadyr': { latitude: 64.7333, longitude: 177.5067, city: 'Anadyr' },
 
   // Australia/Pacific - Major populated cities
   'Australia/Sydney': { latitude: -33.8688, longitude: 151.2093, city: 'Sydney' },
@@ -2375,12 +2492,73 @@ const TIMEZONE_COORDINATES: Record<string, { latitude: number; longitude: number
   'Africa/Cairo': { latitude: 30.0444, longitude: 31.2357, city: 'Cairo' },
   'Africa/Lagos': { latitude: 6.5244, longitude: 3.3792, city: 'Lagos' },
   'Africa/Johannesburg': { latitude: -26.2041, longitude: 28.0473, city: 'Johannesburg' },
+
+  // Additional Pacific and remote timezones
+  'Pacific/Rarotonga': { latitude: -21.2367, longitude: -159.7777, city: 'Rarotonga' },
+  'Pacific/Marquesas': { latitude: -9.0, longitude: -140.0, city: 'Marquesas' },
+  'America/St_Johns': { latitude: 47.5615, longitude: -52.7126, city: 'St. Johns' },
+  'Australia/Eucla': { latitude: -31.6833, longitude: 128.8833, city: 'Eucla' },
+  'Pacific/Dili': { latitude: -8.5569, longitude: 125.5603, city: 'Dili' },
+  'Australia/Lord_Howe': { latitude: -31.5556, longitude: 159.0833, city: 'Lord Howe Island' },
+  'Pacific/Niue': { latitude: -19.0544, longitude: -169.8672, city: 'Niue' },
+  'America/Eirunepe': { latitude: -6.6608, longitude: -69.8739, city: 'Eirunepe' },
+  'America/Boa_Vista': { latitude: 2.8197, longitude: -60.6733, city: 'Boa Vista' },
+  'America/Noronha': { latitude: -3.8536, longitude: -32.4297, city: 'Fernando de Noronha' },
+  'Atlantic/Cape_Verde': { latitude: 14.9215, longitude: -23.5087, city: 'Cape Verde' },
+  'Asia/Katmandu': { latitude: 27.7172, longitude: 85.324, city: 'Kathmandu' },
+  'Asia/Dhaka': { latitude: 23.8103, longitude: 90.4125, city: 'Dhaka' },
+  'Antarctica/Casey': { latitude: -66.2818, longitude: 110.5276, city: 'Casey Station' },
+  'Pacific/Kiritimati': { latitude: 1.8721, longitude: -157.4278, city: 'Kiritimati' },
 };
+
+/**
+ * Get sunrise and sunset times for a specific date and timezone
+ * @param timezone Timezone to calculate for
+ * @param date Date to calculate sunrise/sunset for
+ * @returns Object with sunrise and sunset times, or null if coordinates unavailable
+ */
+function getSunriseSunsetTimes(timezone: TimeZone, date: Date): { sunrise: Date; sunset: Date } | null {
+  // Check for coordinates in custom timezones first, then fall back to TIMEZONE_COORDINATES
+  let coordinates = timezone.coordinates || TIMEZONE_COORDINATES[timezone.iana];
+
+  if (!coordinates) {
+    return null; // No coordinates available for this timezone
+  }
+
+  const { latitude, longitude } = coordinates;
+
+  try {
+    // Get sun times for the date at the coordinates
+    const sunTimes = SunCalc.getTimes(date, latitude, longitude);
+
+    return {
+      sunrise: sunTimes.sunrise,
+      sunset: sunTimes.sunset,
+    };
+  } catch {
+    return null; // SunCalc failed
+  }
+}
+
+/**
+ * Format time for display in timezone-aware format
+ * @param date Date to format
+ * @param timezone IANA timezone identifier
+ * @returns Formatted time string (e.g., "6:42 AM")
+ */
+function formatTimeInTimezone(date: Date, timezone: string): string {
+  return date.toLocaleString('en-US', {
+    timeZone: timezone,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
 
 /**
  * Calculate if a specific hour in a timezone is during daylight using SunCalc
  * @param timezone Timezone to check (must have entry in TIMEZONE_COORDINATES)
- * @param hourDate Date/time to check for daylight status
+ * @param hourDate Date/time to check for daylight status (represents local time in the timezone)
  * @returns true if hour is during daylight, false if night or no coordinates available
  */
 function isHourInDaylight(timezone: TimeZone, hourDate: Date): boolean {
@@ -2394,18 +2572,29 @@ function isHourInDaylight(timezone: TimeZone, hourDate: Date): boolean {
   const { latitude, longitude } = coordinates;
 
   try {
-    // Get sun times for the date at the coordinates
-    const sunTimes = SunCalc.getTimes(hourDate, latitude, longitude);
+    // Extract the calendar date from hourDate for SunCalc
+    const year = hourDate.getFullYear();
+    const month = hourDate.getMonth();
+    const day = hourDate.getDate();
+    const hours = hourDate.getHours();
+    const minutes = hourDate.getMinutes();
 
-    // Convert to local time in the timezone
-    const sunriseLocal = new Date(sunTimes.sunrise.toLocaleString('en-US', { timeZone: timezone.iana }));
-    const sunsetLocal = new Date(sunTimes.sunset.toLocaleString('en-US', { timeZone: timezone.iana }));
-    const hourLocal = new Date(hourDate.toLocaleString('en-US', { timeZone: timezone.iana }));
+    // Create a proper UTC date for the calendar date to pass to SunCalc
+    const calendarDate = new Date(Date.UTC(year, month, day, 12, 0, 0));
 
-    // Check if the hour is between sunrise and sunset
-    return hourLocal >= sunriseLocal && hourLocal <= sunsetLocal;
-  } catch {
+    // Get sun times for this calendar date at the coordinates (returns UTC times)
+    const sunTimes = SunCalc.getTimes(calendarDate, latitude, longitude);
+
+    // Convert the local time (hourDate) to the equivalent UTC time for comparison
+    // The hourDate represents local time in the timezone, so we need to subtract the offset to get UTC
+    const localTimeUTC = new Date(Date.UTC(year, month, day, hours, minutes));
+    const actualUTC = new Date(localTimeUTC.getTime() - timezone.offset * 60 * 60 * 1000);
+
+    // Compare the actual UTC time with sunrise/sunset UTC times
+    return actualUTC >= sunTimes.sunrise && actualUTC <= sunTimes.sunset;
+  } catch (error) {
     // Fallback to simple calculation if SunCalc fails
+    console.warn(`SunCalc failed for timezone ${timezone.iana}:`, error);
     return simpleIsDaylight(coordinates.latitude, hourDate);
   }
 }
