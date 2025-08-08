@@ -10,6 +10,11 @@ branches:
     mode: ContinuousDelivery
     label: ''
     increment: Patch
+  develop:
+    regex: ^develop$
+    mode: ContinuousDeployment
+    label: alpha
+    increment: Minor
   release:
     regex: ^releases?[/-]
     mode: ContinuousDelivery
