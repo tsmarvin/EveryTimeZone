@@ -107,9 +107,7 @@ jobs:
           # Ensure all tags are fetched for version calculation
           git fetch --tags || echo "Tags already available"
           
-          # Build main branch content (without develop GitVersion env vars)
-          # This allows the inject-version script to use git-based version calculation
-
+          # Build main branch content with proper main branch GitVersion
           npm run build
           
           # Save main build
@@ -121,10 +119,68 @@ jobs:
             git stash pop
           fi
         env:
-          # Clear GitVersion variables to force git-based version calculation for main
-          GITVERSION_SEMVER: ""
-          GITVERSION_FULLSEMVER: ""
-          GITVERSION_INFORMATIONALVERSION: ""
+          # Pass test site info for footer link
+          TEST_SITE_PATH: ${{ steps.pr-info.outputs.deploy_path }}
+      
+      # Get GitVersion for main branch after checking it out
+      - name: Get main branch GitVersion
+        id: gitversion-main
+        run: |
+          # Save current develop state
+          git stash push -m "Save develop changes" || echo "No changes to stash"
+          
+          # Checkout main branch
+          git checkout main
+          git pull origin main || echo "No changes to pull"
+          git fetch --tags || echo "Tags already available"
+          
+          # Get GitVersion for main branch
+          gitversion /output json | tee gitversion-main.json
+          MAIN_SEMVER=$(cat gitversion-main.json | grep -o '"SemVer":"[^"]*"' | cut -d'"' -f4)
+          MAIN_FULLSEMVER=$(cat gitversion-main.json | grep -o '"FullSemVer":"[^"]*"' | cut -d'"' -f4)
+          MAIN_INFORMATIONAL=$(cat gitversion-main.json | grep -o '"InformationalVersion":"[^"]*"' | cut -d'"' -f4)
+          
+          echo "main_semver=$MAIN_SEMVER" >> $GITHUB_OUTPUT
+          echo "main_fullsemver=$MAIN_FULLSEMVER" >> $GITHUB_OUTPUT
+          echo "main_informational=$MAIN_INFORMATIONAL" >> $GITHUB_OUTPUT
+          
+          echo "::notice::Main branch GitVersion - SemVer: $MAIN_SEMVER"
+          echo "::notice::Main branch GitVersion - FullSemVer: $MAIN_FULLSEMVER"
+          
+          # Return to develop branch and restore state
+          git checkout develop
+          if git stash list | grep -q "Save develop changes"; then
+            git stash pop
+          fi
+      
+      # Rebuild main with proper GitVersion values
+      - name: Rebuild main branch with correct GitVersion
+        run: |
+          # Save current develop state
+          git stash push -m "Save develop changes" || echo "No changes to stash"
+          
+          # Checkout main branch
+          git checkout main
+          git pull origin main || echo "No changes to pull"
+          git fetch --tags || echo "Tags already available"
+          
+          # Build main branch content with proper main branch GitVersion
+          npm run build
+          
+          # Save main build
+          rm -rf main-dist
+          mv dist main-dist
+          
+          # Return to develop branch and restore state
+          git checkout develop
+          if git stash list | grep -q "Save develop changes"; then
+            git stash pop
+          fi
+        env:
+          # Use proper GitVersion values for main branch
+          GITVERSION_SEMVER: ${{ steps.gitversion-main.outputs.main_semver }}
+          GITVERSION_FULLSEMVER: ${{ steps.gitversion-main.outputs.main_fullsemver }}
+          GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion-main.outputs.main_informational }}
           # Pass test site info for footer link
           TEST_SITE_PATH: ${{ steps.pr-info.outputs.deploy_path }}
 
