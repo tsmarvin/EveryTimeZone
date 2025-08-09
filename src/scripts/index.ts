@@ -1241,7 +1241,8 @@ interface ProcessedTimezoneData {
   currentYear: number;
 }
 
-let processedTimezoneCache: ProcessedTimezoneData | null = null;
+// Cache for timezone data by year to avoid expensive recalculations
+const processedTimezoneCache = new Map<number, ProcessedTimezoneData>();
 
 /**
  * Initialize timezone data by processing all browser timezones for July and December
@@ -1391,14 +1392,21 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
   const now = date || new Date();
   const currentYear = now.getFullYear();
 
-  // Initialize timezone data if not cached or year changed
-  if (!processedTimezoneCache || processedTimezoneCache.currentYear !== currentYear) {
+  // Check if we have cached data for this year
+  if (!processedTimezoneCache.has(currentYear)) {
     console.log('Initializing timezone data for year', currentYear);
-    processedTimezoneCache = initializeTimezoneData(currentYear);
+    const processedData = initializeTimezoneData(currentYear);
+    processedTimezoneCache.set(currentYear, processedData);
+  }
+
+  // Get cached data for this year
+  const processedData = processedTimezoneCache.get(currentYear);
+  if (!processedData) {
+    throw new Error(`Failed to get timezone data for year ${currentYear}`);
   }
 
   // Return appropriate timezone set based on actual DST status for the date
-  return getTimezoneSetForDate(now, processedTimezoneCache);
+  return getTimezoneSetForDate(now, processedData);
 }
 
 /**
