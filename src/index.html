@@ -73,12 +73,14 @@
         </div>
         <div class="modal-content">
           <!-- Search input -->
+          <label for="timezone-input" class="visually-hidden">Search timezones</label>
           <input
             type="text"
             id="timezone-input"
             class="timezone-input"
             placeholder="Type to search timezones..."
             autocomplete="off"
+            aria-label="Search timezones"
           />
 
           <!-- Wheel navigation -->
@@ -110,7 +112,12 @@
             <label for="datetime-input" class="datetime-label">
               Select date and time (in your current timezone):
             </label>
-            <input type="datetime-local" id="datetime-input" class="datetime-input" />
+            <input
+              type="datetime-local"
+              id="datetime-input"
+              class="datetime-input"
+              aria-label="Select date and time (in your current timezone)"
+            />
           </div>
         </div>
         <div class="modal-footer">
@@ -143,14 +150,14 @@
           <div class="mode-toggle-container">
             <!-- Dark mode radio button -->
             <label class="mode-toggle">
-              <input type="radio" name="mode" value="dark" class="mode-radio" />
+              <input type="radio" name="mode" value="dark" class="mode-radio" aria-label="Dark Mode" />
               <span class="mode-option">
                 <span class="mode-text">Dark Mode</span>
               </span>
             </label>
             <!-- Light mode radio button -->
             <label class="mode-toggle">
-              <input type="radio" name="mode" value="light" class="mode-radio" />
+              <input type="radio" name="mode" value="light" class="mode-radio" aria-label="Light Mode" />
               <span class="mode-option">
                 <span class="mode-text">Light Mode</span>
               </span>
@@ -163,7 +170,11 @@
           <h3 class="settings-section-title">Time Format</h3>
           <div class="time-format-toggle-container">
             <label class="time-format-switch">
-              <input type="checkbox" class="time-format-checkbox" />
+              <input
+                type="checkbox"
+                class="time-format-checkbox"
+                aria-label="Toggle between 12-hour and 24-hour time format"
+              />
               <span class="time-format-slider">
                 <span class="time-format-labels">
                   <span class="time-format-label-12h">🕒 12h</span>
@@ -188,12 +199,13 @@
       }
     </script>
 
+    <!-- Third-party Libraries -->
+    <script src="scripts/suncalc/suncalc.js"></script>
+
     <!-- Module Import Map -->
     <script type="importmap">
       {
-        "imports": {
-          "suncalc": "./scripts/suncalc/suncalc.js"
-        }
+        "imports": {}
       }
     </script>
 

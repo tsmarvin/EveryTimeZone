@@ -4,22 +4,21 @@
 
 import { beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'fs';
-import { join } from 'path';
 import { Temporal } from '@js-temporal/polyfill';
 
 /**
- * Load the actual HTML from the site for testing
+ * Load the actual HTML from the built site for testing
  */
 export function loadActualHTML(): void {
-  const htmlPath = join(process.cwd(), 'src', 'index.html');
+  const htmlPath = '/home/runner/work/EveryTimeZone/EveryTimeZone/dist/index.html';
   const htmlContent = readFileSync(htmlPath, 'utf-8');
-  
+
   // Extract the body content from the HTML
   const bodyMatch = htmlContent.match(/<body[^>]*>([\s\S]*)<\/body>/i);
   if (bodyMatch) {
     document.body.innerHTML = bodyMatch[1];
   }
-  
+
   // Extract and add stylesheets and scripts to head for context
   const headMatch = htmlContent.match(/<head[^>]*>([\s\S]*)<\/head>/i);
   if (headMatch) {
@@ -28,7 +27,7 @@ export function loadActualHTML(): void {
     const cssLinks = headContent.match(/<link[^>]*rel="stylesheet"[^>]*>/gi) || [];
     const metaTags = headContent.match(/<meta[^>]*>/gi) || [];
     const title = headContent.match(/<title[^>]*>([^<]*)<\/title>/i);
-    
+
     document.head.innerHTML = [
       ...metaTags,
       ...(title ? [title[0]] : []),
@@ -119,7 +118,7 @@ Object.defineProperty(document, 'readyState', {
 
 // Mock URL and history
 delete (window as any).location;
-window.location = {
+(window as any).location = {
   href: 'http://localhost:3000/',
   search: '',
 } as Location;
@@ -155,7 +154,7 @@ afterEach(() => {
   // Clear all timers to prevent unhandled timeouts
   vi.clearAllTimers();
   vi.runOnlyPendingTimers();
-  
+
   // Remove all event listeners from window to prevent memory leaks
   const windowClone = { ...window };
   Object.getOwnPropertyNames(windowClone).forEach(prop => {
