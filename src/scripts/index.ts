@@ -1233,6 +1233,37 @@ interface WindowWithTimeline extends Window {
 
 (window as WindowWithTimeline).initializeTimeline = initializeTimeline;
 
+// Cache for timezone data to avoid expensive recalculations
+const timezoneCache = new Map<string, TimeZone[]>();
+const MAX_CACHE_SIZE = 30; // Limit cache to 30 dates to prevent memory issues
+
+/**
+ * Get cache key for a date (YYYY-MM-DD format for consistent caching)
+ */
+function getDateCacheKey(date: Date): string {
+  const isoString = date.toISOString().split('T')[0];
+  if (!isoString) {
+    throw new Error('Invalid date provided to getDateCacheKey');
+  }
+  return isoString;
+}
+
+/**
+ * Clear old cache entries if cache size exceeds limit
+ */
+function manageCacheSize(): void {
+  if (timezoneCache.size >= MAX_CACHE_SIZE) {
+    // Remove oldest entries (first 10) to keep cache manageable
+    const entries = Array.from(timezoneCache.keys());
+    for (let i = 0; i < 10 && i < entries.length; i++) {
+      const key = entries[i];
+      if (key) {
+        timezoneCache.delete(key);
+      }
+    }
+  }
+}
+
 /**
  * Get all supported timezones that the browser knows about,
  * ordered starting with the user's current timezone and going around the world
@@ -1240,10 +1271,21 @@ interface WindowWithTimeline extends Window {
  * @returns Array of timezone objects ordered from user's timezone around the globe
  */
 export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
+  const now = date || new Date();
+  const cacheKey = getDateCacheKey(now);
+
+  // Return cached result if available
+  if (timezoneCache.has(cacheKey)) {
+    const cached = timezoneCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  // Manage cache size before adding new entry
+  manageCacheSize();
   // Get user's timezone using Temporal (polyfill ensures availability)
   const userTimezone = Temporal.Now.timeZoneId();
-
-  const now = date || new Date();
 
   // Get all supported timezones (comprehensive list)
   const allTimezones = Intl.supportedValuesOf('timeZone');
@@ -1307,6 +1349,9 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
     }
     return a.name.localeCompare(b.name);
   });
+
+  // Cache the result for future use
+  timezoneCache.set(cacheKey, sortedTimezones);
 
   return sortedTimezones;
 }
