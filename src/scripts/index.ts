@@ -1235,7 +1235,7 @@ interface WindowWithTimeline extends Window {
 
 // Cache for processed timezone data to avoid expensive recalculations
 interface ProcessedTimezoneData {
-  julyTimeZones: TimeZone[];
+  juneTimeZones: TimeZone[];
   decemberTimeZones: TimeZone[];
   userTimezone: string;
   currentYear: number;
@@ -1254,7 +1254,7 @@ function isProcessedTimezoneData(obj: unknown): obj is ProcessedTimezoneData {
   return (
     typeof obj === 'object' &&
     obj !== null &&
-    Array.isArray((obj as ProcessedTimezoneData).julyTimeZones) &&
+    Array.isArray((obj as ProcessedTimezoneData).juneTimeZones) &&
     Array.isArray((obj as ProcessedTimezoneData).decemberTimeZones) &&
     typeof (obj as ProcessedTimezoneData).userTimezone === 'string' &&
     typeof (obj as ProcessedTimezoneData).currentYear === 'number'
@@ -1302,7 +1302,7 @@ function saveTimezoneCache(): void {
 }
 
 /**
- * Initialize timezone data by processing all browser timezones for July and December
+ * Initialize timezone data by processing all browser timezones for June and December
  * This expensive operation should only be done once on page load
  */
 function initializeTimezoneData(year: number = new Date().getFullYear()): ProcessedTimezoneData {
@@ -1311,14 +1311,14 @@ function initializeTimezoneData(year: number = new Date().getFullYear()): Proces
   // Get all supported timezones (comprehensive list)
   const allTimezones = Intl.supportedValuesOf('timeZone');
 
-  // Create dates for July 1st and December 31st to capture DST variations
-  const julyDate = new Date(year, 6, 1); // July 1st
+  // Create dates for June 1st and December 31st to capture DST variations
+  const juneDate = new Date(year, 5, 1); // June 1st
   const decemberDate = new Date(year, 11, 31); // December 31st
 
-  console.log(`Processing ${allTimezones.length} timezones for July and December variants...`);
+  console.log(`Processing ${allTimezones.length} timezones for June and December variants...`);
 
-  // Process timezones for July (typically DST active in Northern Hemisphere)
-  const julyTimeZones = processTimezonesForDate(allTimezones, julyDate, userTimezone);
+  // Process timezones for June (typically DST active in Northern Hemisphere)
+  const juneTimeZones = processTimezonesForDate(allTimezones, juneDate, userTimezone);
 
   // Process timezones for December (typically Standard time in Northern Hemisphere)
   const decemberTimeZones = processTimezonesForDate(allTimezones, decemberDate, userTimezone);
@@ -1326,7 +1326,7 @@ function initializeTimezoneData(year: number = new Date().getFullYear()): Proces
   console.log('Timezone processing complete');
 
   return {
-    julyTimeZones,
+    juneTimeZones,
     decemberTimeZones,
     userTimezone,
     currentYear: year,
@@ -1401,7 +1401,7 @@ function processTimezonesForDate(timezoneIanas: readonly string[], date: Date, u
 /**
  * Determine which timezone set to use based on the actual DST status for a given date.
  * This checks the user's timezone offset for the given date and compares it to the
- * July and December timezone data to determine which set matches.
+ * June and December timezone data to determine which set matches.
  */
 function getTimezoneSetForDate(date: Date, processedData: ProcessedTimezoneData): TimeZone[] {
   const userTimezone = processedData.userTimezone;
@@ -1424,19 +1424,19 @@ function getTimezoneSetForDate(date: Date, processedData: ProcessedTimezoneData)
     currentOffset = sign * (hours + minutes / 60);
   }
 
-  // Find the user's timezone in both July and December sets
-  const julyUserTz = processedData.julyTimeZones.find(tz => tz.iana === userTimezone);
+  // Find the user's timezone in both June and December sets
+  const juneUserTz = processedData.juneTimeZones.find(tz => tz.iana === userTimezone);
   const decemberUserTz = processedData.decemberTimeZones.find(tz => tz.iana === userTimezone);
 
   // Compare the current offset to determine which set to use
-  if (julyUserTz && Math.abs(currentOffset - julyUserTz.offset) < 0.1) {
-    return processedData.julyTimeZones;
+  if (juneUserTz && Math.abs(currentOffset - juneUserTz.offset) < 0.1) {
+    return processedData.juneTimeZones;
   } else if (decemberUserTz && Math.abs(currentOffset - decemberUserTz.offset) < 0.1) {
     return processedData.decemberTimeZones;
   }
 
-  // Fallback: if we can't determine, use July set as default
-  return processedData.julyTimeZones;
+  // Fallback: if we can't determine, use June set as default
+  return processedData.juneTimeZones;
 }
 
 /**
@@ -1476,12 +1476,12 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
 
 /**
  * Get timezone variations for a given IANA identifier using fixed dates
- * Returns both July (June 1st) and December (December 31st) variations
+ * Returns both summer (June 1st) and winter (December 31st) variations
  */
 function getTimezoneVariations(iana: string, year: number = new Date().getFullYear()): TimeZone[] {
   const variations: TimeZone[] = [];
 
-  // Use June 1st for July time and December 31st for December time
+  // Use June 1st for summer time and December 31st for winter time
   const summerDate = new Date(year, 5, 1); // June 1st
   const winterDate = new Date(year, 11, 31); // December 31st
 
