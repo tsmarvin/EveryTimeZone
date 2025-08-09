@@ -82,41 +82,107 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # First: Build main branch content for the root
-      - name: Checkout and build main branch
-        run: |
-          # Save current state
-          git stash push -m "Save develop changes"
-          
-          # Checkout main branch
-          git checkout main
-          
-          # Build main branch content
-          npm run build
-          
-          # Save main build
-          mv dist main-dist
-          
-          # Return to develop branch
-          git checkout develop
-          # Only pop the stash if one exists, and fail if pop fails
-          if git stash list | grep -q .; then
-            git stash pop
-          else
-            echo "No stash to pop"
-          fi
-        env:
-          GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
-          GITVERSION_FULLSEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
-          GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
-      
-      # Second: Build develop branch content for the subdirectory
+      # First: Build develop branch content for the subdirectory
       - name: Build develop branch for sub-directory
         run: npm run build
         env:
           GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
           GITVERSION_FULLSEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
           GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
+      
+      # Save develop build
+      - name: Save develop build
+        run: mv dist develop-dist
+      
+      # Second: Build main branch content for the root
+      - name: Checkout and build main branch with test site link
+        run: |
+          # Save current develop state
+          git stash push -m "Save develop changes" || echo "No changes to stash"
+          
+          # Checkout main branch with full history and ensure tags are available
+          git checkout main
+          git pull origin main || echo "No changes to pull"
+          
+          # Ensure all tags are fetched for version calculation
+          git fetch --tags || echo "Tags already available"
+          
+          # Build main branch content with proper main branch GitVersion
+          npm run build
+          
+          # Save main build
+          mv dist main-dist
+          
+          # Return to develop branch and restore state
+          git checkout develop
+          if git stash list | grep -q "Save develop changes"; then
+            git stash pop
+          fi
+        env:
+          # Pass test site info for footer link
+          TEST_SITE_PATH: ${{ steps.pr-info.outputs.deploy_path }}
+      
+      # Get GitVersion for main branch after checking it out
+      - name: Get main branch GitVersion
+        id: gitversion-main
+        run: |
+          # Save current develop state
+          git stash push -m "Save develop changes" || echo "No changes to stash"
+          
+          # Checkout main branch
+          git checkout main
+          git pull origin main || echo "No changes to pull"
+          git fetch --tags || echo "Tags already available"
+          
+          # Get GitVersion for main branch
+          gitversion /output json | tee gitversion-main.json
+          MAIN_SEMVER=$(cat gitversion-main.json | grep -o '"SemVer":"[^"]*"' | cut -d'"' -f4)
+          MAIN_FULLSEMVER=$(cat gitversion-main.json | grep -o '"FullSemVer":"[^"]*"' | cut -d'"' -f4)
+          MAIN_INFORMATIONAL=$(cat gitversion-main.json | grep -o '"InformationalVersion":"[^"]*"' | cut -d'"' -f4)
+          
+          echo "main_semver=$MAIN_SEMVER" >> $GITHUB_OUTPUT
+          echo "main_fullsemver=$MAIN_FULLSEMVER" >> $GITHUB_OUTPUT
+          echo "main_informational=$MAIN_INFORMATIONAL" >> $GITHUB_OUTPUT
+          
+          echo "::notice::Main branch GitVersion - SemVer: $MAIN_SEMVER"
+          echo "::notice::Main branch GitVersion - FullSemVer: $MAIN_FULLSEMVER"
+          
+          # Return to develop branch and restore state
+          git checkout develop
+          if git stash list | grep -q "Save develop changes"; then
+            git stash pop
+          fi
+      
+      # Rebuild main with proper GitVersion values
+      - name: Rebuild main branch with correct GitVersion
+        run: |
+          # Save current develop state
+          git stash push -m "Save develop changes" || echo "No changes to stash"
+          
+          # Checkout main branch
+          git checkout main
+          git pull origin main || echo "No changes to pull"
+          git fetch --tags || echo "Tags already available"
+          
+          # Build main branch content with proper main branch GitVersion
+          npm run build
+          
+          # Save main build
+          rm -rf main-dist
+          mv dist main-dist
+          
+          # Return to develop branch and restore state
+          git checkout develop
+          if git stash list | grep -q "Save develop changes"; then
+            git stash pop
+          fi
+        env:
+          # Use proper GitVersion values for main branch
+          GITVERSION_SEMVER: ${{ steps.gitversion-main.outputs.main_semver }}
+          GITVERSION_FULLSEMVER: ${{ steps.gitversion-main.outputs.main_fullsemver }}
+          GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion-main.outputs.main_informational }}
+          # Pass test site info for footer link
+          TEST_SITE_PATH: ${{ steps.pr-info.outputs.deploy_path }}
 
       # Third: Combine both builds into a single directory structure
       - name: Combine builds for deployment
@@ -131,21 +197,21 @@ jobs:
           mkdir -p "combined-dist/$DEPLOY_PATH"
           
           # Modify develop build for sub-directory deployment
-          if [ -f dist/index.html ]; then
+          if [ -f develop-dist/index.html ]; then
             # Add base tag for sub-directory if not present
-            if ! grep -q "<base" dist/index.html; then
-              sed -E '0,/<head[[:space:]]*>/s|<head[[:space:]]*>|<head>\n  <base href="/'$DEPLOY_PATH'/">|' dist/index.html > "combined-dist/$DEPLOY_PATH/index.html"
+            if ! grep -q "<base" develop-dist/index.html; then
+              sed -E '0,/<head[[:space:]]*>/s|<head[[:space:]]*>|<head>\n  <base href="/'$DEPLOY_PATH'/">|' develop-dist/index.html > "combined-dist/$DEPLOY_PATH/index.html"
               echo "::notice::Added base tag to index.html for sub-directory support"
             else
-              cp dist/index.html "combined-dist/$DEPLOY_PATH/"
+              cp develop-dist/index.html "combined-dist/$DEPLOY_PATH/"
               echo "::notice::Base tag already exists in index.html"
             fi
             
             # Copy other files, preserving directory structure
-            rsync -av --exclude=index.html dist/ "combined-dist/$DEPLOY_PATH/"
+            rsync -av --exclude=index.html develop-dist/ "combined-dist/$DEPLOY_PATH/"
           else
-            echo "::warning::dist/index.html not found, copying all files as-is"
-            cp -r dist/* "combined-dist/$DEPLOY_PATH/"
+            echo "::warning::develop-dist/index.html not found, copying all files as-is"
+            cp -r develop-dist/* "combined-dist/$DEPLOY_PATH/"
           fi
           
           # Replace dist with combined structure
