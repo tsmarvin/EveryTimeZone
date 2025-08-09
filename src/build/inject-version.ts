@@ -28,27 +28,43 @@ function getGitVersion(): string {
         console.log('Failed to fetch tags, continuing anyway');
       }
 
-      const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-      const commitsSince = execSync(`git rev-list ${lastTag}..HEAD --count`, {
-        encoding: 'utf-8',
-        cwd: process.cwd(),
-      }).trim();
-      const commits = parseInt(commitsSince, 10);
+      // Try to get the last tag - if no tags exist, handle gracefully
+      let lastTag: string;
+      let commits: number;
 
-      console.log(`Last tag: ${lastTag}, commits since: ${commits}`);
+      try {
+        lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+        const commitsSince = execSync(`git rev-list ${lastTag}..HEAD --count`, {
+          encoding: 'utf-8',
+          cwd: process.cwd(),
+        }).trim();
+        commits = parseInt(commitsSince, 10);
+        console.log(`Last tag: ${lastTag}, commits since: ${commits}`);
+      } catch (tagError) {
+        console.log(`No tags found: ${tagError}, generating version from scratch`);
+        // No tags exist, generate a proper version based on branch
+        const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+        const shortHash = execSync('git rev-parse --short HEAD', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+        if (branch === 'main') {
+          console.log(`No tags available, using default main version: 1.0.0+${shortHash}`);
+          return `1.0.0+${shortHash}`;
+        } else {
+          console.log(`No tags available, using default feature branch version: 0.0.1-alpha.${shortHash}`);
+          return `0.0.1-alpha.${shortHash}`;
+        }
+      }
 
       // Parse the tag version - handle both normal and pre-release tags
       const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
       if (!match || !match[1] || !match[2] || !match[3]) {
-        console.log(`Tag format not recognized: ${lastTag}, falling back to git-based version`);
-        // Use git describe for better version fallback
-        try {
-          const describe = execSync('git describe --tags --always', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-          console.log(`Using git describe fallback: ${describe}`);
-          return describe;
-        } catch {
-          console.log('Git describe failed, using basic fallback');
-          return '0.0.1-unknown';
+        console.log(`Tag format not recognized: ${lastTag}, falling back to generated version`);
+        // Generate a proper version format instead of using git describe
+        const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+        const shortHash = execSync('git rev-parse --short HEAD', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+        if (branch === 'main') {
+          return `1.0.0+${shortHash}`;
+        } else {
+          return `0.0.1-alpha.${shortHash}`;
         }
       }
 
@@ -81,13 +97,19 @@ function getGitVersion(): string {
       }
     } catch (gitError) {
       console.log(`Git operations failed: ${gitError}`);
-      // Last resort - use git describe or basic fallback
+      // Last resort - generate a proper version format
       try {
-        const describe = execSync('git describe --tags --always', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-        console.log(`Using git describe as last resort: ${describe}`);
-        return describe;
+        const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+        const shortHash = execSync('git rev-parse --short HEAD', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+        if (branch === 'main') {
+          console.log(`Using basic fallback for main: 1.0.0+${shortHash}`);
+          return `1.0.0+${shortHash}`;
+        } else {
+          console.log(`Using basic fallback for feature branch: 0.0.1-alpha.${shortHash}`);
+          return `0.0.1-alpha.${shortHash}`;
+        }
       } catch {
-        console.log('All git operations failed, using basic fallback');
+        console.log('All git operations failed, using minimal fallback');
         return '0.0.1-unknown';
       }
     }
