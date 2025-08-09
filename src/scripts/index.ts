@@ -1233,29 +1233,118 @@ interface WindowWithTimeline extends Window {
 
 (window as WindowWithTimeline).initializeTimeline = initializeTimeline;
 
-/**
- * Get all supported timezones that the browser knows about,
- * ordered starting with the user's current timezone and going around the world
- * @param date Optional date to calculate timezone offsets for (defaults to current date)
- * @returns Array of timezone objects ordered from user's timezone around the globe
- */
-export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
-  // Get user's timezone using Temporal (polyfill ensures availability)
-  const userTimezone = Temporal.Now.timeZoneId();
+// Cache for processed timezone data to avoid expensive recalculations
+interface ProcessedTimezoneData {
+  juneTimeZones: TimeZone[];
+  decemberTimeZones: TimeZone[];
+  userTimezone: string;
+  currentYear: number;
+}
 
-  const now = date || new Date();
+// Cache for timezone data by year to avoid expensive recalculations
+const processedTimezoneCache = new Map<number, ProcessedTimezoneData>();
+
+// Cache key for localStorage
+const TIMEZONE_CACHE_KEY = 'everytimezone_processed_timezones';
+
+/**
+ * Type guard to check if an object is a valid ProcessedTimezoneData
+ */
+function isProcessedTimezoneData(obj: unknown): obj is ProcessedTimezoneData {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    Array.isArray((obj as ProcessedTimezoneData).juneTimeZones) &&
+    Array.isArray((obj as ProcessedTimezoneData).decemberTimeZones) &&
+    typeof (obj as ProcessedTimezoneData).userTimezone === 'string' &&
+    typeof (obj as ProcessedTimezoneData).currentYear === 'number'
+  );
+}
+
+/**
+ * Load timezone cache from localStorage
+ */
+function loadTimezoneCache(): void {
+  try {
+    const stored = localStorage.getItem(TIMEZONE_CACHE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Validate the structure and load into memory cache
+      for (const [year, data] of Object.entries(parsed)) {
+        const yearNum = parseInt(year, 10);
+        if (isProcessedTimezoneData(data)) {
+          processedTimezoneCache.set(yearNum, data);
+        }
+      }
+      console.log(`Loaded timezone cache for ${processedTimezoneCache.size} years from localStorage`);
+    }
+  } catch (error) {
+    console.warn('Failed to load timezone cache from localStorage:', error);
+    // Clear corrupted cache
+    localStorage.removeItem(TIMEZONE_CACHE_KEY);
+  }
+}
+
+/**
+ * Save timezone cache to localStorage
+ */
+function saveTimezoneCache(): void {
+  try {
+    const cacheObj: Record<number, ProcessedTimezoneData> = {};
+    for (const [year, data] of processedTimezoneCache.entries()) {
+      cacheObj[year] = data;
+    }
+    localStorage.setItem(TIMEZONE_CACHE_KEY, JSON.stringify(cacheObj));
+    console.log(`Saved timezone cache for ${processedTimezoneCache.size} years to localStorage`);
+  } catch (error) {
+    console.warn('Failed to save timezone cache to localStorage:', error);
+  }
+}
+
+/**
+ * Initialize timezone data by processing all browser timezones for June and December
+ * This expensive operation should only be done once on page load
+ */
+function initializeTimezoneData(year: number = new Date().getFullYear()): ProcessedTimezoneData {
+  const userTimezone = Temporal.Now.timeZoneId();
 
   // Get all supported timezones (comprehensive list)
   const allTimezones = Intl.supportedValuesOf('timeZone');
 
-  // Create timezone objects with current offsets using Intl (proven compatibility)
-  const timezoneData = allTimezones.map(iana => {
+  // Create dates for June 1st and December 31st to capture DST variations
+  const juneDate = new Date(year, 5, 1); // June 1st
+  const decemberDate = new Date(year, 11, 31); // December 31st
+
+  console.log(`Processing ${allTimezones.length} timezones for June and December variants...`);
+
+  // Process timezones for June (typically DST active in Northern Hemisphere)
+  const juneTimeZones = processTimezonesForDate(allTimezones, juneDate, userTimezone);
+
+  // Process timezones for December (typically Standard time in Northern Hemisphere)
+  const decemberTimeZones = processTimezonesForDate(allTimezones, decemberDate, userTimezone);
+
+  console.log('Timezone processing complete');
+
+  return {
+    juneTimeZones,
+    decemberTimeZones,
+    userTimezone,
+    currentYear: year,
+  };
+}
+
+/**
+ * Process all timezones for a specific date to get their offsets and display names
+ */
+function processTimezonesForDate(timezoneIanas: readonly string[], date: Date, userTimezone: string): TimeZone[] {
+  // Create timezone objects with offsets for the specific date
+  const timezoneData = timezoneIanas.map(iana => {
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: iana,
       timeZoneName: 'longOffset',
     });
 
-    const offsetStr = formatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || '+00:00';
+    const offsetStr = formatter.formatToParts(date).find(part => part.type === 'timeZoneName')?.value || '+00:00';
 
     // Parse offset string like "GMT+05:30" or "GMT-08:00"
     const offsetMatch = offsetStr.match(/GMT([+-])(\d{2}):(\d{2})/);
@@ -1272,24 +1361,24 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
       timeZone: iana,
       timeZoneName: 'long',
     });
-    const displayName = displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || iana;
+    const displayName = displayFormatter.formatToParts(date).find(part => part.type === 'timeZoneName')?.value || iana;
 
     return {
-      name: createTimezoneDisplayName(iana, offset, now),
+      name: createTimezoneDisplayName(iana, offset, date),
       offset,
       displayName,
       iana,
       cityName: extractCityName(iana),
-      abbreviation: getTimezoneAbbreviation(displayName, iana, now),
+      abbreviation: getTimezoneAbbreviation(displayName, iana, date),
     };
   });
 
-  // Get user's timezone offset
+  // Get user's timezone offset for this date
   const userTimezoneData = timezoneData.find(tz => tz.iana === userTimezone);
   const userOffset = userTimezoneData?.offset || 0;
 
   // Sort timezones: start with user's timezone, then go around the world
-  const sortedTimezones = timezoneData.sort((a, b) => {
+  return timezoneData.sort((a, b) => {
     // Calculate distance from user's timezone, wrapping around
     const getDistance = (offset: number): number => {
       let distance = offset - userOffset;
@@ -1307,8 +1396,82 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
     }
     return a.name.localeCompare(b.name);
   });
+}
 
-  return sortedTimezones;
+/**
+ * Determine which timezone set to use based on the actual DST status for a given date.
+ * This checks the user's timezone offset for the given date and compares it to the
+ * June and December timezone data to determine which set matches.
+ */
+function getTimezoneSetForDate(date: Date, processedData: ProcessedTimezoneData): TimeZone[] {
+  const userTimezone = processedData.userTimezone;
+
+  // Get the actual offset for the user's timezone on the given date
+  const formatter = new Intl.DateTimeFormat('en', {
+    timeZone: userTimezone,
+    timeZoneName: 'longOffset',
+  });
+
+  const offsetStr = formatter.formatToParts(date).find(part => part.type === 'timeZoneName')?.value || '+00:00';
+
+  // Parse offset string like "GMT+05:30" or "GMT-08:00"
+  const offsetMatch = offsetStr.match(/GMT([+-])(\d{2}):(\d{2})/);
+  let currentOffset = 0;
+  if (offsetMatch && offsetMatch[2] && offsetMatch[3]) {
+    const sign = offsetMatch[1] === '+' ? 1 : -1;
+    const hours = parseInt(offsetMatch[2], 10);
+    const minutes = parseInt(offsetMatch[3], 10);
+    currentOffset = sign * (hours + minutes / 60);
+  }
+
+  // Find the user's timezone in both June and December sets
+  const juneUserTz = processedData.juneTimeZones.find(tz => tz.iana === userTimezone);
+  const decemberUserTz = processedData.decemberTimeZones.find(tz => tz.iana === userTimezone);
+
+  // Compare the current offset to determine which set to use
+  if (juneUserTz && Math.abs(currentOffset - juneUserTz.offset) < 0.1) {
+    return processedData.juneTimeZones;
+  } else if (decemberUserTz && Math.abs(currentOffset - decemberUserTz.offset) < 0.1) {
+    return processedData.decemberTimeZones;
+  }
+
+  // Fallback: if we can't determine, use June set as default
+  return processedData.juneTimeZones;
+}
+
+/**
+ * Get all supported timezones that the browser knows about,
+ * ordered starting with the user's current timezone and going around the world
+ * @param date Optional date to calculate timezone offsets for (defaults to current date)
+ * @returns Array of timezone objects ordered from user's timezone around the globe
+ */
+export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
+  const now = date || new Date();
+  const currentYear = now.getFullYear();
+
+  // Load cache from localStorage on first call
+  if (processedTimezoneCache.size === 0) {
+    loadTimezoneCache();
+  }
+
+  // Check if we have cached data for this year
+  if (!processedTimezoneCache.has(currentYear)) {
+    console.log('Initializing timezone data for year', currentYear);
+    const processedData = initializeTimezoneData(currentYear);
+    processedTimezoneCache.set(currentYear, processedData);
+
+    // Save to localStorage after adding new year
+    saveTimezoneCache();
+  }
+
+  // Get cached data for this year
+  const processedData = processedTimezoneCache.get(currentYear);
+  if (!processedData) {
+    throw new Error(`Failed to get timezone data for year ${currentYear}`);
+  }
+
+  // Return appropriate timezone set based on actual DST status for the date
+  return getTimezoneSetForDate(now, processedData);
 }
 
 /**
