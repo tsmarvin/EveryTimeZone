@@ -1244,6 +1244,63 @@ interface ProcessedTimezoneData {
 // Cache for timezone data by year to avoid expensive recalculations
 const processedTimezoneCache = new Map<number, ProcessedTimezoneData>();
 
+// Cache key for localStorage
+const TIMEZONE_CACHE_KEY = 'everytimezone_processed_timezones';
+
+/**
+ * Type guard to check if an object is a valid ProcessedTimezoneData
+ */
+function isProcessedTimezoneData(obj: unknown): obj is ProcessedTimezoneData {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    Array.isArray((obj as ProcessedTimezoneData).julyTimeZones) &&
+    Array.isArray((obj as ProcessedTimezoneData).decemberTimeZones) &&
+    typeof (obj as ProcessedTimezoneData).userTimezone === 'string' &&
+    typeof (obj as ProcessedTimezoneData).currentYear === 'number'
+  );
+}
+
+/**
+ * Load timezone cache from localStorage
+ */
+function loadTimezoneCache(): void {
+  try {
+    const stored = localStorage.getItem(TIMEZONE_CACHE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Validate the structure and load into memory cache
+      for (const [year, data] of Object.entries(parsed)) {
+        const yearNum = parseInt(year, 10);
+        if (isProcessedTimezoneData(data)) {
+          processedTimezoneCache.set(yearNum, data);
+        }
+      }
+      console.log(`Loaded timezone cache for ${processedTimezoneCache.size} years from localStorage`);
+    }
+  } catch (error) {
+    console.warn('Failed to load timezone cache from localStorage:', error);
+    // Clear corrupted cache
+    localStorage.removeItem(TIMEZONE_CACHE_KEY);
+  }
+}
+
+/**
+ * Save timezone cache to localStorage
+ */
+function saveTimezoneCache(): void {
+  try {
+    const cacheObj: Record<number, ProcessedTimezoneData> = {};
+    for (const [year, data] of processedTimezoneCache.entries()) {
+      cacheObj[year] = data;
+    }
+    localStorage.setItem(TIMEZONE_CACHE_KEY, JSON.stringify(cacheObj));
+    console.log(`Saved timezone cache for ${processedTimezoneCache.size} years to localStorage`);
+  } catch (error) {
+    console.warn('Failed to save timezone cache to localStorage:', error);
+  }
+}
+
 /**
  * Initialize timezone data by processing all browser timezones for July and December
  * This expensive operation should only be done once on page load
@@ -1392,11 +1449,19 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
   const now = date || new Date();
   const currentYear = now.getFullYear();
 
+  // Load cache from localStorage on first call
+  if (processedTimezoneCache.size === 0) {
+    loadTimezoneCache();
+  }
+
   // Check if we have cached data for this year
   if (!processedTimezoneCache.has(currentYear)) {
     console.log('Initializing timezone data for year', currentYear);
     const processedData = initializeTimezoneData(currentYear);
     processedTimezoneCache.set(currentYear, processedData);
+
+    // Save to localStorage after adding new year
+    saveTimezoneCache();
   }
 
   // Get cached data for this year
