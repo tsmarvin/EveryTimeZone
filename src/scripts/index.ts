@@ -1233,71 +1233,60 @@ interface WindowWithTimeline extends Window {
 
 (window as WindowWithTimeline).initializeTimeline = initializeTimeline;
 
-// Cache for timezone data to avoid expensive recalculations
-const timezoneCache = new Map<string, TimeZone[]>();
-const MAX_CACHE_SIZE = 30; // Limit cache to 30 dates to prevent memory issues
-
-/**
- * Get cache key for a date (YYYY-MM-DD format for consistent caching)
- */
-function getDateCacheKey(date: Date): string {
-  const isoString = date.toISOString().split('T')[0];
-  if (!isoString) {
-    throw new Error('Invalid date provided to getDateCacheKey');
-  }
-  return isoString;
+// Cache for processed timezone data to avoid expensive recalculations
+interface ProcessedTimezoneData {
+  summerTimezones: TimeZone[];
+  winterTimezones: TimeZone[];
+  userTimezone: string;
+  currentYear: number;
 }
 
-/**
- * Clear old cache entries if cache size exceeds limit
- */
-function manageCacheSize(): void {
-  if (timezoneCache.size >= MAX_CACHE_SIZE) {
-    // Remove oldest entries (first 10) to keep cache manageable
-    const entries = Array.from(timezoneCache.keys());
-    for (let i = 0; i < 10 && i < entries.length; i++) {
-      const key = entries[i];
-      if (key) {
-        timezoneCache.delete(key);
-      }
-    }
-  }
-}
+let processedTimezoneCache: ProcessedTimezoneData | null = null;
 
 /**
- * Get all supported timezones that the browser knows about,
- * ordered starting with the user's current timezone and going around the world
- * @param date Optional date to calculate timezone offsets for (defaults to current date)
- * @returns Array of timezone objects ordered from user's timezone around the globe
+ * Initialize timezone data by processing all browser timezones for summer and winter
+ * This expensive operation should only be done once on page load
  */
-export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
-  const now = date || new Date();
-  const cacheKey = getDateCacheKey(now);
-
-  // Return cached result if available
-  if (timezoneCache.has(cacheKey)) {
-    const cached = timezoneCache.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
-  }
-
-  // Manage cache size before adding new entry
-  manageCacheSize();
-  // Get user's timezone using Temporal (polyfill ensures availability)
+function initializeTimezoneData(year: number = new Date().getFullYear()): ProcessedTimezoneData {
   const userTimezone = Temporal.Now.timeZoneId();
 
   // Get all supported timezones (comprehensive list)
   const allTimezones = Intl.supportedValuesOf('timeZone');
 
-  // Create timezone objects with current offsets using Intl (proven compatibility)
-  const timezoneData = allTimezones.map(iana => {
+  // Create dates for summer (July 1st) and winter (December 31st) to capture DST variations
+  const summerDate = new Date(year, 6, 1); // July 1st
+  const winterDate = new Date(year, 11, 31); // December 31st
+
+  console.log(`Processing ${allTimezones.length} timezones for summer and winter variants...`);
+
+  // Process timezones for summer (DST active in Northern Hemisphere)
+  const summerTimezones = processTimezonesForDate(allTimezones, summerDate, userTimezone);
+
+  // Process timezones for winter (Standard time in Northern Hemisphere)
+  const winterTimezones = processTimezonesForDate(allTimezones, winterDate, userTimezone);
+
+  console.log('Timezone processing complete');
+
+  return {
+    summerTimezones,
+    winterTimezones,
+    userTimezone,
+    currentYear: year,
+  };
+}
+
+/**
+ * Process all timezones for a specific date to get their offsets and display names
+ */
+function processTimezonesForDate(timezoneIanas: readonly string[], date: Date, userTimezone: string): TimeZone[] {
+  // Create timezone objects with offsets for the specific date
+  const timezoneData = timezoneIanas.map(iana => {
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: iana,
       timeZoneName: 'longOffset',
     });
 
-    const offsetStr = formatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || '+00:00';
+    const offsetStr = formatter.formatToParts(date).find(part => part.type === 'timeZoneName')?.value || '+00:00';
 
     // Parse offset string like "GMT+05:30" or "GMT-08:00"
     const offsetMatch = offsetStr.match(/GMT([+-])(\d{2}):(\d{2})/);
@@ -1314,24 +1303,24 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
       timeZone: iana,
       timeZoneName: 'long',
     });
-    const displayName = displayFormatter.formatToParts(now).find(part => part.type === 'timeZoneName')?.value || iana;
+    const displayName = displayFormatter.formatToParts(date).find(part => part.type === 'timeZoneName')?.value || iana;
 
     return {
-      name: createTimezoneDisplayName(iana, offset, now),
+      name: createTimezoneDisplayName(iana, offset, date),
       offset,
       displayName,
       iana,
       cityName: extractCityName(iana),
-      abbreviation: getTimezoneAbbreviation(displayName, iana, now),
+      abbreviation: getTimezoneAbbreviation(displayName, iana, date),
     };
   });
 
-  // Get user's timezone offset
+  // Get user's timezone offset for this date
   const userTimezoneData = timezoneData.find(tz => tz.iana === userTimezone);
   const userOffset = userTimezoneData?.offset || 0;
 
   // Sort timezones: start with user's timezone, then go around the world
-  const sortedTimezones = timezoneData.sort((a, b) => {
+  return timezoneData.sort((a, b) => {
     // Calculate distance from user's timezone, wrapping around
     const getDistance = (offset: number): number => {
       let distance = offset - userOffset;
@@ -1349,11 +1338,35 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
     }
     return a.name.localeCompare(b.name);
   });
+}
 
-  // Cache the result for future use
-  timezoneCache.set(cacheKey, sortedTimezones);
+/**
+ * Determine if a date falls in summer period (Northern Hemisphere DST active)
+ * Rough approximation: March through October
+ */
+function isSummerPeriod(date: Date): boolean {
+  const month = date.getMonth(); // 0-11
+  return month >= 2 && month <= 9; // March (2) through October (9)
+}
 
-  return sortedTimezones;
+/**
+ * Get all supported timezones that the browser knows about,
+ * ordered starting with the user's current timezone and going around the world
+ * @param date Optional date to calculate timezone offsets for (defaults to current date)
+ * @returns Array of timezone objects ordered from user's timezone around the globe
+ */
+export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
+  const now = date || new Date();
+  const currentYear = now.getFullYear();
+
+  // Initialize timezone data if not cached or year changed
+  if (!processedTimezoneCache || processedTimezoneCache.currentYear !== currentYear) {
+    console.log('Initializing timezone data for year', currentYear);
+    processedTimezoneCache = initializeTimezoneData(currentYear);
+  }
+
+  // Return appropriate timezone set based on date
+  return isSummerPeriod(now) ? processedTimezoneCache.summerTimezones : processedTimezoneCache.winterTimezones;
 }
 
 /**
