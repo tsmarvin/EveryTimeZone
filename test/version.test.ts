@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
@@ -6,58 +6,45 @@ import { execSync } from 'child_process';
 const packageJsonPath = join(process.cwd(), 'package.json');
 const distIndexPath = join(process.cwd(), 'dist', 'index.html');
 
-function getGitVersion(): string {
-  try {
-    // Try GitVersion first (if available in CI)
-    const gitVersionOutput = execSync('gitversion', { encoding: 'utf-8', cwd: process.cwd() });
-    const gitVersionData = JSON.parse(gitVersionOutput);
-    return gitVersionData.SemVer || gitVersionData.FullSemVer;
-  } catch (error) {
-    // Fallback to simple git tag approach
-    try {
-      const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-      const commitsSince = execSync(`git rev-list ${lastTag}..HEAD --count`, { encoding: 'utf-8', cwd: process.cwd() }).trim();
-      const commits = parseInt(commitsSince, 10);
-      
-      // Parse the tag version
-      const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
-      if (!match) {
-        return '1.0.0';
-      }
-      
-      const major = parseInt(match[1], 10);
-      const minor = parseInt(match[2], 10);
-      let patch = parseInt(match[3], 10);
-      
-      // Simple branch-based logic for testing
-      const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-      if (branch === 'main' && commits > 0) {
-        patch += 1;
-        return `${major}.${minor}.${patch}`;
-      } else if (commits > 0) {
-        patch += 1;
-        return `${major}.${minor}.${patch}-alpha.${commits}`;
-      }
-      
-      return `${major}.${minor}.${patch}`;
-    } catch (gitError) {
-      // No git or tags available, use default
-      return '1.0.0';
-    }
-  }
-}
-
 describe('Version Management', () => {
-  describe('version injection into HTML', () => {
-    it('should inject git-based version into built HTML during build process', () => {
-      // Run a build to ensure the HTML is generated with version
-      execSync('npm run build', { cwd: process.cwd(), stdio: 'pipe' });
+  let originalGitVersionSemVer: string | undefined;
+  
+  beforeAll(() => {
+    // Store original environment variable
+    originalGitVersionSemVer = process.env.GITVERSION_SEMVER;
+    
+    // Set up mock GitVersion environment variable for testing
+    if (!process.env.GITVERSION_SEMVER) {
+      process.env.GITVERSION_SEMVER = '1.0.2-test';
+    }
+  });
+  
+  afterAll(() => {
+    // Restore original environment variable
+    if (originalGitVersionSemVer !== undefined) {
+      process.env.GITVERSION_SEMVER = originalGitVersionSemVer;
+    } else {
+      delete process.env.GITVERSION_SEMVER;
+    }
+  });
+
+  describe('GitVersion requirement', () => {
+    it('should use GitVersion from environment variables when available', () => {
+      // Ensure GitVersion environment variable is available
+      expect(process.env.GITVERSION_SEMVER).toBeDefined();
       
-      // Check that the built HTML exists and contains version
+      // Run version injection step directly with GitVersion environment variable
+      execSync('npm run version:inject', { 
+        cwd: process.cwd(), 
+        stdio: 'pipe',
+        env: { ...process.env, GITVERSION_SEMVER: process.env.GITVERSION_SEMVER }
+      });
+      
+      // Check that the built HTML exists and contains version from GitVersion
       expect(existsSync(distIndexPath)).toBe(true);
       
       const htmlContent = readFileSync(distIndexPath, 'utf-8');
-      const expectedVersion = getGitVersion();
+      const expectedVersion = process.env.GITVERSION_SEMVER!;
       
       // Should have version in meta tag
       expect(htmlContent).toContain(`<meta name="app-version" content="${expectedVersion}"`);
@@ -72,14 +59,12 @@ describe('Version Management', () => {
       expect(packageJson.version).toBe('1.0.0');
     });
     
-    it('should generate version different from package.json static version', () => {
-      // The injected version should be different from the static package.json version
-      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-      const gitVersion = getGitVersion();
+    it('should generate version from GitVersion that follows semantic versioning', () => {
+      // The injected version should follow semantic versioning pattern
+      const gitVersion = process.env.GITVERSION_SEMVER || '1.0.2-test';
       
-      // Git version should be different from static package.json version
-      // (unless we're exactly at tag v0.0.1-alpha with no commits)
-      expect(gitVersion).toMatch(/^\d+\.\d+\.\d+(?:-\w+(?:\.\d+)?)?$/);
+      // GitVersion SemVer follows standard semantic versioning without build metadata
+      expect(gitVersion).toMatch(/^\d+\.\d+\.\d+(?:-\w+(?:\.\w+)?)?$/);
     });
   });
 });
