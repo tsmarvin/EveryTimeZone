@@ -83,13 +83,15 @@ function getGitVersion(): string {
         return cleanTag;
       }
 
-      // For commits beyond the tag, increment appropriately based on branch
+      // For commits beyond the tag, handle based on branch
       if (branch === 'main') {
-        patch += 1;
-        const version = `${major}.${minor}.${patch}`;
+        // Main branch: show the tag version with build metadata (not incrementing patch)
+        const cleanTag = lastTag.replace(/^v/, '');
+        const version = `${cleanTag}-${commits}`;
         console.log(`Using fallback git logic for main branch: ${version}`);
         return version;
       } else {
+        // Feature/develop branches: next patch version with alpha pre-release
         patch += 1;
         const version = `${major}.${minor}.${patch}-alpha.${commits}`;
         console.log(`Using fallback git logic for feature branch: ${version}`);
@@ -130,8 +132,14 @@ function injectVersionIntoHtml(): void {
   // Remove any existing app-version meta tags
   htmlContent = htmlContent.replace(/<meta name="app-version"[^>]*>\s*/g, '');
 
-  // Remove any existing version spans in footer
+  // Remove any existing version spans and footer content for clean injection
   htmlContent = htmlContent.replace(/<span class="version">[^<]*<\/span>\s*/g, '');
+
+  // Clean up any existing footer paragraph content to avoid duplication
+  const footerCleanRegex = /(<footer class="footer">[\s\S]*?<div class="container">[\s\S]*?<p>[\s\S]*?)(<\/p>)/;
+  if (footerCleanRegex.test(htmlContent)) {
+    htmlContent = htmlContent.replace(footerCleanRegex, '$1$2');
+  }
 
   // Inject meta tag after the viewport meta tag
   const metaTagRegex = /(<meta name="viewport"[^>]*>)/;
@@ -139,18 +147,19 @@ function injectVersionIntoHtml(): void {
     htmlContent = htmlContent.replace(metaTagRegex, `$1\n    <meta name="app-version" content="${version}" />`);
   }
 
-  // Inject version into footer
-  const footerRegex = /(<footer class="footer">[\s\S]*?<div class="container">[\s\S]*?<p>)/;
+  // Inject version into footer by replacing entire paragraph content
+  const footerRegex = /(<footer class="footer">[\s\S]*?<div class="container">[\s\S]*?<p>)[\s\S]*?(<\/p>)/;
   if (footerRegex.test(htmlContent)) {
     const testSitePath = process.env.TEST_SITE_PATH;
-    let versionHtml = `\n          <span class="version">v${version}</span>\n          `;
+    let versionHtml = `\n                <span class="version">v${version}</span>\n                <a href="https://github.com/tsmarvin/EveryTimeZone" target="_blank" rel="noopener noreferrer">View on GitHub</a>`;
 
     // Add test site link if this is the main site build (has TEST_SITE_PATH env var)
     if (testSitePath) {
-      versionHtml += `\n          - preview the <a href="https://www.everytimezone.net/${testSitePath}/" target="_blank" rel="noopener noreferrer">test site</a>\n          `;
+      versionHtml += `,\n                <a href="https://www.everytimezone.net/${testSitePath}/" target="_blank" rel="noopener noreferrer">Test the development site</a>`;
     }
+    versionHtml += '\n              ';
 
-    htmlContent = htmlContent.replace(footerRegex, `$1${versionHtml}`);
+    htmlContent = htmlContent.replace(footerRegex, `$1${versionHtml}$2`);
   }
 
   writeFileSync(distIndexPath, htmlContent, 'utf-8');
