@@ -106,7 +106,7 @@ export function getUserTimezone(date?: Date): TimeZone {
   }
 
   // Get display name using Intl
-  const displayFormatter = new Intl.DateTimeFormat('en', {
+  const displayFormatter = new Intl.DateTimeFormat(undefined, {
     timeZone: userTimezone,
     timeZoneName: 'long',
   });
@@ -542,12 +542,12 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     const timeInTz = new Date(timeInTzZoned.epochMilliseconds);
 
     // Format hours using Temporal for accurate timezone handling
-    const hour12 = timeInTzZoned.toLocaleString('en-US', {
+    const hour12 = timeInTzZoned.toLocaleString(undefined, {
       hour: 'numeric',
       hour12: true,
     });
 
-    const hour24 = timeInTzZoned.toLocaleString('en-US', {
+    const hour24 = timeInTzZoned.toLocaleString(undefined, {
       hour: '2-digit',
       hour12: false,
     });
@@ -561,8 +561,8 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     // Generate date string for display if this is a date transition
     let dateString: string | undefined;
     if (isDateTransition) {
-      // Format date using Temporal for accurate timezone handling
-      dateString = timeInTzZoned.toLocaleString('en-US', {
+      // Format date using user's locale (e.g., "Aug 6", "6 Aug", etc. depending on locale)
+      dateString = timeInTzZoned.toLocaleString(undefined, {
         month: 'short',
         day: 'numeric',
       });
@@ -1383,7 +1383,7 @@ function processTimezonesForDate(timezoneIanas: readonly string[], date: Date, u
     }
 
     // Get display name
-    const displayFormatter = new Intl.DateTimeFormat('en', {
+    const displayFormatter = new Intl.DateTimeFormat(undefined, {
       timeZone: iana,
       timeZoneName: 'long',
     });
@@ -1530,7 +1530,7 @@ function getTimezoneVariations(iana: string, year: number = new Date().getFullYe
     }
 
     // Get display name
-    const displayFormatter = new Intl.DateTimeFormat('en', {
+    const displayFormatter = new Intl.DateTimeFormat(undefined, {
       timeZone: iana,
       timeZoneName: 'long',
     });
@@ -2767,7 +2767,7 @@ function getSunriseSunsetTimes(timezone: TimeZone, date: Date): { sunrise: Date;
  * @returns Formatted time string (e.g., "6:42 AM")
  */
 function formatTimeInTimezone(date: Date, timezone: string): string {
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(undefined, {
     timeZone: timezone,
     hour: 'numeric',
     minute: '2-digit',
