@@ -293,15 +293,15 @@ describe('WCAG AAA Accessibility Standards', () => {
               it('should meet WCAG AAA color contrast requirements (7:1 for normal text)', () => {
                 // Test all text elements for complete accessibility coverage
                 const textElements = document.querySelectorAll('*');
-                let contrastIssues: string[] = [];
-
-                textElements.forEach((element, index) => {
+                
+                // Use functional approach for better performance instead of repeatedly calling push()
+                const contrastIssues = Array.from(textElements).flatMap((element, index) => {
                   const styles = window.getComputedStyle(element);
                   const textColor = styles.color;
                   const backgroundColor = getComputedBackgroundColor(element);
                   
                   // Test all elements including hidden ones for screen reader compatibility
-                  if (!element.textContent?.trim()) return;
+                  if (!element.textContent?.trim()) return [];
 
                   if (textColor && backgroundColor) {
                     const textRGB = parseColor(textColor);
@@ -311,12 +311,11 @@ describe('WCAG AAA Accessibility Standards', () => {
                       const contrastRatio = getContrastRatio(textRGB, bgRGB);
                       // WCAG AAA requires 7:1 for normal text (not 4.5:1 which is AA)
                       if (contrastRatio < 7.0) {
-                        contrastIssues.push(
-                          `${element.tagName}[${index}] "${element.textContent?.trim().substring(0, 20)}..." contrast ratio ${contrastRatio.toFixed(2)}:1 is below WCAG AAA standard (7:1)`
-                        );
+                        return [`${element.tagName}[${index}] "${element.textContent?.trim().substring(0, 20)}..." contrast ratio ${contrastRatio.toFixed(2)}:1 is below WCAG AAA standard (7:1)`];
                       }
                     }
                   }
+                  return [];
                 });
 
                 expect(contrastIssues.length, `Contrast issues found at ${size.name}: ${contrastIssues.join(', ')}`).toBe(0);
@@ -325,15 +324,15 @@ describe('WCAG AAA Accessibility Standards', () => {
               it('should meet WCAG AAA large text contrast requirements (4.5:1)', () => {
                 // Test all elements for complete accessibility coverage
                 const allElements = document.querySelectorAll('*');
-                let contrastIssues: string[] = [];
-
-                allElements.forEach((element, index) => {
+                
+                // Use functional approach for better performance instead of repeatedly calling push()
+                const contrastIssues = Array.from(allElements).flatMap((element, index) => {
                   const styles = window.getComputedStyle(element);
                   const fontSize = parseFloat(styles.fontSize);
                   const fontWeight = styles.fontWeight;
                   
                   // Test all elements including hidden ones for screen reader compatibility  
-                  if (!element.textContent?.trim()) return;
+                  if (!element.textContent?.trim()) return [];
                   
                   // Large text is 18pt+ (24px+) or 14pt+ (18.5px+) bold according to WCAG
                   const isLargeText = fontSize >= 24 || (fontSize >= 18.5 && (fontWeight === 'bold' || parseInt(fontWeight) >= 700));
@@ -350,13 +349,12 @@ describe('WCAG AAA Accessibility Standards', () => {
                         const contrastRatio = getContrastRatio(textRGB, bgRGB);
                         // WCAG AAA requires 4.5:1 for large text
                         if (contrastRatio < 4.5) {
-                          contrastIssues.push(
-                            `Large text ${element.tagName}[${index}] "${element.textContent?.trim().substring(0, 20)}..." contrast ratio ${contrastRatio.toFixed(2)}:1 is below WCAG AAA standard (4.5:1)`
-                          );
+                          return [`Large text ${element.tagName}[${index}] "${element.textContent?.trim().substring(0, 20)}..." contrast ratio ${contrastRatio.toFixed(2)}:1 is below WCAG AAA standard (4.5:1)`];
                         }
                       }
                     }
                   }
+                  return [];
                 });
 
                 expect(contrastIssues.length, `Large text contrast issues at ${size.name}: ${contrastIssues.join(', ')}`).toBe(0);
