@@ -1332,8 +1332,8 @@ function initializeTimezoneData(year: number = Temporal.Now.plainDateISO().year)
   // Create dates for June 1st and December 31st to capture DST variations using Temporal
   const junePlainDate = Temporal.PlainDate.from({ year, month: 6, day: 1 });
   const decemberPlainDate = Temporal.PlainDate.from({ year, month: 12, day: 31 });
-  const juneDate = new Date(junePlainDate.toZonedDateTime(Temporal.Now.timeZoneId()).epochMilliseconds);
-  const decemberDate = new Date(decemberPlainDate.toZonedDateTime(Temporal.Now.timeZoneId()).epochMilliseconds);
+  const juneDate = new Date(junePlainDate.toZonedDateTime('UTC').epochMilliseconds);
+  const decemberDate = new Date(decemberPlainDate.toZonedDateTime('UTC').epochMilliseconds);
 
   console.log(`Processing ${allTimezones.length} timezones for June and December variants...`);
 
@@ -1505,9 +1505,9 @@ function getTimezoneVariations(iana: string, year: number = Temporal.Now.plainDa
   const summerPlainDate = Temporal.PlainDate.from({ year, month: 6, day: 1 });
   const winterPlainDate = Temporal.PlainDate.from({ year, month: 12, day: 31 });
 
-  // Convert to Date objects for Intl.DateTimeFormat compatibility
-  const summerDate = new Date(summerPlainDate.toZonedDateTime(Temporal.Now.timeZoneId()).epochMilliseconds);
-  const winterDate = new Date(winterPlainDate.toZonedDateTime(Temporal.Now.timeZoneId()).epochMilliseconds);
+  // Convert to Date objects for Intl.DateTimeFormat compatibility using the target timezone
+  const summerDate = new Date(summerPlainDate.toZonedDateTime(iana).epochMilliseconds);
+  const winterDate = new Date(winterPlainDate.toZonedDateTime(iana).epochMilliseconds);
 
   for (const date of [summerDate, winterDate]) {
     const formatter = new Intl.DateTimeFormat('en', {
