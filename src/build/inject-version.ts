@@ -7,8 +7,12 @@ function getGitVersion(): string {
   const envSemVer = process.env.GITVERSION_SEMVER;
   const envFullSemVer = process.env.GITVERSION_FULLSEMVER;
 
-  if (envSemVer || envFullSemVer) {
-    const version = envSemVer || envFullSemVer || '';
+  // Check if environment variables are defined (even if empty)
+  if (envSemVer !== undefined || envFullSemVer !== undefined) {
+    const version = envSemVer || envFullSemVer;
+    if (!version || version.trim() === '') {
+      throw new Error('GitVersion environment variables are present but empty. Expected valid version string.');
+    }
     console.log(`Using GitVersion from environment: ${version}`);
     return version;
   }

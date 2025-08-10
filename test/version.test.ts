@@ -63,8 +63,8 @@ describe('Version Management', () => {
       // The injected version should follow semantic versioning pattern
       const gitVersion = process.env.GITVERSION_SEMVER || '1.0.2-test';
       
-      // GitVersion should follow semantic versioning pattern
-      expect(gitVersion).toMatch(/^\d+\.\d+\.\d+(?:-\w+(?:\.\w+)?)?(?:\+\w+)?$/);
+      // GitVersion SemVer follows standard semantic versioning without build metadata
+      expect(gitVersion).toMatch(/^\d+\.\d+\.\d+(?:-\w+(?:\.\w+)?)?$/);
     });
   });
 });
