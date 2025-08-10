@@ -520,7 +520,6 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
   const nowInstant = Temporal.Instant.fromEpochMilliseconds(now.getTime());
   const nowZoned = nowInstant.toZonedDateTimeISO(userTz.iana);
   const roundedZoned = nowZoned.with({ minute: 0, second: 0, millisecond: 0 });
-  const currentUserHour = new Date(roundedZoned.epochMilliseconds);
 
   const hours: TimelineHour[] = [];
 
@@ -532,18 +531,23 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
   const sunriseSunsetCache = new Map<string, { sunrise: Date; sunset: Date } | null>();
 
   for (let i = 0; i < numHours; i++) {
-    // Calculate the time in the target timezone
+    // Calculate the time in the target timezone using Temporal methods
     const hourOffset = startOffset + i;
-    const baseTime = new Date(currentUserHour.getTime() + hourOffset * 60 * 60 * 1000);
-    const offsetDiff = (timezone.offset - userTz.offset) * 60 * 60 * 1000;
-    const timeInTz = new Date(baseTime.getTime() + offsetDiff);
 
-    const hour12 = timeInTz.toLocaleString('en-US', {
+    // Add hours to the rounded user time and convert to target timezone
+    const baseTimeZoned = roundedZoned.add({ hours: hourOffset });
+    const timeInTzZoned = baseTimeZoned.withTimeZone(timezone.iana);
+
+    // Convert to Date object only when needed for legacy functions
+    const timeInTz = new Date(timeInTzZoned.epochMilliseconds);
+
+    // Format hours using Temporal for accurate timezone handling
+    const hour12 = timeInTzZoned.toLocaleString('en-US', {
       hour: 'numeric',
       hour12: true,
     });
 
-    const hour24 = timeInTz.toLocaleString('en-US', {
+    const hour24 = timeInTzZoned.toLocaleString('en-US', {
       hour: '2-digit',
       hour12: false,
     });
@@ -552,13 +556,13 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     let isDaylight = isHourInDaylight(timezone, timeInTz);
 
     // Check if this hour represents a date transition (midnight = start of new day)
-    const isDateTransition = timeInTz.getHours() === 0;
+    const isDateTransition = timeInTzZoned.hour === 0;
 
     // Generate date string for display if this is a date transition
     let dateString: string | undefined;
     if (isDateTransition) {
-      // Format date using user's locale (e.g., "Aug 6", "6 Aug", etc. depending on locale)
-      dateString = timeInTz.toLocaleDateString(undefined, {
+      // Format date using Temporal for accurate timezone handling
+      dateString = timeInTzZoned.toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
       });
@@ -586,7 +590,7 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
       const sunriseInstant = Temporal.Instant.fromEpochMilliseconds(sunTimes.sunrise.getTime());
       const sunriseZoned = sunriseInstant.toZonedDateTimeISO(timezone.iana);
       const sunriseHour = sunriseZoned.hour;
-      if (timeInTz.getHours() === sunriseHour) {
+      if (timeInTzZoned.hour === sunriseHour) {
         isSunriseHour = true;
       }
 
@@ -595,13 +599,13 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
       const sunsetInstant = Temporal.Instant.fromEpochMilliseconds(sunTimes.sunset.getTime());
       const sunsetZoned = sunsetInstant.toZonedDateTimeISO(timezone.iana);
       const sunsetHour = sunsetZoned.hour;
-      if (timeInTz.getHours() === sunsetHour) {
+      if (timeInTzZoned.hour === sunsetHour) {
         isSunsetHour = true;
       }
 
       // Update daylight calculation to be consistent with sunrise/sunset hour logic
       // Daylight hours should include the sunrise hour through the sunset hour (inclusive)
-      const currentHour = timeInTz.getHours();
+      const currentHour = timeInTzZoned.hour;
 
       if (sunriseHour <= sunsetHour) {
         // Normal case: sunrise and sunset are on the same day
@@ -613,7 +617,7 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     }
 
     hours.push({
-      hour: timeInTz.getHours(),
+      hour: timeInTzZoned.hour,
       date: timeInTz,
       time12: hour12,
       time24: hour24,
