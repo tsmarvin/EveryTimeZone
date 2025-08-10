@@ -519,7 +519,8 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
   // Get current hour in user's timezone and round down using Temporal
   const nowInstant = Temporal.Instant.fromEpochMilliseconds(now.getTime());
   const nowZoned = nowInstant.toZonedDateTimeISO(userTz.iana);
-  const currentUserHour = new Date(nowZoned.year, nowZoned.month - 1, nowZoned.day, nowZoned.hour, 0, 0, 0);
+  const roundedZoned = nowZoned.with({ minute: 0, second: 0, millisecond: 0 });
+  const currentUserHour = new Date(roundedZoned.epochMilliseconds);
 
   const hours: TimelineHour[] = [];
 
