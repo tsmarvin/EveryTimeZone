@@ -677,7 +677,7 @@ p {
   border-top: 8px solid var(--color-accent);
 }
 
-/* Preserve sunrise/sunset icons on current hour cells by using ::before for the arrow when combined */
+/* Preserve sunrise/sunset icons on current hour cells by using ::after for the emoji */
 .timeline-hour.current-hour.sunrise-hour::after {
   content: '🔆';
   position: absolute;
