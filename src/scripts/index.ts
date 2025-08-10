@@ -41,7 +41,7 @@ export interface TimeZone {
   abbreviation: string; // Timezone abbreviation (e.g., "EDT", "JST")
   daylight?: DaylightData;
   isCustom?: boolean; // Flag to indicate custom timezone
-  isOffCycle?: boolean; // Flag to indicate timezone was manually selected in alternate DST/Standard state (e.g., PST when PDT is current, prevents auto DST switching)
+  isOffCycle?: boolean; // Flag to indicate timezone was manually selected in alternate DST/Standard state (e.g., PST when PDT is current, prevents automatic DST transitions on date changes)
   coordinates?: { latitude: number; longitude: number }; // Optional coordinates for custom timezones
 }
 
@@ -1839,7 +1839,7 @@ export class TimezoneModal {
     // Get both grouped and flat timezone lists
     this.groupedTimezones = getGroupedTimezones(this.selectedDate);
 
-    // Create lookup map for efficient timezone searches
+    // Create lookup map for efficient timezone group searches by IANA identifier
     this.groupedTimezonesLookup = new Map();
     for (const group of this.groupedTimezones) {
       this.groupedTimezonesLookup.set(group.current.iana, group);
@@ -1930,8 +1930,9 @@ export class TimezoneModal {
     const allSearchTargets: TimeZone[] = [...this.timezones];
 
     // Add alternate timezones from grouped timezones to search targets
+    const existingIanas = new Set(allSearchTargets.map(tz => tz.iana));
     for (const group of this.groupedTimezones) {
-      if (group.alternate && !allSearchTargets.find(tz => tz.iana === group.alternate?.iana)) {
+      if (group.alternate && !existingIanas.has(group.alternate.iana)) {
         allSearchTargets.push(group.alternate);
       }
     }
