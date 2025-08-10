@@ -41,7 +41,7 @@ export interface TimeZone {
   abbreviation: string; // Timezone abbreviation (e.g., "EDT", "JST")
   daylight?: DaylightData;
   isCustom?: boolean; // Flag to indicate custom timezone
-  isOffCycle?: boolean; // Flag to indicate timezone was manually selected in off-cycle state (prevents auto DST switching)
+  isOffCycle?: boolean; // Flag to indicate timezone was manually selected in alternate DST/Standard state (e.g., PST when PDT is current, prevents auto DST switching)
   coordinates?: { latitude: number; longitude: number }; // Optional coordinates for custom timezones
 }
 
@@ -994,6 +994,7 @@ export class TimelineManager {
 
     // Handle DST transitions while preserving off-cycle timezones
     const updatedTimezones: TimeZone[] = [];
+    const allTimezones = getAllTimezonesOrdered(this.selectedDate);
 
     for (const timezone of this.selectedTimezones) {
       if (timezone.isOffCycle || timezone.isCustom) {
@@ -1001,7 +1002,6 @@ export class TimelineManager {
         updatedTimezones.push(timezone);
       } else {
         // For regular timezones, recalculate for new date to handle DST transitions
-        const allTimezones = getAllTimezonesOrdered(this.selectedDate);
         const updatedTimezone = allTimezones.find(tz => tz.iana === timezone.iana);
         if (updatedTimezone) {
           updatedTimezones.push(updatedTimezone);
@@ -1014,12 +1014,13 @@ export class TimelineManager {
 
     this.selectedTimezones = updatedTimezones;
 
-    // Re-add any saved custom timezones that might not be in the current selection
+    // Re-add any saved custom timezones that were not preserved in the updated selection
     const customTimezones = CustomTimezoneManager.getCustomTimezones();
+    const existingIanas = new Set(this.selectedTimezones.map(tz => tz.iana));
+
     for (const customTz of customTimezones) {
       // Only add if not already included
-      const exists = this.selectedTimezones.find(tz => tz.iana === customTz.iana);
-      if (!exists) {
+      if (!existingIanas.has(customTz.iana)) {
         this.selectedTimezones.push(customTz);
       }
     }
@@ -1811,6 +1812,7 @@ export class TimezoneModal {
   private downButton: HTMLElement;
   private timezones: TimeZone[];
   private groupedTimezones: GroupedTimezone[];
+  private groupedTimezonesLookup: Map<string, GroupedTimezone>; // Lookup map for efficient timezone searches
   private filteredTimezones: TimeZone[];
   private filteredGroups: GroupedTimezone[];
   private selectedIndex = 0;
@@ -1836,6 +1838,15 @@ export class TimezoneModal {
 
     // Get both grouped and flat timezone lists
     this.groupedTimezones = getGroupedTimezones(this.selectedDate);
+
+    // Create lookup map for efficient timezone searches
+    this.groupedTimezonesLookup = new Map();
+    for (const group of this.groupedTimezones) {
+      this.groupedTimezonesLookup.set(group.current.iana, group);
+      if (group.alternate) {
+        this.groupedTimezonesLookup.set(group.alternate.iana, group);
+      }
+    }
 
     // Combine standard and custom timezones using the selected date
     const standardTimezones = getAllTimezonesOrdered(this.selectedDate);
@@ -2331,11 +2342,7 @@ export class TimezoneModal {
 
       // Check if this is an off-cycle variant by comparing with grouped timezones
       let isOffCycle = false;
-      const matchingGroup = this.groupedTimezones.find(
-        group =>
-          group.current.iana === selectedTimezone.iana ||
-          (group.alternate && group.alternate.iana === selectedTimezone.iana),
-      );
+      const matchingGroup = this.groupedTimezonesLookup.get(selectedTimezone.iana);
 
       if (matchingGroup && matchingGroup.alternate && matchingGroup.alternate.iana === selectedTimezone.iana) {
         // This is the alternate timezone (off-cycle variant)
