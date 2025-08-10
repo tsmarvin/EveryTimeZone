@@ -516,9 +516,10 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
   const now = baseDate || new Date();
   const userTz = getUserTimezone();
 
-  // Get current hour in user's timezone and round down
-  const currentUserHour = new Date(now.toLocaleString('en-US', { timeZone: userTz.iana }));
-  currentUserHour.setMinutes(0, 0, 0);
+  // Get current hour in user's timezone and round down using Temporal
+  const nowInstant = Temporal.Instant.fromEpochMilliseconds(now.getTime());
+  const nowZoned = nowInstant.toZonedDateTimeISO(userTz.iana);
+  const currentUserHour = new Date(nowZoned.year, nowZoned.month - 1, nowZoned.day, nowZoned.hour, 0, 0, 0);
 
   const hours: TimelineHour[] = [];
 
@@ -580,17 +581,19 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
       sunsetTime = formatTimeInTimezone(sunTimes.sunset, timezone.iana);
 
       // Check if this is the sunrise hour - the hour that CONTAINS the sunrise time
-      // Convert sunrise time from UTC to local timezone using proper IANA timezone conversion
-      const sunriseLocalTime = new Date(sunTimes.sunrise.toLocaleString('en-US', { timeZone: timezone.iana }));
-      const sunriseHour = sunriseLocalTime.getHours();
+      // Convert sunrise time from UTC to local timezone using proper Temporal IANA timezone conversion
+      const sunriseInstant = Temporal.Instant.fromEpochMilliseconds(sunTimes.sunrise.getTime());
+      const sunriseZoned = sunriseInstant.toZonedDateTimeISO(timezone.iana);
+      const sunriseHour = sunriseZoned.hour;
       if (timeInTz.getHours() === sunriseHour) {
         isSunriseHour = true;
       }
 
       // Check if this is the sunset hour - the hour that CONTAINS the sunset time
-      // Convert sunset time from UTC to local timezone using proper IANA timezone conversion
-      const sunsetLocalTime = new Date(sunTimes.sunset.toLocaleString('en-US', { timeZone: timezone.iana }));
-      const sunsetHour = sunsetLocalTime.getHours();
+      // Convert sunset time from UTC to local timezone using proper Temporal IANA timezone conversion
+      const sunsetInstant = Temporal.Instant.fromEpochMilliseconds(sunTimes.sunset.getTime());
+      const sunsetZoned = sunsetInstant.toZonedDateTimeISO(timezone.iana);
+      const sunsetHour = sunsetZoned.hour;
       if (timeInTz.getHours() === sunsetHour) {
         isSunsetHour = true;
       }
