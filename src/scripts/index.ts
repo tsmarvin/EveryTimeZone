@@ -545,8 +545,8 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
       hour12: false,
     });
 
-    // Calculate daylight status for this hour
-    const isDaylight = isHourInDaylight(timezone, timeInTz);
+    // Calculate daylight status for this hour - will be updated after sunrise/sunset calculations
+    let isDaylight = isHourInDaylight(timezone, timeInTz);
 
     // Check if this hour represents a date transition (midnight = start of new day)
     const isDateTransition = timeInTz.getHours() === 0;
@@ -578,24 +578,31 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
       sunriseTime = formatTimeInTimezone(sunTimes.sunrise, timezone.iana);
       sunsetTime = formatTimeInTimezone(sunTimes.sunset, timezone.iana);
 
-      // Check if this is the sunrise hour (transition from night to day)
-      // We check if this hour is daylight and the previous hour would be night
-      if (isDaylight) {
-        const prevHourTime = new Date(timeInTz.getTime() - 60 * 60 * 1000);
-        const prevHourDaylight = isHourInDaylight(timezone, prevHourTime);
-        if (!prevHourDaylight) {
-          isSunriseHour = true;
-        }
+      // Check if this is the sunrise hour - the hour that CONTAINS the sunrise time
+      // Convert sunrise time from UTC to local timezone for comparison
+      const sunriseLocal = new Date(sunTimes.sunrise.getTime() + timezone.offset * 60 * 60 * 1000);
+      const sunriseHour = sunriseLocal.getHours();
+      if (timeInTz.getHours() === sunriseHour) {
+        isSunriseHour = true;
       }
 
-      // Check if this is the sunset hour (transition from day to night)
-      // We check if this hour is night and the previous hour was daylight
-      if (!isDaylight) {
-        const prevHourTime = new Date(timeInTz.getTime() - 60 * 60 * 1000);
-        const prevHourDaylight = isHourInDaylight(timezone, prevHourTime);
-        if (prevHourDaylight) {
-          isSunsetHour = true;
-        }
+      // Check if this is the sunset hour - the hour that CONTAINS the sunset time
+      // Convert sunset time from UTC to local timezone for comparison  
+      const sunsetLocal = new Date(sunTimes.sunset.getTime() + timezone.offset * 60 * 60 * 1000);
+      const sunsetHour = sunsetLocal.getHours();
+      if (timeInTz.getHours() === sunsetHour) {
+        isSunsetHour = true;
+      }
+
+      // Update daylight calculation to be consistent with sunrise/sunset hour logic
+      // Daylight hours should include the sunrise hour through the sunset hour (inclusive)
+      const currentHour = timeInTz.getHours();
+      if (sunriseHour <= sunsetHour) {
+        // Normal case: sunrise and sunset are on the same day
+        isDaylight = currentHour >= sunriseHour && currentHour <= sunsetHour;
+      } else {
+        // Edge case: sunset is after midnight (next day)
+        isDaylight = currentHour >= sunriseHour || currentHour <= sunsetHour;
       }
     }
 

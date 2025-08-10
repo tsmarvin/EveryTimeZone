@@ -582,37 +582,7 @@ p {
 /* Removed redundant night emoji - styling now handled through background gradients only */
 
 /* Sunrise and Sunset Transition Hour Indicators */
-.timeline-hour.sunrise-hour::after {
-  content: '🔆';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 16px;
-  opacity: 1;
-  pointer-events: none;
-  z-index: 2;
-  text-shadow:
-    0 0 4px rgba(0, 0, 0, 0.9),
-    0 0 8px rgba(0, 0, 0, 0.7),
-    1px 1px 2px rgba(0, 0, 0, 0.8);
-  filter: contrast(1.3) brightness(1.2) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
-}
-
-.timeline-hour.sunset-hour::after {
-  content: '🔅';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 16px;
-  opacity: 1;
-  pointer-events: none;
-  z-index: 2;
-  text-shadow:
-    0 0 4px rgba(0, 0, 0, 0.9),
-    0 0 8px rgba(0, 0, 0, 0.7),
-    1px 1px 2px rgba(0, 0, 0, 0.8);
-  filter: contrast(1.3) brightness(1.2) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
-}
+/* Note: Sunrise/sunset symbols are now handled by JavaScript content, not CSS pseudo-elements */
 
 /* Enhanced styling for sunrise/sunset transition hours */
 .timeline-hour.sunrise-hour {
@@ -678,35 +648,7 @@ p {
 }
 
 /* Preserve sunrise/sunset icons on current hour cells by using ::before for the arrow when combined */
-.timeline-hour.current-hour.sunrise-hour::after {
-  content: '🔆';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 12px;
-  opacity: 1;
-  pointer-events: none;
-  z-index: 3;
-  border: none;
-  width: auto;
-  height: auto;
-  transform: none;
-}
-
-.timeline-hour.current-hour.sunset-hour::after {
-  content: '🔅';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 12px;
-  opacity: 1;
-  pointer-events: none;
-  z-index: 3;
-  border: none;
-  width: auto;
-  height: auto;
-  transform: none;
-}
+/* Note: Sunrise/sunset symbols are now handled by JavaScript content, not CSS pseudo-elements */
 
 /* Add arrow indicator for current hour using ::before when it's also sunrise/sunset */
 .timeline-hour.current-hour.sunrise-hour::before,
