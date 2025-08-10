@@ -60,6 +60,19 @@
   box-sizing: border-box;
 }
 
+/* Accessibility utility classes */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 html {
   font-size: 16px;
   line-height: 1.6;
@@ -287,6 +300,8 @@ p {
   transition: var(--transition);
   margin-top: var(--space-md);
   box-shadow: var(--shadow);
+  min-width: 44px; /* WCAG AAA touch target minimum */
+  min-height: 44px; /* WCAG AAA touch target minimum */
   position: relative;
   overflow: hidden;
 }
@@ -466,7 +481,7 @@ p {
 }
 
 .timeline-row.user-timezone {
-  background: linear-gradient(135deg, rgba(79, 107, 179, 0.1), rgba(74, 139, 107, 0.1));
+  background: var(--color-surface-accent);
   border: 2px solid var(--color-primary);
   border-left: none;
   border-right: none;
@@ -544,48 +559,107 @@ p {
 }
 
 .timeline-hour.working-hours {
-  background-color: rgba(74, 139, 107, 0.1);
+  background-color: var(--color-accent-subtle);
   color: var(--color-secondary);
   font-weight: 600;
 }
 
 /* Daylight and Night Indicators */
 .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, var(--golden-yellow), var(--golden-amber));
-  color: var(--brown-dark);
   font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.3);
+  border-radius: 4px;
+  position: relative;
 }
+
+/* Removed redundant day emoji - styling now handled through background gradients only */
 
 .timeline-hour.night-hour {
-  background: linear-gradient(135deg, var(--slate-dark), var(--slate-darkest));
-  color: var(--gray-blue);
   font-weight: 500;
-  box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.5);
+  border-radius: 4px;
+  position: relative;
 }
 
-/* Light theme adjustments for daylight/night indicators */
-.light-theme .timeline-hour.daylight-hour {
-  background: linear-gradient(135deg, var(--cream-pale), var(--cream-light));
-  color: var(--brown-medium);
-  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.2);
+/* Removed redundant night emoji - styling now handled through background gradients only */
+
+/* Sunrise and Sunset Transition Hour Indicators */
+.timeline-hour.sunrise-hour::after {
+  content: '🔆';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 16px;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 2;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(0, 0, 0, 0.7),
+    1px 1px 2px rgba(0, 0, 0, 0.8);
+  filter: contrast(1.3) brightness(1.2) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
 
-.light-theme .timeline-hour.night-hour {
-  background: linear-gradient(135deg, var(--gray-750), var(--gray-850));
-  color: var(--gray-warm);
-  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.3);
+.timeline-hour.sunset-hour::after {
+  content: '🔅';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 16px;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 2;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(0, 0, 0, 0.7),
+    1px 1px 2px rgba(0, 0, 0, 0.8);
+  filter: contrast(1.3) brightness(1.2) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+/* Enhanced styling for sunrise/sunset transition hours */
+.timeline-hour.sunrise-hour {
+  animation: sunrise-glow 2s ease-in-out infinite alternate;
+}
+
+.timeline-hour.sunset-hour {
+  animation: sunset-glow 2s ease-in-out infinite alternate;
+}
+
+/* Subtle glow animations for sunrise/sunset transitions */
+@keyframes sunrise-glow {
+  from {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sunset-glow {
+  from {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Tooltip enhancements for sunrise/sunset hours */
+.timeline-hour.sunrise-hour:hover,
+.timeline-hour.sunset-hour:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease-in-out;
 }
 
 /* Current hour styling with higher specificity to override daylight/night indicators */
 .timeline-hour.current-hour,
 .timeline-hour.current-hour.daylight-hour,
-.timeline-hour.current-hour.night-hour {
-  background: linear-gradient(135deg, var(--color-accent), rgba(220, 38, 38, 0.8)) !important;
-  color: white !important;
+.timeline-hour.current-hour.night-hour,
+.timeline-hour.current-hour.sunrise-hour,
+.timeline-hour.current-hour.sunset-hour {
+  background: var(--color-current-hour) !important;
+  color: var(--pure-white) !important;
   font-weight: 700;
   position: relative;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 0 0 2px var(--color-current-hour-border);
 }
 
 .timeline-hour.current-hour::after,
@@ -603,14 +677,61 @@ p {
   border-top: 8px solid var(--color-accent);
 }
 
+/* Preserve sunrise/sunset icons on current hour cells by using ::after for the emoji */
+.timeline-hour.current-hour.sunrise-hour::after {
+  content: '🔆';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 12px;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 3;
+  border: none;
+  width: auto;
+  height: auto;
+  transform: none;
+}
+
+.timeline-hour.current-hour.sunset-hour::after {
+  content: '🔅';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 12px;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 3;
+  border: none;
+  width: auto;
+  height: auto;
+  transform: none;
+}
+
+/* Add arrow indicator for current hour using ::before when it's also sunrise/sunset */
+.timeline-hour.current-hour.sunrise-hour::before,
+.timeline-hour.current-hour.sunset-hour::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--color-accent);
+  z-index: 3;
+}
+
 /* Date Transition Styling */
 .timeline-hour.date-transition {
   flex-direction: column;
   padding: var(--space-xs) 2px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  background: var(--color-surface);
   color: var(--color-text);
   font-weight: 600;
-  border: 2px solid var(--color-accent);
+  border: 1px solid var(--color-border);
   position: relative;
   min-height: 60px;
 }
@@ -622,6 +743,7 @@ p {
   margin-bottom: 2px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  color: var(--color-text-secondary);
 }
 
 .time-display {
@@ -629,32 +751,41 @@ p {
   font-family: 'Courier New', monospace;
   font-weight: 600;
   line-height: 1;
+  color: var(--color-text);
 }
 
 /* Date transition styling that overrides daylight/night indicators */
 .timeline-hour.date-transition.daylight-hour,
 .timeline-hour.date-transition.night-hour {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+  background: var(--color-surface) !important;
   color: var(--color-text) !important;
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 255, 255, 0.3),
-    0 0 0 2px var(--color-accent);
+  border: 1px solid var(--color-border) !important;
+  box-shadow: none !important;
+}
+
+.timeline-hour.date-transition.daylight-hour .date-display,
+.timeline-hour.date-transition.night-hour .date-display {
+  color: var(--color-text-secondary) !important;
+}
+
+.timeline-hour.date-transition.daylight-hour .time-display,
+.timeline-hour.date-transition.night-hour .time-display {
+  color: var(--color-text) !important;
 }
 
 /* Light theme adjustments for date transitions */
 .light-theme .timeline-hour.date-transition {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  background: var(--color-surface);
   color: var(--color-text);
-  border-color: var(--color-accent);
+  border-color: var(--color-border);
 }
 
 .light-theme .timeline-hour.date-transition.daylight-hour,
 .light-theme .timeline-hour.date-transition.night-hour {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)) !important;
+  background: var(--color-surface) !important;
   color: var(--color-text) !important;
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 255, 255, 0.4),
-    0 0 0 2px var(--color-accent);
+  border: 1px solid var(--color-border) !important;
+  box-shadow: none !important;
 }
 
 /* Timezone Selection Modal */
@@ -664,7 +795,7 @@ p {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-overlay);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -731,6 +862,8 @@ p {
   border-radius: 50%;
   width: 1.75rem;
   height: 1.75rem;
+  min-width: 44px; /* WCAG AAA touch target minimum */
+  min-height: 44px; /* WCAG AAA touch target minimum */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -769,7 +902,7 @@ p {
 .timezone-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(79, 107, 179, 0.2);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
 .timezone-wheel-container {
@@ -790,6 +923,8 @@ p {
   border-radius: 50%;
   width: 2rem;
   height: 2rem;
+  min-width: 44px; /* WCAG AAA touch target minimum */
+  min-height: 44px; /* WCAG AAA touch target minimum */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -878,6 +1013,56 @@ p {
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Plus button for alternate timezone selection */
+.timezone-plus-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--color-secondary);
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: var(--text-xs);
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  z-index: 10;
+}
+
+.timezone-plus-btn:hover {
+  background: var(--color-primary);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Grouped timezone item styles */
+.wheel-timezone-item.grouped .wheel-timezone-display {
+  font-size: var(--text-xs);
+  opacity: 0.8;
+  line-height: 1.2;
+  white-space: normal;
+  text-align: center;
+  width: 100%;
+}
+
+.wheel-timezone-item.grouped {
+  min-height: 60px;
+}
+
+/* Ensure center grouped items have proper spacing for the plus button */
+.wheel-timezone-item.grouped.center .wheel-timezone-name {
+  padding-right: 25px;
 }
 
 .wheel-timezone-display {
@@ -1036,7 +1221,7 @@ p {
 .field-group input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(79, 107, 179, 0.2);
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
 }
 
 .form-actions {
@@ -1144,6 +1329,8 @@ p {
   border-radius: var(--border-radius);
   width: 3rem;
   height: 3rem;
+  min-width: 44px; /* WCAG AAA touch target minimum */
+  min-height: 44px; /* WCAG AAA touch target minimum */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1159,12 +1346,12 @@ p {
   background: var(--color-header-button-hover-bg);
   border-color: var(--color-header-button-hover-border);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-elevated);
 }
 
 .appearance-settings:active {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-subtle);
 }
 
 .appearance-settings-icon {
@@ -1179,7 +1366,7 @@ p {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-overlay);
   backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
@@ -1243,6 +1430,8 @@ p {
   justify-content: center;
   width: 2rem;
   height: 2rem;
+  min-width: 44px; /* WCAG AAA touch target minimum */
+  min-height: 44px; /* WCAG AAA touch target minimum */
 }
 
 .settings-close:hover {
@@ -1450,7 +1639,7 @@ p {
   background: var(--color-primary);
   border-radius: 18px;
   transition: var(--transition);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-subtle);
 }
 
 /* When checkbox is checked (24-hour format) */
@@ -1788,7 +1977,7 @@ p {
 
   .timeline-container {
     box-shadow: none;
-    border: 1px solid #000;
+    border: 1px solid var(--pure-black);
   }
 
   .timeline-row.user-timezone {
@@ -1796,8 +1985,8 @@ p {
   }
 
   .timeline-hour.current-hour {
-    background: #666 !important;
-    color: white !important;
+    background: var(--gray-medium-light) !important;
+    color: var(--pure-white) !important;
   }
 }
 
@@ -1980,6 +2169,17 @@ p {
   --cream-light: #fde68a;
   --cream-pale: #fef3c7;
   --brown-medium: #92400e;
+
+  /* Additional utility colors */
+  --color-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Alpha value utilities */
+  --gray-medium-alpha: rgba(102, 102, 102, 0.2);
+  --golden-amber-alpha: rgba(245, 158, 11, 0.4);
+  --gray-alpha-60: rgba(55, 65, 81, 0.6);
+  --color-focus-ring: rgba(79, 107, 179, 0.2);
+  --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* ============================================================================
@@ -2033,6 +2233,45 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(153, 153, 153, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(102, 102, 102, 0.1);
+  --color-accent-subtle: rgba(102, 102, 102, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--gray-300);
+  --color-secondary-hover: var(--gray-200);
+  --color-header-button-hover-bg: rgba(102, 102, 102, 0.4);
+  --color-header-button-hover-border: rgba(102, 102, 102, 0.6);
+  --color-text-muted: var(--gray-300);
+  --color-text-tertiary: var(--gray-400);
+  --color-bg-secondary: var(--gray-800);
+  --color-primary-alpha: var(--gray-medium-alpha);
+
+  /* Daylight/Night hour styling */
+  --color-daylight-bg-from: var(--golden-yellow);
+  --color-daylight-bg-to: var(--golden-amber);
+  --color-daylight-text: var(--brown-dark);
+  --color-daylight-border: var(--golden-amber);
+  --color-daylight-border-alpha: var(--golden-amber-alpha);
+  --color-night-bg-from: var(--gray-750);
+  --color-night-bg-to: var(--gray-850);
+  --color-night-text: var(--gray-blue);
+  --color-night-border: var(--gray-750);
+  --color-night-border-alpha: var(--gray-alpha-60);
+}
+
+/* Default theme daylight/night overrides */
+.theme-default .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px var(--color-daylight-border-alpha);
+}
+
+.theme-default .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-night-bg-from), var(--color-night-bg-to));
+  color: var(--color-night-text);
+  box-shadow: inset 0 0 0 1px var(--color-night-border-alpha);
 }
 
 .theme-default.light-theme {
@@ -2065,6 +2304,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Default theme light mode daylight/night overrides */
+.theme-default.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.3);
+}
+
+.theme-default.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.4);
 }
 
 /* Forest Harmony Theme */
@@ -2122,6 +2374,33 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(132, 204, 22, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(34, 197, 94, 0.1);
+  --color-accent-subtle: rgba(34, 197, 94, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--forest-bright);
+  --color-secondary-hover: var(--forest-lime);
+  --color-header-button-hover-bg: rgba(34, 197, 94, 0.4);
+  --color-header-button-hover-border: rgba(34, 197, 94, 0.6);
+  --color-text-muted: var(--forest-light);
+  --color-text-tertiary: var(--forest-spring);
+  --color-bg-secondary: var(--forest-medium-green);
+  --color-primary-alpha: rgba(34, 197, 94, 0.2);
+}
+
+/* Forest Harmony theme daylight/night overrides */
+.theme-forest-harmony .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(132, 204, 22, 0.5);
+}
+
+.theme-forest-harmony .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(26, 46, 26, 0.7);
 }
 
 .theme-forest-harmony.light-theme {
@@ -2154,6 +2433,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Forest Harmony theme light mode daylight/night overrides */
+.theme-forest-harmony.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.3);
+}
+
+.theme-forest-harmony.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(31, 41, 55, 0.5);
 }
 
 /* Neon Cyber Theme */
@@ -2211,6 +2503,33 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(189, 0, 255, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(0, 212, 255, 0.1);
+  --color-accent-subtle: rgba(0, 212, 255, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--cyber-blue);
+  --color-secondary-hover: var(--cyber-pink);
+  --color-header-button-hover-bg: rgba(0, 212, 255, 0.4);
+  --color-header-button-hover-border: rgba(0, 212, 255, 0.6);
+  --color-text-muted: var(--cyber-light-blue);
+  --color-text-tertiary: var(--cyber-cyan-light);
+  --color-bg-secondary: var(--cyber-medium-dark);
+  --color-primary-alpha: rgba(0, 212, 255, 0.2);
+}
+
+/* Neon Cyber theme daylight/night overrides */
+.theme-neon-cyber .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.5);
+}
+
+.theme-neon-cyber .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(26, 11, 46, 0.7);
 }
 
 .theme-neon-cyber.light-theme {
@@ -2243,6 +2562,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Neon Cyber theme light mode daylight/night overrides */
+.theme-neon-cyber.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(147, 51, 234, 0.3);
+}
+
+.theme-neon-cyber.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.5);
 }
 
 /* Ocean Breeze Theme */
@@ -2300,6 +2632,33 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(20, 184, 166, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(6, 182, 212, 0.1);
+  --color-accent-subtle: rgba(6, 182, 212, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--ocean-blue);
+  --color-secondary-hover: var(--ocean-teal-dark);
+  --color-header-button-hover-bg: rgba(6, 182, 212, 0.4);
+  --color-header-button-hover-border: rgba(6, 182, 212, 0.6);
+  --color-text-muted: var(--ocean-cyan-light);
+  --color-text-tertiary: var(--ocean-cyan-light);
+  --color-bg-secondary: var(--ocean-medium-blue);
+  --color-primary-alpha: rgba(6, 182, 212, 0.2);
+}
+
+/* Ocean Breeze theme daylight/night overrides */
+.theme-ocean-breeze .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.5);
+}
+
+.theme-ocean-breeze .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(10, 26, 42, 0.7);
 }
 
 .theme-ocean-breeze.light-theme {
@@ -2332,6 +2691,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Ocean Breeze theme light mode daylight/night overrides */
+.theme-ocean-breeze.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.3);
+}
+
+.theme-ocean-breeze.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(30, 41, 59, 0.5);
 }
 
 /* Original Theme */
@@ -2389,6 +2761,33 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(138, 184, 163, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(124, 159, 184, 0.1);
+  --color-accent-subtle: rgba(124, 159, 184, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--original-steel);
+  --color-secondary-hover: var(--original-sage-blue);
+  --color-header-button-hover-bg: rgba(124, 159, 184, 0.4);
+  --color-header-button-hover-border: rgba(124, 159, 184, 0.6);
+  --color-text-muted: var(--original-sky);
+  --color-text-tertiary: var(--original-sky);
+  --color-bg-secondary: var(--original-surface);
+  --color-primary-alpha: rgba(124, 159, 184, 0.2);
+}
+
+/* Original theme daylight/night overrides */
+.theme-original .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(138, 184, 163, 0.5);
+}
+
+.theme-original .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(58, 74, 90, 0.7);
 }
 
 .theme-original.light-theme {
@@ -2421,6 +2820,19 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Original theme light mode daylight/night overrides */
+.theme-original.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(138, 184, 163, 0.3);
+}
+
+.theme-original.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  box-shadow: inset 0 0 0 1px rgba(55, 65, 81, 0.4);
 }
 
 /* Sunset Warmth Theme */
@@ -2478,6 +2890,35 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 171, 0, 0.4);
+
+  /* Additional theme variables for removed hardcoded colors */
+  --color-surface-accent: rgba(255, 107, 53, 0.1);
+  --color-accent-subtle: rgba(255, 107, 53, 0.1);
+  --color-current-hour: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  --color-current-hour-border: rgba(255, 255, 255, 0.3);
+  --color-primary-hover: var(--sunset-orange-dark);
+  --color-secondary-hover: var(--sunset-deep-red);
+  --color-header-button-hover-bg: rgba(255, 107, 53, 0.4);
+  --color-header-button-hover-border: rgba(255, 107, 53, 0.6);
+  --color-text-muted: var(--sunset-cream);
+  --color-text-tertiary: var(--sunset-peach);
+  --color-bg-secondary: var(--sunset-surface);
+  --color-primary-alpha: rgba(255, 107, 53, 0.2);
+}
+
+/* Sunset Warmth theme daylight/night overrides */
+.theme-sunset-warmth .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(255, 171, 0, 0.5);
+}
+
+.theme-sunset-warmth .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1px rgba(62, 39, 35, 0.7);
 }
 
 .theme-sunset-warmth.light-theme {
@@ -2510,6 +2951,21 @@ p {
 
   /* Button effects */
   --color-button-shimmer: rgba(255, 255, 255, 0.4);
+}
+
+/* Sunset Warmth theme light mode daylight/night overrides */
+.theme-sunset-warmth.light-theme .timeline-hour.daylight-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 53, 0.3);
+}
+
+.theme-sunset-warmth.light-theme .timeline-hour.night-hour {
+  background: linear-gradient(135deg, var(--color-daylight-bg-from), var(--color-daylight-bg-to));
+  color: var(--color-daylight-text);
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1px rgba(93, 64, 55, 0.5);
 }
 
 /* Default root colors for fallback */

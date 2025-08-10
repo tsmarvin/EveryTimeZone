@@ -3,63 +3,33 @@ import { join } from 'path';
 import { execSync } from 'child_process';
 
 function getGitVersion(): string {
-  // First, check if GitVersion environment variables are available (from CI)
+  // Check GitVersion environment variables (from CI)
   const envSemVer = process.env.GITVERSION_SEMVER;
+  const envFullSemVer = process.env.GITVERSION_FULLSEMVER;
 
-  if (envSemVer) {
-    console.log(`Using GitVersion from environment: ${envSemVer}`);
-    return envSemVer;
+  // Check if environment variables are defined (even if empty)
+  if (envSemVer !== undefined || envFullSemVer !== undefined) {
+    const version = envSemVer || envFullSemVer;
+    if (!version || version.trim() === '') {
+      throw new Error('GitVersion environment variables are present but empty. Expected valid version string.');
+    }
+    console.log(`Using GitVersion from environment: ${version}`);
+    return version;
   }
 
+  // Try GitVersion CLI
   try {
-    // Try GitVersion CLI tool (if available locally)
     const gitVersionOutput = execSync('gitversion', { encoding: 'utf-8', cwd: process.cwd() });
     const gitVersionData = JSON.parse(gitVersionOutput);
-    console.log(`Using GitVersion from CLI: ${gitVersionData.SemVer || gitVersionData.FullSemVer}`);
-    return gitVersionData.SemVer || gitVersionData.FullSemVer;
-  } catch {
-    // Fallback to simple git tag approach
-    try {
-      const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-      const commitsSince = execSync(`git rev-list ${lastTag}..HEAD --count`, {
-        encoding: 'utf-8',
-        cwd: process.cwd(),
-      }).trim();
-      const commits = parseInt(commitsSince, 10);
-
-      // Parse the tag version
-      const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
-      if (!match || !match[1] || !match[2] || !match[3]) {
-        console.log('Using default fallback version: 1.0.0');
-        return '1.0.0';
-      }
-
-      const major = parseInt(match[1], 10);
-      const minor = parseInt(match[2], 10);
-      let patch = parseInt(match[3], 10);
-
-      // Simple branch-based logic
-      const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-      if (branch === 'main' && commits > 0) {
-        patch += 1;
-        const version = `${major}.${minor}.${patch}`;
-        console.log(`Using fallback git logic for main branch: ${version}`);
-        return version;
-      } else if (commits > 0) {
-        patch += 1;
-        const version = `${major}.${minor}.${patch}-alpha.${commits}`;
-        console.log(`Using fallback git logic for feature branch: ${version}`);
-        return version;
-      }
-
-      const version = `${major}.${minor}.${patch}`;
-      console.log(`Using fallback git logic for tagged commit: ${version}`);
-      return version;
-    } catch {
-      // No git or tags available, use default
-      console.log('No git available, using default version: 1.0.0');
-      return '1.0.0';
-    }
+    const version = gitVersionData.SemVer || gitVersionData.FullSemVer;
+    console.log(`Using GitVersion from CLI: ${version}`);
+    return version;
+  } catch (gitVersionError) {
+    throw new Error(
+      `GitVersion is required but was not available. ` +
+        `Expected GITVERSION_SEMVER environment variable or working 'gitversion' CLI tool. ` +
+        `Error: ${gitVersionError}`,
+    );
   }
 }
 
@@ -86,13 +56,19 @@ function injectVersionIntoHtml(): void {
     htmlContent = htmlContent.replace(metaTagRegex, `$1\n    <meta name="app-version" content="${version}" />`);
   }
 
-  // Inject version into footer
-  const footerRegex = /(<footer class="footer">[\s\S]*?<div class="container">[\s\S]*?<p>)/;
+  // Inject version into footer by replacing entire paragraph content
+  const footerRegex = /(<footer class="footer">[\s\S]*?<div class="container">[\s\S]*?<p>)[\s\S]*?(<\/p>)/;
   if (footerRegex.test(htmlContent)) {
-    htmlContent = htmlContent.replace(
-      footerRegex,
-      `$1\n          <span class="version">v${version}</span>\n          `,
-    );
+    const testSitePath = process.env.TEST_SITE_PATH;
+    let footerContent = `\n                <span class="version">v${version}</span>\n                <a href="https://github.com/tsmarvin/EveryTimeZone" target="_blank" rel="noopener noreferrer">View on GitHub</a>`;
+
+    // Add test site link if this is the main site build (has TEST_SITE_PATH env var)
+    if (testSitePath) {
+      footerContent += `,\n                <a href="https://www.everytimezone.net/${testSitePath}/" target="_blank" rel="noopener noreferrer">Test the development site</a>`;
+    }
+    footerContent += '\n              ';
+
+    htmlContent = htmlContent.replace(footerRegex, `$1${footerContent}$2`);
   }
 
   writeFileSync(distIndexPath, htmlContent, 'utf-8');
