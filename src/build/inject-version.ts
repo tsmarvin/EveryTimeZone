@@ -3,63 +3,86 @@ import { join } from 'path';
 import { execSync } from 'child_process';
 
 function getGitVersion(): string {
-  // First, check if GitVersion environment variables are available (from CI)
+  // Priority 1: GitVersion environment variables (from CI)
   const envSemVer = process.env.GITVERSION_SEMVER;
+  const envFullSemVer = process.env.GITVERSION_FULLSEMVER;
 
-  if (envSemVer) {
-    console.log(`Using GitVersion from environment: ${envSemVer}`);
-    return envSemVer;
+  if (envSemVer || envFullSemVer) {
+    const version = envSemVer || envFullSemVer || '';
+    console.log(`Using GitVersion from environment: ${version}`);
+    return version;
   }
 
+  // Priority 2: GitVersion CLI (if available)
   try {
-    // Try GitVersion CLI tool (if available locally)
     const gitVersionOutput = execSync('gitversion', { encoding: 'utf-8', cwd: process.cwd() });
     const gitVersionData = JSON.parse(gitVersionOutput);
-    console.log(`Using GitVersion from CLI: ${gitVersionData.SemVer || gitVersionData.FullSemVer}`);
-    return gitVersionData.SemVer || gitVersionData.FullSemVer;
-  } catch {
-    // Fallback to simple git tag approach
+    const version = gitVersionData.SemVer || gitVersionData.FullSemVer;
+    console.log(`Using GitVersion from CLI: ${version}`);
+    return version;
+  } catch (gitVersionError) {
+    console.log(`GitVersion CLI not available: ${gitVersionError}`);
+  }
+
+  // Check if we're in a CI environment or main/develop branch where GitVersion should be required
+  const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+  let currentBranch = '';
+
+  // In CI, use environment variable branch info first
+  if (isCI && process.env.GITHUB_REF_NAME) {
+    currentBranch = process.env.GITHUB_REF_NAME;
+  } else {
     try {
-      const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-      const commitsSince = execSync(`git rev-list ${lastTag}..HEAD --count`, {
-        encoding: 'utf-8',
-        cwd: process.cwd(),
-      }).trim();
-      const commits = parseInt(commitsSince, 10);
-
-      // Parse the tag version
-      const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
-      if (!match || !match[1] || !match[2] || !match[3]) {
-        console.log('Using default fallback version: 1.0.0');
-        return '1.0.0';
-      }
-
-      const major = parseInt(match[1], 10);
-      const minor = parseInt(match[2], 10);
-      let patch = parseInt(match[3], 10);
-
-      // Simple branch-based logic
-      const branch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
-      if (branch === 'main' && commits > 0) {
-        patch += 1;
-        const version = `${major}.${minor}.${patch}`;
-        console.log(`Using fallback git logic for main branch: ${version}`);
-        return version;
-      } else if (commits > 0) {
-        patch += 1;
-        const version = `${major}.${minor}.${patch}-alpha.${commits}`;
-        console.log(`Using fallback git logic for feature branch: ${version}`);
-        return version;
-      }
-
-      const version = `${major}.${minor}.${patch}`;
-      console.log(`Using fallback git logic for tagged commit: ${version}`);
-      return version;
+      currentBranch = execSync('git branch --show-current', { encoding: 'utf-8', cwd: process.cwd() }).trim();
     } catch {
-      // No git or tags available, use default
-      console.log('No git available, using default version: 1.0.0');
+      // Might be in detached HEAD state (common in CI)
+      currentBranch = process.env.GITHUB_REF_NAME || '';
+    }
+  }
+
+  // For CI environments or main/develop branches, GitVersion should always be available
+  if (isCI && (currentBranch === 'main' || currentBranch === 'develop')) {
+    throw new Error(
+      `GitVersion is required for ${currentBranch} branch in CI environment, but was not available. ` +
+        `Expected GITVERSION_SEMVER environment variable or working 'gitversion' CLI tool.`,
+    );
+  }
+
+  // Fallback for local development only
+  console.log('GitVersion not available, using fallback for local development');
+  try {
+    const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8', cwd: process.cwd() }).trim();
+    const commitsSince = execSync(`git rev-list ${lastTag}..HEAD --count`, {
+      encoding: 'utf-8',
+      cwd: process.cwd(),
+    }).trim();
+    const commits = parseInt(commitsSince, 10);
+
+    // Parse the tag version
+    const match = lastTag.match(/^v?(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/);
+    if (!match || !match[1] || !match[2] || !match[3]) {
+      console.log('Using default fallback version: 1.0.0');
       return '1.0.0';
     }
+
+    const major = parseInt(match[1], 10);
+    const minor = parseInt(match[2], 10);
+    let patch = parseInt(match[3], 10);
+
+    if (commits > 0) {
+      patch += 1;
+      const version = `${major}.${minor}.${patch}-alpha.${commits}`;
+      console.log(`Using fallback git logic: ${version}`);
+      return version;
+    }
+
+    const version = `${major}.${minor}.${patch}`;
+    console.log(`Using fallback git logic for tagged commit: ${version}`);
+    return version;
+  } catch {
+    // Last resort fallback
+    console.log('No git available, using default version: 1.0.0');
+    return '1.0.0';
   }
 }
 
