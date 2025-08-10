@@ -1115,58 +1115,17 @@ export class TimelineManager {
         const hourCell = document.createElement('div');
         hourCell.className = 'timeline-cell timeline-hour';
 
-        // Add sunrise/sunset transition indicators with tooltips
-        if (hour.isSunriseHour && hour.sunriseTime) {
-          hourCell.classList.add('sunrise-hour');
-          // Add daylight/night class based on calculated isDaylight
-          if (hour.isDaylight) {
-            hourCell.classList.add('daylight-hour');
-          } else {
-            hourCell.classList.add('night-hour');
-          }
-          hourCell.title = `🔆 Sunrise: ${hour.sunriseTime}`;
-          hourCell.setAttribute('data-sunrise-time', hour.sunriseTime);
-          // Replace content with sunrise icon and time
-          if (hour.isDateTransition && hour.dateString) {
-            hourCell.innerHTML = `
-              <div class="date-display">${hour.dateString}</div>
-              <div class="time-display">🔆 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
-            `;
-          } else {
-            hourCell.innerHTML = `🔆 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
-          }
-        } else if (hour.isSunsetHour && hour.sunsetTime) {
-          hourCell.classList.add('sunset-hour');
-          // Add daylight/night class based on calculated isDaylight  
-          if (hour.isDaylight) {
-            hourCell.classList.add('daylight-hour');
-          } else {
-            hourCell.classList.add('night-hour');
-          }
-          hourCell.title = `🔅 Sunset: ${hour.sunsetTime}`;
-          hourCell.setAttribute('data-sunset-time', hour.sunsetTime);
-          // Replace content with sunset icon and time
-          if (hour.isDateTransition && hour.dateString) {
-            hourCell.innerHTML = `
-              <div class="date-display">${hour.dateString}</div>
-              <div class="time-display">🔅 ${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
-            `;
-          } else {
-            hourCell.innerHTML = `🔅 ${timeFormat === '12h' ? hour.time12 : hour.time24}`;
-          }
+        // Add date transition class and display date if this is midnight
+        if (hour.isDateTransition && hour.dateString) {
+          hourCell.classList.add('date-transition');
+          // Create a container for both date and time
+          hourCell.innerHTML = `
+            <div class="date-display">${hour.dateString}</div>
+            <div class="time-display">${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
+          `;
         } else {
-          // Regular hour content (no sunrise/sunset transition)
-          if (hour.isDateTransition && hour.dateString) {
-            hourCell.classList.add('date-transition');
-            // Create a container for both date and time
-            hourCell.innerHTML = `
-              <div class="date-display">${hour.dateString}</div>
-              <div class="time-display">${timeFormat === '12h' ? hour.time12 : hour.time24}</div>
-            `;
-          } else {
-            // Use consistent format based on setting for regular hours
-            hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
-          }
+          // Use consistent format based on setting for regular hours
+          hourCell.textContent = timeFormat === '12h' ? hour.time12 : hour.time24;
         }
 
         // Mark current hour (index 24 since we start from -24 hours)
@@ -1179,14 +1138,25 @@ export class TimelineManager {
           hourCell.classList.add('working-hours');
         }
 
+        // Add sunrise/sunset transition indicators with tooltips
+        if (hour.isSunriseHour && hour.sunriseTime) {
+          hourCell.classList.add('sunrise-hour');
+          hourCell.title = `Sunrise: ${hour.sunriseTime}`;
+          hourCell.setAttribute('data-sunrise-time', hour.sunriseTime);
+        }
+
+        if (hour.isSunsetHour && hour.sunsetTime) {
+          hourCell.classList.add('sunset-hour');
+          hourCell.title = `Sunset: ${hour.sunsetTime}`;
+          hourCell.setAttribute('data-sunset-time', hour.sunsetTime);
+        }
+
         // Add daylight/night indicator (apply to all hours including sunrise/sunset)
         if (hour.isDaylight !== undefined) {
           if (hour.isDaylight) {
             hourCell.classList.add('daylight-hour');
-            hourCell.title = 'Daylight hours';
           } else {
             hourCell.classList.add('night-hour');
-            hourCell.title = 'Night hours';
           }
         }
 
