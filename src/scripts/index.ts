@@ -2226,11 +2226,8 @@ export class TimezoneModal {
     if (plusBtn && group.alternate) {
       plusBtn.addEventListener('click', e => {
         e.stopPropagation();
-        // Select the alternate timezone directly and mark as off-cycle
-        if (this.onTimezoneSelectedCallback && group.alternate) {
-          this.onTimezoneSelectedCallback(group.alternate, true); // Mark alternate as off-cycle
-        }
-        this.close();
+        // Expand to show both timezone options instead of directly adding alternate
+        this.showTimezoneOptions(group);
       });
     }
 
@@ -2293,12 +2290,29 @@ export class TimezoneModal {
       ? `${timezone.cityName} (${timezone.abbreviation})`
       : `${timezone.cityName} (${timezone.abbreviation} ${offsetStr})`;
 
+    // Check if this timezone has an alternate available (for DST support in search results)
+    const matchingGroup = this.groupedTimezonesLookup.get(timezone.iana);
+    const hasAlternate = matchingGroup && matchingGroup.alternate;
+
     item.innerHTML = `
       <div class="wheel-timezone-name">
         ${displayText}
+        ${hasAlternate ? '<span class="timezone-plus-btn" title="Select alternate timezone">+</span>' : ''}
       </div>
       <div class="wheel-timezone-display">${timezone.displayName}</div>
     `;
+
+    // Handle plus button clicks (for search results)
+    if (hasAlternate) {
+      const plusBtn = item.querySelector('.timezone-plus-btn');
+      if (plusBtn && matchingGroup && matchingGroup.alternate) {
+        plusBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          // Expand to show both timezone options instead of directly adding alternate
+          this.showTimezoneOptions(matchingGroup);
+        });
+      }
+    }
 
     // Click handler
     item.addEventListener('click', () => {
@@ -2367,6 +2381,86 @@ export class TimezoneModal {
   public close(): void {
     this.overlay.classList.remove('active');
     document.body.style.overflow = '';
+  }
+
+  /**
+   * Show expanded view with both timezone options for selection
+   */
+  private showTimezoneOptions(group: GroupedTimezone): void {
+    // Clear wheel and show both timezone options
+    this.wheel.innerHTML = '';
+
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'timezone-options-container';
+    optionsContainer.innerHTML = `
+      <div class="timezone-options-header">
+        <h3>Select ${group.location} Timezone</h3>
+        <div class="timezone-options-subtitle">Choose your preferred time offset</div>
+      </div>
+      <div class="timezone-options-list">
+      </div>
+      <div class="timezone-options-actions">
+        <button type="button" class="timezone-option-back">← Back to Search</button>
+      </div>
+    `;
+
+    const optionsList = optionsContainer.querySelector('.timezone-options-list') as HTMLElement;
+
+    // Add current timezone option
+    const currentOption = document.createElement('div');
+    currentOption.className = 'timezone-option current-option';
+    currentOption.innerHTML = `
+      <div class="timezone-option-header">
+        <div class="timezone-option-name">${group.current.cityName} (${group.current.abbreviation})</div>
+        <div class="timezone-option-badge">Current</div>
+      </div>
+      <div class="timezone-option-details">
+        <div class="timezone-option-offset">${formatOffset(group.current.offset)}</div>
+        <div class="timezone-option-display">${group.current.displayName}</div>
+      </div>
+    `;
+
+    currentOption.addEventListener('click', () => {
+      if (this.onTimezoneSelectedCallback) {
+        this.onTimezoneSelectedCallback(group.current);
+      }
+      this.close();
+    });
+
+    optionsList.appendChild(currentOption);
+
+    // Add alternate timezone option if available
+    if (group.alternate) {
+      const alternateOption = document.createElement('div');
+      alternateOption.className = 'timezone-option alternate-option';
+      alternateOption.innerHTML = `
+        <div class="timezone-option-header">
+          <div class="timezone-option-name">${group.alternate.cityName} (${group.alternate.abbreviation})</div>
+          <div class="timezone-option-badge">Alternate</div>
+        </div>
+        <div class="timezone-option-details">
+          <div class="timezone-option-offset">${formatOffset(group.alternate.offset)}</div>
+          <div class="timezone-option-display">${group.alternate.displayName}</div>
+        </div>
+      `;
+
+      alternateOption.addEventListener('click', () => {
+        if (this.onTimezoneSelectedCallback && group.alternate) {
+          this.onTimezoneSelectedCallback(group.alternate, true); // Mark alternate as off-cycle
+        }
+        this.close();
+      });
+
+      optionsList.appendChild(alternateOption);
+    }
+
+    // Back button functionality
+    const backButton = optionsContainer.querySelector('.timezone-option-back') as HTMLElement;
+    backButton.addEventListener('click', () => {
+      this.renderWheel();
+    });
+
+    this.wheel.appendChild(optionsContainer);
   }
 
   /**
