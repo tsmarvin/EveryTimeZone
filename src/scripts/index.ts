@@ -1329,11 +1329,10 @@ function initializeTimezoneData(year: number = Temporal.Now.plainDateISO().year)
   // Get all supported timezones (comprehensive list)
   const allTimezones = Intl.supportedValuesOf('timeZone');
 
-  // Create dates for June 1st and December 31st to capture DST variations using Temporal
-  const junePlainDate = Temporal.PlainDate.from({ year, month: 6, day: 1 });
-  const decemberPlainDate = Temporal.PlainDate.from({ year, month: 12, day: 31 });
-  const juneDate = new Date(junePlainDate.toZonedDateTime('UTC').epochMilliseconds);
-  const decemberDate = new Date(decemberPlainDate.toZonedDateTime('UTC').epochMilliseconds);
+  // Create neutral dates for June 1st and December 31st to capture DST variations
+  // Using UTC to avoid local timezone interpretation issues
+  const juneDate = new Date(Date.UTC(year, 5, 1)); // June 1st in UTC
+  const decemberDate = new Date(Date.UTC(year, 11, 31)); // December 31st in UTC
 
   console.log(`Processing ${allTimezones.length} timezones for June and December variants...`);
 
@@ -1501,13 +1500,10 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
 function getTimezoneVariations(iana: string, year: number = Temporal.Now.plainDateISO().year): TimeZone[] {
   const variations: TimeZone[] = [];
 
-  // Use June 1st for summer time and December 31st for winter time using Temporal
-  const summerPlainDate = Temporal.PlainDate.from({ year, month: 6, day: 1 });
-  const winterPlainDate = Temporal.PlainDate.from({ year, month: 12, day: 31 });
-
-  // Convert to Date objects for Intl.DateTimeFormat compatibility using the target timezone
-  const summerDate = new Date(summerPlainDate.toZonedDateTime(iana).epochMilliseconds);
-  const winterDate = new Date(winterPlainDate.toZonedDateTime(iana).epochMilliseconds);
+  // Use June 1st for summer time and December 31st for winter time
+  // Create neutral UTC dates and let Intl.DateTimeFormat handle timezone conversion
+  const summerDate = new Date(Date.UTC(year, 5, 1)); // June 1st in UTC
+  const winterDate = new Date(Date.UTC(year, 11, 31)); // December 31st in UTC
 
   for (const date of [summerDate, winterDate]) {
     const formatter = new Intl.DateTimeFormat('en', {
