@@ -49,3 +49,7 @@ jobs:
     
     - name: Run tests (includes linting, formatting, and type checking)
       run: npm test
+      env:
+        GITVERSION_SEMVER: ${{ steps.gitversion.outputs.semVer }}
+        GITVERSION_FULLSEMVER: ${{ steps.gitversion.outputs.fullSemVer }}
+        GITVERSION_INFORMATIONALVERSION: ${{ steps.gitversion.outputs.informationalVersion }}
