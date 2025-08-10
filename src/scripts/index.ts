@@ -967,10 +967,7 @@ export class TimelineManager {
     const exists = this.selectedTimezones.find(tz => tz.iana === timezone.iana);
     if (!exists) {
       // Create a copy of the timezone and set the off-cycle flag if specified
-      const timezoneToAdd: TimeZone = {
-        ...timezone,
-        ...(isOffCycle !== undefined && { isOffCycle }),
-      };
+      const timezoneToAdd = isOffCycle !== undefined ? { ...timezone, isOffCycle } : timezone;
       this.selectedTimezones.push(timezoneToAdd);
       this.renderTimeline();
     }
