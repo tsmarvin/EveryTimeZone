@@ -580,17 +580,17 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
       sunsetTime = formatTimeInTimezone(sunTimes.sunset, timezone.iana);
 
       // Check if this is the sunrise hour - the hour that CONTAINS the sunrise time
-      // Convert sunrise time from UTC to local timezone for comparison
-      const sunriseLocal = new Date(sunTimes.sunrise.getTime() + timezone.offset * 60 * 60 * 1000);
-      const sunriseHour = sunriseLocal.getHours();
+      // Convert sunrise time from UTC to local timezone using proper IANA timezone conversion
+      const sunriseLocalTime = new Date(sunTimes.sunrise.toLocaleString('en-US', { timeZone: timezone.iana }));
+      const sunriseHour = sunriseLocalTime.getHours();
       if (timeInTz.getHours() === sunriseHour) {
         isSunriseHour = true;
       }
 
       // Check if this is the sunset hour - the hour that CONTAINS the sunset time
-      // Convert sunset time from UTC to local timezone for comparison
-      const sunsetLocal = new Date(sunTimes.sunset.getTime() + timezone.offset * 60 * 60 * 1000);
-      const sunsetHour = sunsetLocal.getHours();
+      // Convert sunset time from UTC to local timezone using proper IANA timezone conversion
+      const sunsetLocalTime = new Date(sunTimes.sunset.toLocaleString('en-US', { timeZone: timezone.iana }));
+      const sunsetHour = sunsetLocalTime.getHours();
       if (timeInTz.getHours() === sunsetHour) {
         isSunsetHour = true;
       }
