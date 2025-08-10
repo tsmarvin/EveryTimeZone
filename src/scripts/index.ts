@@ -1329,9 +1329,11 @@ function initializeTimezoneData(year: number = Temporal.Now.plainDateISO().year)
   // Get all supported timezones (comprehensive list)
   const allTimezones = Intl.supportedValuesOf('timeZone');
 
-  // Create dates for June 1st and December 31st to capture DST variations
-  const juneDate = new Date(year, 5, 1); // June 1st
-  const decemberDate = new Date(year, 11, 31); // December 31st
+  // Create dates for June 1st and December 31st to capture DST variations using Temporal
+  const junePlainDate = Temporal.PlainDate.from({ year, month: 6, day: 1 });
+  const decemberPlainDate = Temporal.PlainDate.from({ year, month: 12, day: 31 });
+  const juneDate = new Date(junePlainDate.toZonedDateTime(Temporal.Now.timeZoneId()).epochMilliseconds);
+  const decemberDate = new Date(decemberPlainDate.toZonedDateTime(Temporal.Now.timeZoneId()).epochMilliseconds);
 
   console.log(`Processing ${allTimezones.length} timezones for June and December variants...`);
 
@@ -1499,9 +1501,13 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
 function getTimezoneVariations(iana: string, year: number = Temporal.Now.plainDateISO().year): TimeZone[] {
   const variations: TimeZone[] = [];
 
-  // Use June 1st for summer time and December 31st for winter time
-  const summerDate = new Date(year, 5, 1); // June 1st
-  const winterDate = new Date(year, 11, 31); // December 31st
+  // Use June 1st for summer time and December 31st for winter time using Temporal
+  const summerPlainDate = Temporal.PlainDate.from({ year, month: 6, day: 1 });
+  const winterPlainDate = Temporal.PlainDate.from({ year, month: 12, day: 31 });
+
+  // Convert to Date objects for Intl.DateTimeFormat compatibility
+  const summerDate = new Date(summerPlainDate.toZonedDateTime(Temporal.Now.timeZoneId()).epochMilliseconds);
+  const winterDate = new Date(winterPlainDate.toZonedDateTime(Temporal.Now.timeZoneId()).epochMilliseconds);
 
   for (const date of [summerDate, winterDate]) {
     const formatter = new Intl.DateTimeFormat('en', {
