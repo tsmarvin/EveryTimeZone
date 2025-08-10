@@ -85,7 +85,7 @@ export function getUserTimezone(date?: Date): TimeZone {
   // Get user's timezone ID using Temporal (polyfill ensures availability)
   const userTimezone = Temporal.Now.timeZoneId();
 
-  const now = date || new Date();
+  const now = date || new Date(Temporal.Now.instant().epochMilliseconds);
 
   // Use Intl for offset calculation (proven compatibility)
   const formatter = new Intl.DateTimeFormat('en', {
@@ -421,7 +421,7 @@ function getTimezoneAbbreviation(displayName: string, iana: string, date?: Date)
     });
 
     // Format the provided date (or current date) and extract the timezone abbreviation
-    const parts = formatter.formatToParts(date || new Date());
+    const parts = formatter.formatToParts(date || new Date(Temporal.Now.instant().epochMilliseconds));
     const timeZonePart = parts.find(part => part.type === 'timeZoneName');
 
     if (timeZonePart && timeZonePart.value && timeZonePart.value.length <= 5) {
@@ -469,7 +469,7 @@ function createTimezoneDisplayName(iana: string, offset: number, date?: Date): s
     });
 
     // Get the timezone name from the provided date (or current date)
-    const parts = formatter.formatToParts(date || new Date());
+    const parts = formatter.formatToParts(date || new Date(Temporal.Now.instant().epochMilliseconds));
     const timeZonePart = parts.find(part => part.type === 'timeZoneName');
 
     if (timeZonePart && timeZonePart.value) {
@@ -513,7 +513,7 @@ function formatOffset(offset: number): string {
  * @returns Array of timeline hours with daylight information and date transitions
  */
 export function generateTimelineHours(numHours: number, timezone: TimeZone, baseDate?: Date): TimelineHour[] {
-  const now = baseDate || new Date();
+  const now = baseDate || new Date(Temporal.Now.instant().epochMilliseconds);
   const userTz = getUserTimezone();
 
   // Get current hour in user's timezone and round down
@@ -924,7 +924,7 @@ export class TimelineManager {
   private modal: TimezoneModal;
   private dateTimeModal: DateTimeModal;
   private selectedTimezones: TimeZone[] = [];
-  private selectedDate: Date = new Date(); // Default to today
+  private selectedDate: Date = new Date(Temporal.Now.instant().epochMilliseconds); // Default to today
 
   constructor() {
     this.container = document.getElementById('timeline-container') as HTMLElement;
@@ -1323,15 +1323,15 @@ function saveTimezoneCache(): void {
  * Initialize timezone data by processing all browser timezones for June and December
  * This expensive operation should only be done once on page load
  */
-function initializeTimezoneData(year: number = new Date().getFullYear()): ProcessedTimezoneData {
+function initializeTimezoneData(year: number = Temporal.Now.plainDateISO().year): ProcessedTimezoneData {
   const userTimezone = Temporal.Now.timeZoneId();
 
   // Get all supported timezones (comprehensive list)
   const allTimezones = Intl.supportedValuesOf('timeZone');
 
-  // Create dates for June 1st and December 31st to capture DST variations
-  const juneDate = new Date(year, 5, 1); // June 1st
-  const decemberDate = new Date(year, 11, 31); // December 31st
+  // Create dates for June 1st and December 31st to capture DST variations using Temporal
+  const juneDate = new Date(Temporal.PlainDate.from({ year, month: 6, day: 1 }).year, 5, 1); // June 1st
+  const decemberDate = new Date(Temporal.PlainDate.from({ year, month: 12, day: 31 }).year, 11, 31); // December 31st
 
   console.log(`Processing ${allTimezones.length} timezones for June and December variants...`);
 
@@ -1464,7 +1464,7 @@ function getTimezoneSetForDate(date: Date, processedData: ProcessedTimezoneData)
  * @returns Array of timezone objects ordered from user's timezone around the globe
  */
 export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
-  const now = date || new Date();
+  const now = date || new Date(Temporal.Now.instant().epochMilliseconds);
   const currentYear = now.getFullYear();
 
   // Load cache from localStorage on first call
@@ -1496,14 +1496,17 @@ export function getAllTimezonesOrdered(date?: Date): TimeZone[] {
  * Get timezone variations for a given IANA identifier using fixed dates
  * Returns both summer (June 1st) and winter (December 31st) variations
  */
-function getTimezoneVariations(iana: string, year: number = new Date().getFullYear()): TimeZone[] {
+function getTimezoneVariations(iana: string, year: number = Temporal.Now.plainDateISO().year): TimeZone[] {
   const variations: TimeZone[] = [];
 
-  // Use June 1st for summer time and December 31st for winter time
-  const summerDate = new Date(year, 5, 1); // June 1st
-  const winterDate = new Date(year, 11, 31); // December 31st
+  // Use June 1st for summer time and December 31st for winter time using Temporal
+  const summerDate = Temporal.PlainDate.from({ year, month: 6, day: 1 }); // June 1st
+  const winterDate = Temporal.PlainDate.from({ year, month: 12, day: 31 }); // December 31st
 
-  for (const date of [summerDate, winterDate]) {
+  for (const plainDate of [summerDate, winterDate]) {
+    // Convert Temporal.PlainDate to Date for Intl.DateTimeFormat compatibility
+    const date = new Date(plainDate.year, plainDate.month - 1, plainDate.day);
+
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: iana,
       timeZoneName: 'longOffset',
@@ -1574,7 +1577,7 @@ function extractRegion(iana: string): string {
  * Get grouped timezones with DST/Standard variations, prioritized by selected date
  */
 export function getGroupedTimezones(selectedDate?: Date): GroupedTimezone[] {
-  const date = selectedDate || new Date();
+  const date = selectedDate || new Date(Temporal.Now.instant().epochMilliseconds);
   const allTimezones = Intl.supportedValuesOf('timeZone');
   const locationGroups = new Map<string, GroupedTimezone>();
 
@@ -1809,7 +1812,7 @@ export class TimezoneModal {
   private selectedDate: Date; // Date to use for timezone calculations
 
   constructor(onTimezoneSelected?: (timezone: TimeZone, isOffCycle?: boolean) => void, selectedDate?: Date) {
-    this.selectedDate = selectedDate || new Date();
+    this.selectedDate = selectedDate || new Date(Temporal.Now.instant().epochMilliseconds);
     this.modal = document.getElementById('timezone-modal') as HTMLElement;
     this.overlay = document.getElementById('timezone-modal-overlay') as HTMLElement;
     this.input = document.getElementById('timezone-input') as HTMLInputElement;
@@ -2700,7 +2703,7 @@ export class DateTimeModal {
 
     // Set current datetime as default if no value is set
     if (!this.input.value) {
-      const now = new Date();
+      const now = new Date(Temporal.Now.instant().epochMilliseconds);
       // Format to datetime-local format (YYYY-MM-DDTHH:MM)
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
