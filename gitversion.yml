@@ -7,14 +7,14 @@ commit-message-incrementing: Enabled
 branches:
   main:
     regex: ^main$
-    mode: ContinuousDelivery
+    mode: ContinuousDeployment
     label: ''
     increment: Patch
   develop:
     regex: ^develop$
     mode: ContinuousDeployment
     label: alpha
-    increment: None
+    increment: Patch
   release:
     regex: ^releases?[/-]
     mode: ContinuousDelivery

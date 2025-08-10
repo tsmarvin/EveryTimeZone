@@ -94,35 +94,7 @@ jobs:
       - name: Save develop build
         run: mv dist develop-dist
       
-      # Second: Build main branch content for the root
-      - name: Checkout and build main branch with test site link
-        run: |
-          # Save current develop state
-          git stash push -m "Save develop changes" || echo "No changes to stash"
-          
-          # Checkout main branch with full history and ensure tags are available
-          git checkout main
-          git pull origin main || echo "No changes to pull"
-          
-          # Ensure all tags are fetched for version calculation
-          git fetch --tags || echo "Tags already available"
-          
-          # Build main branch content with proper main branch GitVersion
-          npm run build
-          
-          # Save main build
-          mv dist main-dist
-          
-          # Return to develop branch and restore state
-          git checkout develop
-          if git stash list | grep -q "Save develop changes"; then
-            git stash pop
-          fi
-        env:
-          # Pass test site info for footer link
-          TEST_SITE_PATH: ${{ steps.pr-info.outputs.deploy_path }}
-      
-      # Get GitVersion for main branch after checking it out
+      # Get GitVersion for main branch
       - name: Get main branch GitVersion
         id: gitversion-main
         run: |
@@ -153,8 +125,8 @@ jobs:
             git stash pop
           fi
       
-      # Rebuild main with proper GitVersion values
-      - name: Rebuild main branch with correct GitVersion
+      # Build main branch with proper GitVersion values
+      - name: Build main branch with correct GitVersion
         run: |
           # Save current develop state
           git stash push -m "Save develop changes" || echo "No changes to stash"
