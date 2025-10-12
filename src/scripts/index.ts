@@ -1266,16 +1266,37 @@ const processedTimezoneCache = new Map<number, ProcessedTimezoneData>();
 const TIMEZONE_CACHE_KEY = 'everytimezone_processed_timezones';
 
 /**
- * Type guard to check if an object is a valid ProcessedTimezoneData
+ * Type guard to check if an object is a valid TimeZone
  */
-function isProcessedTimezoneData(obj: unknown): obj is ProcessedTimezoneData {
+function isValidTimeZone(obj: unknown): obj is TimeZone {
   return (
     typeof obj === 'object' &&
     obj !== null &&
-    Array.isArray((obj as ProcessedTimezoneData).juneTimeZones) &&
-    Array.isArray((obj as ProcessedTimezoneData).decemberTimeZones) &&
-    typeof (obj as ProcessedTimezoneData).userTimezone === 'string' &&
-    typeof (obj as ProcessedTimezoneData).currentYear === 'number'
+    typeof (obj as TimeZone).name === 'string' &&
+    typeof (obj as TimeZone).offset === 'number' &&
+    typeof (obj as TimeZone).displayName === 'string' &&
+    typeof (obj as TimeZone).iana === 'string' &&
+    typeof (obj as TimeZone).cityName === 'string' &&
+    typeof (obj as TimeZone).abbreviation === 'string'
+    // Note: daylight, isCustom, isOffCycle, coordinates are optional properties
+  );
+}
+
+/**
+ * Type guard to check if an object is a valid ProcessedTimezoneData
+ */
+function isProcessedTimezoneData(obj: unknown): obj is ProcessedTimezoneData {
+  const candidate = obj as ProcessedTimezoneData;
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    Array.isArray(candidate.juneTimeZones) &&
+    Array.isArray(candidate.decemberTimeZones) &&
+    typeof candidate.userTimezone === 'string' &&
+    typeof candidate.currentYear === 'number' &&
+    // Validate that array contents are valid TimeZone objects to prevent runtime errors
+    candidate.juneTimeZones.every(isValidTimeZone) &&
+    candidate.decemberTimeZones.every(isValidTimeZone)
   );
 }
 
