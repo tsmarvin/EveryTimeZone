@@ -106,7 +106,7 @@ export function getUserTimezone(date?: Date): TimeZone {
   }
 
   // Get display name using Intl
-  const displayFormatter = new Intl.DateTimeFormat('en', {
+  const displayFormatter = new Intl.DateTimeFormat(undefined, {
     timeZone: userTimezone,
     timeZoneName: 'long',
   });
@@ -516,9 +516,10 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
   const now = baseDate || new Date(Temporal.Now.instant().epochMilliseconds);
   const userTz = getUserTimezone();
 
-  // Get current hour in user's timezone and round down
-  const currentUserHour = new Date(now.toLocaleString('en-US', { timeZone: userTz.iana }));
-  currentUserHour.setMinutes(0, 0, 0);
+  // Get current hour in user's timezone and round down using Temporal
+  const nowInstant = Temporal.Instant.fromEpochMilliseconds(now.getTime());
+  const nowZoned = nowInstant.toZonedDateTimeISO(userTz.iana);
+  const roundedZoned = nowZoned.with({ minute: 0, second: 0, millisecond: 0 });
 
   const hours: TimelineHour[] = [];
 
@@ -530,18 +531,23 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
   const sunriseSunsetCache = new Map<string, { sunrise: Date; sunset: Date } | null>();
 
   for (let i = 0; i < numHours; i++) {
-    // Calculate the time in the target timezone
+    // Calculate the time in the target timezone using Temporal methods
     const hourOffset = startOffset + i;
-    const baseTime = new Date(currentUserHour.getTime() + hourOffset * 60 * 60 * 1000);
-    const offsetDiff = (timezone.offset - userTz.offset) * 60 * 60 * 1000;
-    const timeInTz = new Date(baseTime.getTime() + offsetDiff);
 
-    const hour12 = timeInTz.toLocaleString('en-US', {
+    // Add hours to the rounded user time and convert to target timezone
+    const baseTimeZoned = roundedZoned.add({ hours: hourOffset });
+    const timeInTzZoned = baseTimeZoned.withTimeZone(timezone.iana);
+
+    // Convert to Date object only when needed for legacy functions
+    const timeInTz = new Date(timeInTzZoned.epochMilliseconds);
+
+    // Format hours using Temporal for accurate timezone handling
+    const hour12 = timeInTzZoned.toLocaleString(undefined, {
       hour: 'numeric',
       hour12: true,
     });
 
-    const hour24 = timeInTz.toLocaleString('en-US', {
+    const hour24 = timeInTzZoned.toLocaleString(undefined, {
       hour: '2-digit',
       hour12: false,
     });
@@ -550,13 +556,13 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     let isDaylight = isHourInDaylight(timezone, timeInTz);
 
     // Check if this hour represents a date transition (midnight = start of new day)
-    const isDateTransition = timeInTz.getHours() === 0;
+    const isDateTransition = timeInTzZoned.hour === 0;
 
     // Generate date string for display if this is a date transition
     let dateString: string | undefined;
     if (isDateTransition) {
       // Format date using user's locale (e.g., "Aug 6", "6 Aug", etc. depending on locale)
-      dateString = timeInTz.toLocaleDateString(undefined, {
+      dateString = timeInTzZoned.toLocaleString(undefined, {
         month: 'short',
         day: 'numeric',
       });
@@ -580,24 +586,26 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
       sunsetTime = formatTimeInTimezone(sunTimes.sunset, timezone.iana);
 
       // Check if this is the sunrise hour - the hour that CONTAINS the sunrise time
-      // Convert sunrise time from UTC to local timezone for comparison
-      const sunriseLocal = new Date(sunTimes.sunrise.getTime() + timezone.offset * 60 * 60 * 1000);
-      const sunriseHour = sunriseLocal.getHours();
-      if (timeInTz.getHours() === sunriseHour) {
+      // Convert sunrise time from UTC to local timezone using proper Temporal IANA timezone conversion
+      const sunriseInstant = Temporal.Instant.fromEpochMilliseconds(sunTimes.sunrise.getTime());
+      const sunriseZoned = sunriseInstant.toZonedDateTimeISO(timezone.iana);
+      const sunriseHour = sunriseZoned.hour;
+      if (timeInTzZoned.hour === sunriseHour) {
         isSunriseHour = true;
       }
 
       // Check if this is the sunset hour - the hour that CONTAINS the sunset time
-      // Convert sunset time from UTC to local timezone for comparison
-      const sunsetLocal = new Date(sunTimes.sunset.getTime() + timezone.offset * 60 * 60 * 1000);
-      const sunsetHour = sunsetLocal.getHours();
-      if (timeInTz.getHours() === sunsetHour) {
+      // Convert sunset time from UTC to local timezone using proper Temporal IANA timezone conversion
+      const sunsetInstant = Temporal.Instant.fromEpochMilliseconds(sunTimes.sunset.getTime());
+      const sunsetZoned = sunsetInstant.toZonedDateTimeISO(timezone.iana);
+      const sunsetHour = sunsetZoned.hour;
+      if (timeInTzZoned.hour === sunsetHour) {
         isSunsetHour = true;
       }
 
       // Update daylight calculation to be consistent with sunrise/sunset hour logic
       // Daylight hours should include the sunrise hour through the sunset hour (inclusive)
-      const currentHour = timeInTz.getHours();
+      const currentHour = timeInTzZoned.hour;
 
       if (sunriseHour <= sunsetHour) {
         // Normal case: sunrise and sunset are on the same day
@@ -609,7 +617,7 @@ export function generateTimelineHours(numHours: number, timezone: TimeZone, base
     }
 
     hours.push({
-      hour: timeInTz.getHours(),
+      hour: timeInTzZoned.hour,
       date: timeInTz,
       time12: hour12,
       time24: hour24,
@@ -1376,7 +1384,7 @@ function processTimezonesForDate(timezoneIanas: readonly string[], date: Date, u
     }
 
     // Get display name
-    const displayFormatter = new Intl.DateTimeFormat('en', {
+    const displayFormatter = new Intl.DateTimeFormat(undefined, {
       timeZone: iana,
       timeZoneName: 'long',
     });
@@ -1524,7 +1532,7 @@ function getTimezoneVariations(iana: string, year: number = Temporal.Now.plainDa
     }
 
     // Get display name
-    const displayFormatter = new Intl.DateTimeFormat('en', {
+    const displayFormatter = new Intl.DateTimeFormat(undefined, {
       timeZone: iana,
       timeZoneName: 'long',
     });
@@ -2855,7 +2863,7 @@ function getSunriseSunsetTimes(timezone: TimeZone, date: Date): { sunrise: Date;
  * @returns Formatted time string (e.g., "6:42 AM")
  */
 function formatTimeInTimezone(date: Date, timezone: string): string {
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(undefined, {
     timeZone: timezone,
     hour: 'numeric',
     minute: '2-digit',
